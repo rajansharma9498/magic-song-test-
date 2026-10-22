@@ -1,0 +1,140 @@
+
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Magic Song Test</title>
+</head>
+<body style="font-family:Arial,sans-serif;max-width:480px;margin:40px auto;padding:16px">
+  <h2>Magic Song</h2>
+  <p id="status">Connecting to Firebase...</p>
+
+  <section id="magician" hidden>
+    <h3>Magician Panel</h3>
+    <input id="song" style="width:95%;padding:12px"
+      placeholder="YouTube video link">
+    <button id="send" style="padding:12px;margin-top:12px">
+      Send Song
+    </button>
+    <p>Send करने के बाद दर्शक के खुले पेज पर अपडेट पहुँचेगा।</p>
+  </section>
+
+  <section id="audience" hidden>
+    <h3>Audience Receiver</h3>
+    <p>Ready. Waiting for the next song...</p>
+    <button id="arm">Arm receiver</button>
+  </section>
+
+<script type="module">
+import { initializeApp } from
+  "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, signInAnonymously } from
+  "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {
+  getFirestore, doc, setDoc, onSnapshot, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+// Replace these values with your Firebase web app config.
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  projectId: "YOUR_PROJECT_ID",
+  appId: "YOUR_APP_ID"
+};
+
+const status = document.getElementById("status");
+const mode = new URLSearchParams(location.search).get("mode");
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const session = doc(db, "sessions", "demo");
+
+function validYouTubeUrl(value) {
+  try {
+    const u = new URL(value);
+    return ["youtube.com", "www.youtube.com", "m.youtube.com",
+      "youtu.be", "www.youtube-nocookie.com"].includes(u.hostname)
+      && (u.protocol === "https:");
+  } catch {
+    return false;
+  }
+}
+
+try {
+  await signInAnonymously(auth);
+  status.textContent = "Connected.";
+
+  if (mode === "magician") {
+    document.getElementById("magician").hidden = false;
+
+    document.getElementById("send").onclick = async () => {
+      const url = document.getElementById("song").value.trim();
+
+      if (!validYouTubeUrl(url)) {
+        status.textContent = "Enter a valid HTTPS YouTube video URL.";
+        return;
+      }
+
+      try {
+        await setDoc(session, {
+          songUrl: url,
+          seq: Date.now(),
+          updatedAt: serverTimestamp()
+        }, { merge: true });
+
+        status.textContent = "Song sent to the receiver.";
+      } catch (e) {
+        status.textContent = "Send failed: " + e.message;
+      }
+    };
+
+  } else if (mode === "audience") {
+    document.getElementById("audience").hidden = false;
+
+    let firstSnapshot = true;
+    let lastSeq = null;
+    let armed = false;
+
+    document.getElementById("arm").onclick = () => {
+      armed = true;
+      status.textContent =
+        "Receiver armed. Keep this page open until the song arrives.";
+    };
+
+    onSnapshot(session, (snap) => {
+      if (!snap.exists()) return;
+      const data = snap.data();
+
+      if (firstSnapshot) {
+        firstSnapshot = false;
+        lastSeq = data.seq ?? null;
+        return; // Ignore any old song when the page first opens.
+      }
+
+      if (data.seq == null || data.seq === lastSeq) return;
+      lastSeq = data.seq;
+
+      if (!armed || !validYouTubeUrl(data.songUrl)) {
+        status.textContent =
+          "New update received. Arm the receiver before the next send.";
+        return;
+      }
+
+      status.textContent = "Opening YouTube...";
+      location.href = data.songUrl;
+    }, (e) => {
+      status.textContent = "Listener error: " + e.message;
+    });
+
+  } else {
+    status.innerHTML =
+      'Choose a mode: <a href="?mode=magician">Magician</a> · ' +
+      '<a href="?mode=audience">Audience</a>';
+  }
+} catch (e) {
+  status.textContent = "Firebase error: " + e.message;
+}
+</script>
+</body>
+</html>
