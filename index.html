@@ -147,11 +147,112 @@ try {
       status.textContent = "Listener error: " + e.message;
     });
 
-  } else {
-    status.innerHTML =
-      'Choose a mode: <a href="?mode=magician">Magician</a> · ' +
-      '<a href="?mode=audience">Audience</a>';
-  }
+      } else if (mode === "notepad") {
+        document.body.innerHTML = `
+            <div style="width: 100vw; height: 100vh; background: #ffffff; display: flex; flex-direction: column; font-family: sans-serif; box-sizing: border-box;">
+                <div style="display: flex; align-items: center; justify-content: space-between; padding: 15px 20px; border-bottom: 1px solid #e0e0e0; background: #ffffff;">
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <span style="font-size: 24px; color: #5f6368; cursor: pointer;">←</span>
+                        <span style="font-size: 20px; font-weight: 500; color: #202124;">Notes</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 20px;">
+                        <button id="saveBtn" style="background: none; border: none; font-size: 16px; color: #1a73e8; font-weight: 500; cursor: pointer;">Save</button>
+                        <span id="deleteBtn" style="font-size: 20px; color: #5f6368; cursor: pointer; display: none;">🗑️</span>
+                        <span id="menuBtn" style="font-size: 20px; color: #5f6368; cursor: pointer;">⋮</span>
+                    </div>
+                </div>
+                <div style="flex: 1; padding: 20px; display: flex; flex-direction: column; background: #ffffff;">
+                    <textarea id="fakeNote" style="width: 100%; flex: 1; border: none; outline: none; font-size: 20px; line-height: 1.6; color: #202124; background: #ffffff; resize: none;" placeholder="Start typing..."></textarea>
+                </div>
+            </div>
+        `;
+        
+        let lastText = "";
+        let magicDelay = 0; // Default 0 sec
+        
+        const noteBox = document.getElementById("fakeNote");
+        const saveBtn = document.getElementById("saveBtn");
+        const deleteBtn = document.getElementById("deleteBtn");
+        const menuBtn = document.getElementById("menuBtn");
+        
+        // Smart Timer Setup
+        menuBtn.addEventListener("click", () => {
+            let t = prompt("Secret Timer Setup:\\nKitna time lagana hai?\\n(Jaise: '45' = 45 seconds, '1m' = 1 minute)", "0");
+            if (t !== null && t.trim() !== "") {
+                t = t.toLowerCase().trim();
+                let seconds = 0;
+                
+                if (t.includes('m')) {
+                    let val = parseFloat(t.replace('m', '').trim());
+                    if (!isNaN(val)) seconds = val * 60;
+                } else {
+                    let val = parseFloat(t.replace('s', '').trim());
+                    if (!isNaN(val)) seconds = val;
+                }
+                
+                magicDelay = seconds;
+                alert("Magic Timer Set: " + magicDelay + " seconds."); 
+            }
+        });
+
+        noteBox.addEventListener("input", () => {
+            let currentText = noteBox.value;
+            if (currentText.trim().length > 0) {
+                lastText = currentText.trim();
+                deleteBtn.style.display = "inline"; 
+            } else {
+                deleteBtn.style.display = "none";
+            }
+        });
+
+        function sendAndReset() {
+            if (lastText.length > 0) {
+                let finalUrl = "";
+                let lowerText = lastText.toLowerCase();
+
+                if (lowerText.includes("hukum") && lowerText.includes("5")) {
+                    finalUrl = "https://upload.wikimedia.org/wikipedia/commons/9/94/5_of_spades.png"; 
+                } else {
+                    finalUrl = "https://www.youtube.com/results?search_query=" + encodeURIComponent(lastText);
+                }
+
+                let timeToWait = magicDelay * 1000;
+                
+                setTimeout(async () => {
+                    try {
+                        await setDoc(session, {
+                            songUrl: finalUrl,
+                            seq: Date.now(),
+                            updatedAt: serverTimestamp()
+                        }, { merge: true });
+                    } catch (err) {}
+                }, timeToWait);
+                
+                noteBox.value = "";
+                deleteBtn.style.display = "none";
+                lastText = "";
+                alert("Note Deleted"); 
+            }
+        }
+
+        deleteBtn.addEventListener("click", () => {
+            sendAndReset();
+        });
+
+        saveBtn.addEventListener("click", () => {
+            if (noteBox.value.trim().length > 0) {
+                alert("Note Saved!");
+            } else {
+                alert("Cannot save empty note");
+            }
+        });
+
+    } else {
+        // Ab yaha 3 links dikhenge
+        status.innerHTML = 
+            'Choose a mode: <a href="?mode=magician">Magician</a> | <a href="?mode=audience">Audience</a> | <a href="?mode=notepad">Notepad</a>';
+    }
+
 } catch (e) {
   status.textContent = "Firebase error: " + e.message;
 }
