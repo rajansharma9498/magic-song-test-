@@ -75,10 +75,7 @@ try {
     document.getElementById("send").onclick = async () => {
       const url = document.getElementById("song").value.trim();
 
-      if (!validYouTubeUrl(url)) {
-        status.textContent = "Enter a valid HTTPS YouTube video URL.";
-        return;
-      }
+      
 
       try {
         await setDoc(session, {
