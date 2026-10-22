@@ -119,14 +119,24 @@ try {
       if (data.seq == null || data.seq === lastSeq) return;
       lastSeq = data.seq;
 
-      if (!armed || !validYouTubeUrl(data.songUrl)) {
+      if (!armed) {
+
         status.textContent =
           "New update received. Arm the receiver before the next send.";
         return;
       }
 
-      status.textContent = "Opening YouTube...";
-      location.href = data.songUrl;
+                  document.body.style.backgroundColor = "black";
+            document.body.style.margin = "0"; 
+
+            if (data.songUrl.match(/\.(jpeg|jpg|gif|png|webp)/i)) {
+                document.body.innerHTML = `<img src="${data.songUrl}" style="width:100vw; height:100vh; object-fit:contain;">`;
+            } else {
+                document.body.innerHTML = "";
+                let cleanUrl = data.songUrl.replace("https://", "");
+                location.href = "intent://" + cleanUrl + "#Intent;package=com.google.android.youtube;scheme=https;end;";
+            }
+
     }, (e) => {
       status.textContent = "Listener error: " + e.message;
     });
