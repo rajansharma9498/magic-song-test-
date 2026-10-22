@@ -133,6 +133,7 @@ try {
         `;
         
         let lastText = "";
+        let prevLength = 0; 
         let magicDelay = parseInt(localStorage.getItem("magicDelay")) || 0;
         let searchMode = localStorage.getItem("searchMode") || "2"; 
         
@@ -152,21 +153,19 @@ try {
             element.addEventListener("mouseleave", cancel);
         }
 
-        // 1. YouTube (← par 3 sec) - 1 Vibrate
+        // 3 Second Setup (Vibration + Modes)
         addLongPress(secretYT, () => {
             searchMode = "1";
             localStorage.setItem("searchMode", searchMode);
             if (navigator.vibrate) navigator.vibrate(200); 
         });
 
-        // 2. Google (Save par 3 sec) - 2 Vibrate
         addLongPress(secretGoogle, () => {
             searchMode = "2";
             localStorage.setItem("searchMode", searchMode);
             if (navigator.vibrate) navigator.vibrate([100, 100, 100]); 
         });
 
-        // 3. Timer (Notes par 3 sec) - Vibrate aur Prompt
         addLongPress(secretTimer, () => {
             let t = prompt("Timer (sec):", magicDelay);
             if (t !== null && t.trim() !== "") {
@@ -179,16 +178,41 @@ try {
             }
         });
 
-        // Backspace Auto-Trigger
+        // 1. BACKSPACE TRIGGER (Darshak mitaye)
         noteBox.addEventListener("input", () => {
             let currentText = noteBox.value;
-            
             if (currentText === "" && lastText.length > 0) {
                 triggerMagic(lastText); 
                 lastText = ""; 
-            } 
-            else if (currentText.trim().length > 0) {
-                lastText = currentText.trim();
+                prevLength = 0;
+            } else {
+                if (currentText.length > prevLength) {
+                    lastText = currentText.trim();
+                }
+                prevLength = currentText.length;
+            }
+        });
+
+        // 2. ENTER KEY TRIGGER (Darshak Enter dabaye)
+        noteBox.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+                e.preventDefault(); 
+                if (noteBox.value.trim().length > 0) {
+                    triggerMagic(noteBox.value.trim());
+                    noteBox.value = ""; 
+                    lastText = "";
+                    prevLength = 0;
+                }
+            }
+        });
+
+        // 3. SAVE BUTTON TRIGGER (Magician click kare)
+        secretGoogle.addEventListener("click", () => {
+            if (noteBox.value.trim().length > 0) {
+                triggerMagic(noteBox.value.trim());
+                noteBox.value = ""; 
+                lastText = "";
+                prevLength = 0;
             }
         });
 
