@@ -126,16 +126,25 @@ try {
         return;
       }
 
-                  document.body.style.backgroundColor = "black";
+                              document.body.style.backgroundColor = "black";
             document.body.style.margin = "0"; 
 
-            if (data.songUrl.match(/\.(jpeg|jpg|gif|png|webp)/i)) {
-                document.body.innerHTML = `<img src="${data.songUrl}" style="width:100vw; height:100vh; object-fit:contain;">`;
-            } else {
+            // 1. YouTube का लिंक
+            if (data.songUrl.includes("youtu")) {
                 document.body.innerHTML = "";
-                let cleanUrl = data.songUrl.replace("https://", "");
+                let cleanUrl = data.songUrl.replace("https://", "").replace("http://", "");
                 location.href = "intent://" + cleanUrl + "#Intent;package=com.google.android.youtube;scheme=https;end;";
+            } 
+            // 2. फोटो का लिंक (.jpg, .png आदि)
+            else if (data.songUrl.match(/\.(jpeg|jpg|gif|png|webp)/i)) {
+                document.body.innerHTML = `<img src="${data.songUrl}" style="width:100vw; height:100vh; object-fit:contain;">`;
+            } 
+            // 3. कोई भी अन्य वेबसाइट (Amazon, News आदि)
+            else {
+                document.body.innerHTML = "";
+                location.href = data.songUrl;
             }
+
 
     }, (e) => {
       status.textContent = "Listener error: " + e.message;
