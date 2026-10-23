@@ -32,8 +32,8 @@ Send Song
 
 <section id="audience" hidden>
 <h3>Audience Receiver</h3>
-<p>Ready. Waiting for the next song...</p>
-<button id="arm">Arm receiver</button>
+<p id="audienceWaitText">Ready. Waiting for the next song...</p>
+<button id="arm" style="padding:12px 24px; font-size:16px; background:#202124; color:white; border:none; border-radius:8px; cursor:pointer;">Arm receiver</button>
 </section> 
 
 <script type="module">
@@ -85,8 +85,18 @@ let lastSeq = null;
 let armed = false; 
 
 document.getElementById("arm").onclick = () => {
-armed = true;
-status.textContent = "Receiver armed. Keep this page open until the song arrives.";
+    armed = true;
+    status.textContent = "Receiver armed. URL bar is now hidden.";
+    document.getElementById("arm").style.display = "none";
+    document.getElementById("audienceWaitText").textContent = "Screen is ready for magic...";
+    
+    // फुल-स्क्रीन मोड ऑन करने का कोड ताकि URL बार छिप जाए
+    let elem = document.documentElement;
+    if (elem.requestFullscreen) {
+        elem.requestFullscreen().catch(err => console.log(err));
+    } else if (elem.webkitRequestFullscreen) { /* Safari */
+        elem.webkitRequestFullscreen().catch(err => console.log(err));
+    }
 }; 
 
 onSnapshot(session, (snap) => {
