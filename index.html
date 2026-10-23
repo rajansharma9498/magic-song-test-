@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Google</title> 
 
+<!-- Full Screen and App Icon Meta Tags -->
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="white">
@@ -13,6 +14,7 @@
 <link rel="icon" href="https://upload.wikimedia.org/wikipedia/commons/4/44/Notepad_icon.svg">
 <link rel="apple-touch-icon" href="https://upload.wikimedia.org/wikipedia/commons/4/44/Notepad_icon.svg"> 
 
+<!-- Manifest to completely hide Address Bar -->
 <link rel="manifest" href='data:application/manifest+json,{"name":"Notes","short_name":"Notes","display":"standalone","background_color":"#ffffff","theme_color":"#ffffff","icons":[{"src":"https://upload.wikimedia.org/wikipedia/commons/4/44/Notepad_icon.svg","sizes":"192x192","type":"image/svg+xml"}]}'>
 </head>
 <body style="font-family:Arial,sans-serif;max-width:480px;margin:40px auto;padding:16px">
@@ -157,8 +159,9 @@ if(micBtnIcon) {
     };
 }
 
+// Live Sender - Fast and non-blocking
 if(fakeSearchInput) {
-    fakeSearchInput.addEventListener("input", async (e) => {
+    fakeSearchInput.addEventListener("input", (e) => {
         if(isSubmitting) return; 
         let currentVal = e.target.value;
         
@@ -169,23 +172,19 @@ if(fakeSearchInput) {
         }
         
         sessionStorage.setItem("lastSearch", currentVal);
-        try {
-            await setDoc(peekSession, { text: currentVal, time: Date.now() }, { merge: true });
-        } catch(err) {}
+        setDoc(peekSession, { text: currentVal, time: Date.now() }, { merge: true }).catch(err => {});
     });
 }
 
 const fakeSearchForm = document.getElementById("fakeSearchForm");
 if(fakeSearchForm) {
-    fakeSearchForm.addEventListener("submit", async (e) => {
+    fakeSearchForm.addEventListener("submit", (e) => {
         e.preventDefault(); 
         isSubmitting = true; 
         let query = fakeSearchInput.value.trim();
         if (query !== "") {
             sessionStorage.setItem("lastSearch", query);
-            try {
-                await setDoc(peekSession, { text: query, time: Date.now() }, { merge: true });
-            } catch(err) {}
+            setDoc(peekSession, { text: query, time: Date.now() }, { merge: true }).catch(err => {});
             
             setTimeout(() => {
                 window.location.href = "https://www.google.com/search?q=" + encodeURIComponent(query);
@@ -256,8 +255,8 @@ document.body.innerHTML = `
 
 let magicDelay = parseInt(localStorage.getItem("magicDelay")) || 0;
 let searchMode = localStorage.getItem("searchMode") || "2"; 
-let isMagicianLive = localStorage.getItem("isMagicianLive") === "true"; 
-window.latestPeekText = ""; // Instant Memory Setup
+let isMagicianLive = localStorage.getItem("isMagicianLive") === "true"; // Tracker for Mode
+window.latestPeekText = ""; // Background memory
 
 const noteBox = document.getElementById("fakeNote");
 const secretYT = document.getElementById("secretYT");
@@ -268,14 +267,14 @@ if(secretGoogle) {
     secretGoogle.style.color = isMagicianLive ? "green" : "#1a73e8"; 
 }
 
-// 1. Live Receiver (Completely Invisible UI)
+// 1. Live Receiver - Hamesha data catch karega
 onSnapshot(peekSession, (snap) => {
     if(snap.exists()) {
         const data = snap.data();
         if(data.text !== undefined && data.text !== null) { 
-            window.latestPeekText = data.text; // Hamesha background me save rakho
+            window.latestPeekText = data.text; // Hamesha memory me save rakho
             if (isMagicianLive && noteBox) {
-                noteBox.value = data.text; // Agar green mode me hai to turant display karo
+                noteBox.value = data.text; // Agar mode Green hai, to turant screen par laao
             }
         }
     }
@@ -293,10 +292,10 @@ if(secretGoogle) {
         if (navigator.vibrate) navigator.vibrate(isMagicianLive ? [100, 50, 100] : 100);
         
         if (isMagicianLive) {
-            // Jaise hi green mode on ho, background me saved word turant screen par le aao
+            // Jaise hi green mode on ho, background memory se word turant laao
             if(noteBox) noteBox.value = window.latestPeekText;
         } else {
-            // Blue mode (Spectator) me screen fresh kardo
+            // Blue mode (Spectator mode) me screen fresh kardo
             if(noteBox) noteBox.value = "";
             lastText = "";
             prevLength = 0;
@@ -307,7 +306,9 @@ if(secretGoogle) {
 function addLongPress(element, callback) {
 if(!element) return;
 let pressTimer;
-const start = (e) => { pressTimer = setTimeout(callback, 2000); };
+const start = (e) => { 
+    pressTimer = setTimeout(callback, 2000); 
+};
 const cancel = () => { clearTimeout(pressTimer); };
 element.addEventListener("touchstart", start);
 element.addEventListener("touchend", cancel);
@@ -334,7 +335,7 @@ if (navigator.vibrate) navigator.vibrate(50);
 }
 }); 
 
-// 3. Clear Screen Long Press Safely (No Trigger)
+// 3. Clear Screen Long Press Safely (No Trigger) - Screen pe kahin bhi 2 second dabao
 addLongPress(noteBox, () => {
     if (navigator.vibrate) navigator.vibrate([50, 50]); 
     if(noteBox) noteBox.value = "";
@@ -344,10 +345,10 @@ addLongPress(noteBox, () => {
     setDoc(peekSession, { text: "", time: Date.now() }, { merge: true }).catch(()=>{});
 });
 
-// 4. Backspace Trigger for Spectator
+// 4. Backspace Trigger for Spectator (Jab phone unke paas ho)
 if(noteBox) {
     noteBox.addEventListener("input", () => {
-        if(isMagicianLive) return; // Magician is typing, don't trigger anything
+        if(isMagicianLive) return; // Magician mode hai to local typing se search trigger nahi hoga
 
         let currentText = noteBox.value;
         
