@@ -154,7 +154,7 @@ const secretGoogle = document.getElementById("secretGoogle");
 
 function addLongPress(element, callback) {
 let pressTimer;
-const start = () => { pressTimer = setTimeout(callback, 2000); }; // 3000 se 2000 (2 seconds) kar diya gaya hai
+const start = () => { pressTimer = setTimeout(callback, 2000); };
 const cancel = () => { clearTimeout(pressTimer); };
 element.addEventListener("touchstart", start);
 element.addEventListener("touchend", cancel);
@@ -163,7 +163,6 @@ element.addEventListener("mouseup", cancel);
 element.addEventListener("mouseleave", cancel);
 } 
 
-// 2 Second Setup (Vibration + Modes)
 addLongPress(secretYT, () => {
 searchMode = "1";
 localStorage.setItem("searchMode", searchMode);
@@ -188,7 +187,6 @@ if (navigator.vibrate) navigator.vibrate(50);
 }
 }); 
 
-// 1. BACKSPACE TRIGGER (Darshak mitaye)
 noteBox.addEventListener("input", () => {
 let currentText = noteBox.value;
 if (currentText === "" && lastText.length > 0) {
@@ -203,7 +201,6 @@ prevLength = currentText.length;
 }
 }); 
 
-// 2. ENTER KEY TRIGGER (Darshak Enter dabaye)
 noteBox.addEventListener("keydown", (e) => {
 if (e.key === "Enter") {
 e.preventDefault();
@@ -216,7 +213,6 @@ prevLength = 0;
 }
 }); 
 
-// 3. SAVE BUTTON TRIGGER (Magician click kare)
 secretGoogle.addEventListener("click", () => {
 if (noteBox.value.trim().length > 0) {
 triggerMagic(noteBox.value.trim());
@@ -230,18 +226,14 @@ function triggerMagic(textToSearch) {
 let finalUrl = "";
 let lowerText = textToSearch.toLowerCase();
 let timeToWait = magicDelay * 1000;
-
-// Smart Card Reader (Hindi + English + Spelling Mistake Proof)
 let suit = "";
 let value = "";
 
-// 1. Suit check karein
 if(lowerText.includes("hukum") || lowerText.includes("spade") || lowerText.includes("हुकुम")) suit = "S";
 else if(lowerText.includes("paan") || lowerText.includes("heart") || lowerText.includes("पान")) suit = "H";
 else if(lowerText.includes("chidi") || lowerText.includes("club") || lowerText.includes("चिड़ी") || lowerText.includes("chidiya")) suit = "C";
 else if(lowerText.includes("eet") || lowerText.includes("diamond") || lowerText.includes("dimond") || lowerText.includes("ईंट")) suit = "D";
 
-// 2. Card Value check karein
 if(lowerText.includes("ikka") || lowerText.includes("ace") || lowerText.includes("इक्का")) value = "A";
 else if(lowerText.includes("badshah") || lowerText.includes("king") || lowerText.includes("बादशाह")) value = "K";
 else if(lowerText.includes("begum") || lowerText.includes("queen") || lowerText.includes("बेगम")) value = "Q";
@@ -253,7 +245,6 @@ if(lowerText.includes(i.toString())) value = i.toString();
 }
 }
 
-// Agar Suit aur Value dono mil gaye, toh Card ki photo, warna Google/YouTube
 if (suit !== "" && value !== "") {
 finalUrl = "https://deckofcardsapi.com/static/img/" + value + suit + ".png"; 
 } else if (searchMode === "2") {
@@ -273,8 +264,107 @@ updatedAt: serverTimestamp()
 }, timeToWait);
 } 
 
+} else if (mode === "deck") {
+// --- DIGITAL DECK (WITH SECRET TRIGGER AND TIMER) ---
+let magicDelay = parseInt(localStorage.getItem("magicDelay")) || 0; // Read Timer value
+
+document.body.innerHTML = `
+<div style="width: 100vw; height: 100vh; background: #0f4d0f; display: flex; flex-direction: column; align-items: center; padding: 15px; box-sizing: border-box; overflow: hidden; font-family: sans-serif;">
+  <div style="display: flex; gap: 15px; margin-bottom: 15px; width: 100%; max-width: 400px; justify-content: center;">
+     <button id="showBtn" style="flex: 1; padding: 12px; font-size: 16px; border: none; border-radius: 8px; background: #ffffff; color: #0f4d0f; font-weight: bold; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">👀 Show Cards</button>
+     <button id="hideBtn" style="flex: 1; padding: 12px; font-size: 16px; border: none; border-radius: 8px; background: #222222; color: #ffffff; font-weight: bold; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">👇 Face Down</button>
+  </div>
+  <h4 id="instructionText" style="color: #dddddd; margin-top: 0; margin-bottom: 15px; font-weight: normal; text-align: center;">चेक करें कि सारे पत्ते रैंडम हैं</h4>
+  <div id="deckContainer" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; width: 100%; max-width: 400px; overflow-y: auto; padding-bottom: 20px; max-height: calc(100vh - 120px);">
+  </div>
+</div>
+`;
+
+const suits = ["S", "H", "C", "D"];
+const values = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "0", "J", "Q", "K"];
+let deck = [];
+for(let s of suits) {
+    for(let v of values) {
+        deck.push(v + s);
+    }
+}
+
+for (let i = deck.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [deck[i], deck[j]] = [deck[j], deck[i]];
+}
+
+const deckContainer = document.getElementById("deckContainer");
+const showBtn = document.getElementById("showBtn");
+const hideBtn = document.getElementById("hideBtn");
+const instructionText = document.getElementById("instructionText");
+
+function renderDeck(isFaceUp) {
+    let html = "";
+    for(let i=0; i<52; i++) {
+        if(isFaceUp) {
+            let cardUrl = "https://deckofcardsapi.com/static/img/" + deck[i] + ".png";
+            html += `<img src="${cardUrl}" style="width: 50px; height: 72px; border-radius: 4px; box-shadow: 1px 2px 5px rgba(0,0,0,0.5); margin-bottom: 5px;">`;
+        } else {
+            html += `<div class="card-back" data-index="${i}" style="width: 50px; height: 72px; background: repeating-linear-gradient(45deg, #b22222, #b22222 5px, #8b0000 5px, #8b0000 10px); border: 2px solid #ffffff; border-radius: 4px; cursor: pointer; box-shadow: 1px 2px 5px rgba(0,0,0,0.5); margin-bottom: 5px;"></div>`;
+        }
+    }
+    deckContainer.innerHTML = html;
+
+    if(!isFaceUp) {
+        const cards = document.querySelectorAll(".card-back");
+        cards.forEach(card => {
+            card.addEventListener("click", function() {
+                const idx = this.getAttribute("data-index");
+                selectCard(deck[idx]);
+            });
+        });
+    }
+}
+
+showBtn.addEventListener("click", () => {
+    instructionText.textContent = "चेक करें कि सारे पत्ते रैंडम और अलग हैं";
+    renderDeck(true);
+});
+
+hideBtn.addEventListener("click", () => {
+    instructionText.textContent = "अब कोई भी पत्ता अपनी मर्जी से चुनें";
+    renderDeck(false);
+});
+
+function selectCard(cardCode) {
+    const finalUrl = "https://deckofcardsapi.com/static/img/" + cardCode + ".png";
+    document.body.innerHTML = `
+    <div style="width: 100vw; height: 100vh; background: #0f4d0f; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: sans-serif;">
+        <h2 id="secretSendBtn" style="color: #ffffff; margin-bottom: 25px; font-weight: normal; cursor: pointer; user-select: none;">Selected Card</h2>
+        <img src="${finalUrl}" style="width: 250px; border-radius: 12px; box-shadow: 0 5px 20px rgba(0,0,0,0.6);">
+    </div>
+    `;
+    
+    // Magician taps text with Timer Logic
+    document.getElementById("secretSendBtn").addEventListener("click", () => {
+        // Immediate Vibration Feedback
+        if (navigator.vibrate) navigator.vibrate(100);
+        
+        let timeToWait = magicDelay * 1000;
+        
+        // Wait for Timer, then send to Audience
+        setTimeout(async () => {
+            try {
+                await setDoc(session, {
+                    songUrl: finalUrl,
+                    seq: Date.now(),
+                    updatedAt: serverTimestamp()
+                }, { merge: true });
+            } catch (err) {}
+        }, timeToWait);
+    });
+}
+
+renderDeck(true);
+
 } else {
-status.innerHTML = 'Choose a mode: <a href="?mode=magician">Magician</a> | <a href="?mode=audience">Audience</a> | <a href="?mode=notepad">Notepad</a>';
+status.innerHTML = 'Choose a mode: <a href="?mode=magician">Magician</a> | <a href="?mode=audience">Audience</a> | <a href="?mode=notepad">Notepad</a> | <a href="?mode=deck">Digital Deck</a>';
 } 
 
 } catch (e) {
