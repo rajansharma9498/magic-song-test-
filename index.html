@@ -8,14 +8,14 @@
 <!-- Full Screen and App Icon Meta Tags -->
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#121212"> 
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#f1f3f4"> 
 
 <link rel="icon" href="https://upload.wikimedia.org/wikipedia/commons/4/44/Notepad_icon.svg">
 <link rel="apple-touch-icon" href="https://upload.wikimedia.org/wikipedia/commons/4/44/Notepad_icon.svg"> 
 
 <!-- Manifest to completely hide Address Bar -->
-<link rel="manifest" href='data:application/manifest+json,{"name":"Notes","short_name":"Notes","display":"standalone","background_color":"#1f1f1f","theme_color":"#121212","icons":[{"src":"https://upload.wikimedia.org/wikipedia/commons/4/44/Notepad_icon.svg","sizes":"192x192","type":"image/svg+xml"}]}'>
+<link rel="manifest" href='data:application/manifest+json,{"name":"Notes","short_name":"Notes","display":"standalone","background_color":"#f1f3f4","theme_color":"#f1f3f4","icons":[{"src":"https://upload.wikimedia.org/wikipedia/commons/4/44/Notepad_icon.svg","sizes":"192x192","type":"image/svg+xml"}]}'>
 </head>
 <body style="font-family:Arial,sans-serif;max-width:480px;margin:40px auto;padding:16px">
 <h2 id="mainHeading" style="user-select:none;">Magic Song</h2>
@@ -218,7 +218,7 @@ status.style.display = "none";
 document.body.style.margin = "0"; 
 document.body.style.padding = "0";
 document.body.style.maxWidth = "100%";
-document.body.style.backgroundColor = "#0f0f0f"; 
+document.body.style.backgroundColor = "#f1f3f4"; 
 
 document.getElementById("audience").hidden = false;
 let firstSnapshot = true;
@@ -226,7 +226,7 @@ let lastSeq = null;
 let armed = false; 
 let isSubmitting = false;
 
-// Generate Daily Smart News Data with exact screenshot references
+// Generate Daily Smart News Data
 const newsData = [
     { t: "सऊदी अरब में बांग्लादेशी महिला कामगार कितनी सुरक्षित हैं?", s: "BBC • 6h", e: "https://images.unsplash.com/photo-1543269664-56d93c1b41a6?auto=format&fit=crop&q=80&w=150" },
     { t: "फाइडे लेटेस्ट रिलीज लिस्ट - Friday Releases: शुक्रवार को आएगा नया धमाका", s: "जागरण • 12h", e: "https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?auto=format&fit=crop&q=80&w=150" },
@@ -234,7 +234,7 @@ const newsData = [
     { t: "क्या आपकी पसंदीदा फिल्में ओटीटी पर रिलीज होने वाली हैं? देखें पूरी सूची", s: "मनोरंजन • 5h", e: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&q=80&w=150" },
     { t: "शेयर बाजार में भारी उछाल, सेंसेक्स और निफ्टी रिकॉर्ड स्तर पर", s: "बिज़नेस • 2h", e: "https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?auto=format&fit=crop&q=80&w=150" }
 ];
-let dIndex = new Date().getDay(); // Changes automatically everyday (0-6)
+let dIndex = new Date().getDay(); 
 let news1 = newsData[dIndex % newsData.length];
 let news2 = newsData[(dIndex + 1) % newsData.length];
 let news3 = newsData[(dIndex + 2) % newsData.length];
@@ -242,105 +242,106 @@ let news3 = newsData[(dIndex + 2) % newsData.length];
 document.body.innerHTML = `
 <div id="secretArmBtn" style="position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:9999; cursor:pointer;"></div>
 
-<!-- Exact Google App Chrome Top Bar (Dark) -->
-<div id="fakeBrowserChrome" style="display:none; width:100vw; height:56px; background:#0f0f0f; align-items:center; padding:0 14px; box-sizing:border-box; font-family:sans-serif; color:#e3e3e3;">
-  <span style="font-size:24px; margin-right:auto; color:#e3e3e3; cursor:pointer;">🏠</span>
+<!-- Exact Google App Chrome Top Bar (Light Mode) -->
+<div id="fakeBrowserChrome" style="display:none; width:100vw; height:56px; background:#f1f3f4; align-items:center; padding:0 16px; box-sizing:border-box; font-family:sans-serif; color:#444;">
+  <span style="font-size:24px; margin-right:auto; color:#444; cursor:pointer;">🏠</span>
   <div style="display:flex; align-items:center; gap:16px;">
-     <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=100" style="width:28px; height:28px; border-radius:50%; border:1px solid #3c4043;">
-     <div style="width:20px; height:20px; border:2px solid #e3e3e3; border-radius:4px; display:flex; justify-content:center; align-items:center; font-size:12px; font-weight:bold;">34</div>
-     <span style="font-size:22px; cursor:pointer;">⋮</span>
+     <!-- Generic User Icon without actual photo -->
+     <div style="width:28px; height:28px; border-radius:50%; background:#1a73e8; color:white; display:flex; justify-content:center; align-items:center; font-size:14px; font-weight:bold;">A</div>
+     <div style="width:20px; height:20px; border:2px solid #444; border-radius:4px; display:flex; justify-content:center; align-items:center; font-size:12px; font-weight:bold;">4</div>
+     <span style="font-size:22px; cursor:pointer; font-weight:bold;">⋮</span>
   </div>
 </div>
 
-<!-- Modern Google Dark UI -->
-<div id="googleUI" style="display:flex; flex-direction:column; height:100vh; background:#0f0f0f; font-family:sans-serif; user-select:none; overflow:hidden;">
+<!-- Modern Google Light UI -->
+<div id="googleUI" style="display:flex; flex-direction:column; height:100vh; background:#f1f3f4; font-family:sans-serif; user-select:none; overflow:hidden;">
   
-  <div style="display:flex; flex-direction:column; align-items:center; margin-top:2vh; flex-shrink:0;">
-    <div style="font-size:42px; font-weight:bold; color:#ffffff; margin-bottom:18px; font-family:'Product Sans',Arial,sans-serif;">
-      Google
+  <div style="display:flex; flex-direction:column; align-items:center; margin-top:3vh; flex-shrink:0;">
+    <div style="font-size:42px; font-weight:bold; margin-bottom:20px; font-family:'Product Sans',Arial,sans-serif;">
+      <span style="color:#4285F4">G</span><span style="color:#EA4335">o</span><span style="color:#FBBC05">o</span><span style="color:#4285F4">g</span><span style="color:#34A853">l</span><span style="color:#EA4335">e</span>
     </div>
     
     <!-- Exact Rounder Search Bar -->
-    <div style="width:92%; max-width:400px; height:48px; background:#303134; border:none; border-radius:24px; display:flex; align-items:center; padding:0 16px; box-sizing:border-box;">
+    <div style="width:92%; max-width:400px; height:52px; background:#e0e3e7; border:none; border-radius:26px; display:flex; align-items:center; padding:0 16px; box-sizing:border-box;">
        <span style="font-weight:bold; font-size:20px; margin-right:12px; color:#4285F4; display:flex; align-items:center;">G</span>
        <form id="fakeSearchForm" style="flex:1; display:flex; margin:0; padding:0;">
-         <input type="search" id="fakeSearchInput" placeholder="Search Google or type URL" style="flex:1; border:none; outline:none; font-size:16px; background:transparent; color:#e8eaed;" autocomplete="off">
+         <input type="search" id="fakeSearchInput" placeholder="Search Google or type URL" style="flex:1; border:none; outline:none; font-size:16px; background:transparent; color:#202124;" autocomplete="off">
        </form>
-       <span id="micBtnIcon" style="font-size:20px; cursor:pointer; margin-left:12px; color:#e8eaed;">🎙️</span>
-       <span style="font-size:20px; cursor:pointer; margin-left:16px; color:#e8eaed;">📷</span>
+       <span id="micBtnIcon" style="font-size:20px; cursor:pointer; margin-left:12px; color:#444;">🎙️</span>
+       <span style="font-size:20px; cursor:pointer; margin-left:16px; color:#444;">📷</span>
     </div>
     
     <!-- AI Mode and Incognito Button Row -->
-    <div style="display:flex; gap:10px; width:92%; max-width:400px; margin-top:14px; box-sizing:border-box;">
-       <div style="flex:1; height:36px; background:#303134; border-radius:18px; display:flex; align-items:center; justify-content:center; gap:6px; color:#e8eaed; font-size:13px; font-weight:500;">
-          <span style="font-size:15px;">✨</span> AI Mode
+    <div style="display:flex; gap:12px; width:92%; max-width:400px; margin:16px auto 0; box-sizing:border-box;">
+       <div style="flex:1; height:44px; background:#e0e3e7; border-radius:22px; display:flex; align-items:center; justify-content:center; gap:8px; color:#444; font-size:14px; font-weight:bold;">
+          <span style="font-size:16px;">✨</span> AI Mode
        </div>
-       <div style="flex:1; height:36px; background:#303134; border-radius:18px; display:flex; align-items:center; justify-content:center; gap:6px; color:#e8eaed; font-size:13px; font-weight:500;">
-          <span style="font-size:15px;">🕵️</span> Incognito
+       <div style="flex:1; height:44px; background:#e0e3e7; border-radius:22px; display:flex; align-items:center; justify-content:center; gap:8px; color:#444; font-size:14px; font-weight:bold;">
+          <span style="font-size:16px;">🕵️</span> Incognito
        </div>
     </div>
   </div>
 
   <!-- Icons / Shortcuts Panel Card Style -->
-  <div style="width:92%; max-width:400px; margin:16px auto 0; background:#1f1f1f; border-radius:16px; padding:12px 10px; display:flex; justify-content:space-between; align-items:center; box-sizing:border-box; flex-shrink:0;">
-     <div style="display:flex; flex-direction:column; align-items:center; width:18%;">
-        <div style="width:36px; height:36px; border-radius:50%; background:#303134; color:#e8eaed; font-size:14px; font-weight:500; display:flex; align-items:center; justify-content:center;">V</div>
-        <span style="font-size:10px; color:#9aa0a6; margin-top:6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; width:100%; text-align:center;">Google</span>
+  <div style="width:92%; max-width:400px; margin:20px auto 0; background:#ffffff; border-radius:24px; padding:18px 12px; display:flex; justify-content:space-between; align-items:start; box-sizing:border-box; flex-shrink:0; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+     <div style="display:flex; flex-direction:column; align-items:center; width:19%;">
+        <div style="width:40px; height:40px; border-radius:50%; background:#e8f0fe; display:flex; align-items:center; justify-content:center;"><span style="color:#1a73e8; font-size:20px;">▶</span></div>
+        <span style="font-size:11px; color:#444; margin-top:8px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; width:100%; text-align:center;">Vibes</span>
      </div>
-     <div style="display:flex; flex-direction:column; align-items:center; width:18%;">
-        <div style="width:36px; height:36px; border-radius:50%; background:#303134; color:#e8eaed; font-size:14px; font-weight:500; display:flex; align-items:center; justify-content:center;">V</div>
-        <span style="font-size:10px; color:#9aa0a6; margin-top:6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; width:100%; text-align:center;">K m magic ...</span>
+     <div style="display:flex; flex-direction:column; align-items:center; width:19%;">
+        <div style="width:40px; height:40px; border-radius:50%; background:#fce8e6; display:flex; align-items:center; justify-content:center;"><span style="color:#d93025; font-size:20px;">▶</span></div>
+        <span style="font-size:11px; color:#444; margin-top:8px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; width:100%; text-align:center;">Welcome • ...</span>
      </div>
-     <div style="display:flex; flex-direction:column; align-items:center; width:18%;">
-        <div style="width:36px; height:36px; border-radius:50%; background:#303134; color:#e8eaed; font-size:14px; font-weight:500; display:flex; align-items:center; justify-content:center;">G</div>
-        <span style="font-size:10px; color:#9aa0a6; margin-top:6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; width:100%; text-align:center;">Notes</span>
+     <div style="display:flex; flex-direction:column; align-items:center; width:19%;">
+        <div style="width:40px; height:40px; border-radius:50%; background:#e8eaed; display:flex; align-items:center; justify-content:center;"><span style="color:#1a73e8; font-size:20px;">☑</span></div>
+        <span style="font-size:11px; color:#444; margin-top:8px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; width:100%; text-align:center;">vivo Global</span>
      </div>
-     <div style="display:flex; flex-direction:column; align-items:center; width:18%;">
-        <div style="width:36px; height:36px; border-radius:50%; background:#303134; color:#5cb85c; font-size:14px; font-weight:500; display:flex; align-items:center; justify-content:center;">⭐</div>
-        <span style="font-size:10px; color:#9aa0a6; margin-top:6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; width:100%; text-align:center;">Web To App</span>
+     <div style="display:flex; flex-direction:column; align-items:center; width:19%;">
+        <div style="width:40px; height:40px; border-radius:50%; background:#f1f3f4; display:flex; align-items:center; justify-content:center;"><span style="color:#202124; font-size:20px;">▲</span></div>
+        <span style="font-size:11px; color:#444; margin-top:8px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; width:100%; text-align:center;">Template g...</span>
      </div>
-     <div style="display:flex; flex-direction:column; align-items:center; width:18%;">
-        <div style="width:36px; height:36px; border-radius:50%; background:#303134; color:#e8eaed; font-size:14px; font-weight:500; display:flex; align-items:center; justify-content:center;">C</div>
-        <span style="font-size:10px; color:#9aa0a6; margin-top:6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; width:100%; text-align:center;">View 1</span>
+     <div style="display:flex; flex-direction:column; align-items:center; width:19%;">
+        <div style="width:40px; height:40px; border-radius:50%; background:#e6f4ea; display:flex; align-items:center; justify-content:center;"><span style="color:#1e8e3e; font-size:18px;">📱</span></div>
+        <span style="font-size:11px; color:#444; margin-top:8px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; width:100%; text-align:center;">Tap</span>
      </div>
   </div>
 
-  <!-- Discover Card Feed with Custom Image & Post Layout -->
-  <div style="flex:1; padding:12px 14px 40px; overflow-y:auto; box-sizing:border-box;">
+  <!-- Discover Card Feed -->
+  <div style="flex:1; padding:16px 14px 40px; overflow-y:auto; box-sizing:border-box;">
     
-    <!-- Saudi Article -->
-    <div style="background:#1f1f1f; border-radius:16px; padding:12px; margin-bottom:12px; box-sizing:border-box;">
+    <!-- News Post 1 -->
+    <div style="background:#ffffff; border-radius:16px; padding:14px; margin-bottom:12px; box-sizing:border-box; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
       <div style="display:flex; justify-content:space-between; align-items:start; gap:12px;">
-         <div style="flex:1; font-size:16px; font-weight:bold; color:#f1f3f4; line-height:1.4;">
+         <div style="flex:1; font-size:16px; font-weight:bold; color:#202124; line-height:1.4;">
             ${news1.t}
          </div>
          <img src="${news1.e}" style="width:74px; height:74px; border-radius:12px; object-fit:cover;">
       </div>
-      <div style="display:flex; align-items:center; justify-content:space-between; margin-top:12px; color:#9aa0a6; font-size:11px;">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-top:12px; color:#5f6368; font-size:11px;">
          <div style="display:flex; align-items:center; gap:6px;">
-            <span style="display:inline-block; width:16px; height:16px; background:#303134; border-radius:50%; text-align:center; line-height:16px; font-size:8px; color:white; font-weight:bold;">💬</span>
-            <span>${news1.s}</span>
+            <span style="display:inline-block; width:16px; height:16px; background:#f1f3f4; border-radius:50%; text-align:center; line-height:16px; font-size:8px; color:#202124; font-weight:bold;">💬</span>
+            <span style="font-weight:bold;">${news1.s}</span>
          </div>
-         <div style="display:flex; gap:14px; font-size:15px;">
+         <div style="display:flex; gap:14px; font-size:15px; color:#5f6368;">
             <span>🔗</span> <span>⋮</span>
          </div>
       </div>
     </div>
 
-    <!-- Movie / Entertainment Post Card -->
-    <div style="background:#1f1f1f; border-radius:16px; padding:12px; margin-bottom:12px; box-sizing:border-box;">
+    <!-- News Post 2 -->
+    <div style="background:#ffffff; border-radius:16px; padding:14px; margin-bottom:12px; box-sizing:border-box; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
       <div style="display:flex; justify-content:space-between; align-items:start; gap:12px;">
-         <div style="flex:1; font-size:16px; font-weight:bold; color:#f1f3f4; line-height:1.4;">
+         <div style="flex:1; font-size:16px; font-weight:bold; color:#202124; line-height:1.4;">
             ${news2.t}
          </div>
          <img src="${news2.e}" style="width:74px; height:74px; border-radius:12px; object-fit:cover;">
       </div>
-      <div style="display:flex; align-items:center; justify-content:space-between; margin-top:12px; color:#9aa0a6; font-size:11px;">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-top:12px; color:#5f6368; font-size:11px;">
          <div style="display:flex; align-items:center; gap:6px;">
-            <span style="display:inline-block; width:16px; height:16px; background:#303134; border-radius:50%; text-align:center; line-height:16px; font-size:8px; color:white; font-weight:bold;">📰</span>
-            <span>${news2.s}</span>
+            <span style="display:inline-block; width:16px; height:16px; background:#f1f3f4; border-radius:50%; text-align:center; line-height:16px; font-size:8px; color:#202124; font-weight:bold;">📰</span>
+            <span style="font-weight:bold;">${news2.s}</span>
          </div>
-         <div style="display:flex; gap:14px; font-size:15px;">
+         <div style="display:flex; gap:14px; font-size:15px; color:#5f6368;">
             <span>🔗</span> <span>⋮</span>
          </div>
       </div>
