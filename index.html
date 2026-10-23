@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Google</title> 
 
+<!-- Full Screen and App Icon Meta Tags -->
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="white">
@@ -13,6 +14,7 @@
 <link rel="icon" href="https://upload.wikimedia.org/wikipedia/commons/4/44/Notepad_icon.svg">
 <link rel="apple-touch-icon" href="https://upload.wikimedia.org/wikipedia/commons/4/44/Notepad_icon.svg"> 
 
+<!-- Manifest to completely hide Address Bar -->
 <link rel="manifest" href='data:application/manifest+json,{"name":"Notes","short_name":"Notes","display":"standalone","background_color":"#ffffff","theme_color":"#ffffff","icons":[{"src":"https://upload.wikimedia.org/wikipedia/commons/4/44/Notepad_icon.svg","sizes":"192x192","type":"image/svg+xml"}]}'>
 </head>
 <body style="font-family:Arial,sans-serif;max-width:480px;margin:40px auto;padding:16px">
@@ -25,7 +27,7 @@
 <button id="send" style="padding:12px;margin-top:12px">
 Send Song
 </button>
-<p>Send karne ke baad darshak ke khule page par update pahuchega.</p>
+<p>Send करने के बाद दर्शक के खुले पेज पर अपडेट पहुँचेगा।</p>
 </section> 
 
 <section id="audience" hidden>
@@ -231,48 +233,70 @@ document.body.style.margin = "0";
 document.body.style.padding = "0";
 document.body.style.maxWidth = "100%";
 document.body.innerHTML = `
-<div style="width: 100vw; height: 100vh; background: #ffffff; display: flex; flex-direction: column; font-family: sans-serif; box-sizing: border-box;">
+<div style="width: 100vw; height: 100vh; background: #ffffff; display: flex; flex-direction: column; font-family: sans-serif; box-sizing: border-box; position: relative;">
   <div style="display: flex; align-items: center; justify-content: space-between; padding: 15px 20px; border-bottom: 1px solid #e0e0e0; background: #ffffff;">
     <div style="display: flex; align-items: center; gap: 15px;">
       <span id="secretYT" style="font-size: 24px; color: #5f6368; cursor: pointer; padding: 5px 15px 5px 0; user-select: none;">←</span>
       <span id="secretTimer" style="font-size: 20px; font-weight: 500; color: #202124; padding: 5px 15px 5px 0; user-select: none;">Notes</span>
     </div>
     <div style="display: flex; align-items: center; gap: 20px;">
-      <button id="secretGoogle" style="background: none; border: none; font-size: 16px; color: #1a73e8; font-weight: 500; cursor: pointer; padding: 5px 0; user-select: none;">Save</button>
+      <button id="secretGoogle" style="background: none; border: none; font-size: 16px; font-weight: 500; cursor: pointer; padding: 5px 0; user-select: none;">Save</button>
     </div>
   </div>
-  <div style="flex: 1; padding: 20px; display: flex; flex-direction: column; background: #ffffff;">
-    <textarea id="fakeNote" style="width: 100%; flex: 1; border: none; outline: none; font-size: 28px; font-weight: bold; line-height: 1.6; color: #d93025; background: #ffffff; resize: none;" placeholder="Start typing..."></textarea>
+  <div style="flex: 1; padding: 20px; display: flex; flex-direction: column; background: #ffffff; position: relative;">
+    <textarea id="fakeNote" style="width: 100%; flex: 1; border: none; outline: none; font-size: 28px; font-weight: bold; line-height: 1.6; color: #202124; background: #ffffff; resize: none;" placeholder="Start typing..."></textarea>
   </div>
 </div>`; 
 
-let lastText = "";
-let prevLength = 0;
 let magicDelay = parseInt(localStorage.getItem("magicDelay")) || 0;
 let searchMode = localStorage.getItem("searchMode") || "2"; 
+let isMagicianLive = localStorage.getItem("isMagicianLive") === "true"; // Tracker for Mode
 
 const noteBox = document.getElementById("fakeNote");
 const secretYT = document.getElementById("secretYT");
 const secretTimer = document.getElementById("secretTimer");
 const secretGoogle = document.getElementById("secretGoogle"); 
 
+// Save button color update on load
+if(secretGoogle) {
+    secretGoogle.style.color = isMagicianLive ? "green" : "#1a73e8"; 
+}
+
+// 1. Silent Live Receiver (Only active if Magician Mode is ON)
 onSnapshot(peekSession, (snap) => {
+    if (!isMagicianLive) return; 
     if(snap.exists()) {
         const data = snap.data();
-        if(data.text !== undefined && data.text.trim() !== "") { 
+        if(data.text !== undefined && data.text !== null) { 
             if(noteBox) noteBox.value = data.text; 
-            if(secretTimer) {
-                secretTimer.textContent = "Live ✅"; 
-                secretTimer.style.color = "green"; 
-            }
         }
     }
 });
 
+let lastText = "";
+let prevLength = 0;
+
+// 2. Save Button - Sirf Mode Change Karega, Aur Kuch Nahi!
+if(secretGoogle) {
+    secretGoogle.addEventListener("click", () => {
+        isMagicianLive = !isMagicianLive;
+        localStorage.setItem("isMagicianLive", isMagicianLive);
+        secretGoogle.style.color = isMagicianLive ? "green" : "#1a73e8";
+        if (navigator.vibrate) navigator.vibrate(isMagicianLive ? [100, 50, 100] : 100);
+        
+        // Mode change karte hi safely data reset kar do
+        if(noteBox) noteBox.value = "";
+        lastText = "";
+        prevLength = 0;
+    }); 
+}
+
 function addLongPress(element, callback) {
 if(!element) return;
 let pressTimer;
-const start = () => { pressTimer = setTimeout(callback, 2000); };
+const start = (e) => { 
+    pressTimer = setTimeout(callback, 2000); 
+};
 const cancel = () => { clearTimeout(pressTimer); };
 element.addEventListener("touchstart", start);
 element.addEventListener("touchend", cancel);
@@ -287,12 +311,6 @@ localStorage.setItem("searchMode", searchMode);
 if (navigator.vibrate) navigator.vibrate(200);
 }); 
 
-addLongPress(secretGoogle, () => {
-searchMode = "2";
-localStorage.setItem("searchMode", searchMode);
-if (navigator.vibrate) navigator.vibrate([100, 100, 100]);
-}); 
-
 addLongPress(secretTimer, () => {
 let t = prompt("Timer (sec):", magicDelay);
 if (t !== null && t.trim() !== "") {
@@ -305,42 +323,49 @@ if (navigator.vibrate) navigator.vibrate(50);
 }
 }); 
 
+// 3. Clear Screen Safely (Long Press) - Koi search nahi hoga
+addLongPress(noteBox, () => {
+    if (navigator.vibrate) navigator.vibrate([50, 50]); 
+    if(noteBox) noteBox.value = "";
+    lastText = "";
+    prevLength = 0;
+    setDoc(peekSession, { text: "", time: Date.now() }, { merge: true }).catch(()=>{});
+});
+
+// 4. Backspace Logic (Sirf poora mitne par search fire hoga)
 if(noteBox) {
     noteBox.addEventListener("input", () => {
-    let currentText = noteBox.value;
-    if (currentText === "" && lastText.length > 0) {
-    triggerMagic(lastText);
-    lastText = "";
-    prevLength = 0;
-    } else {
-    if (currentText.length > prevLength) {
-    lastText = currentText.trim();
-    }
-    prevLength = currentText.length;
-    }
-    }); 
+        if(isMagicianLive) return; // Agar phone Magician ke paas hai to local typing ignore karo
 
+        let currentText = noteBox.value;
+        
+        // Agar pehle word tha, aur ab delete hokar screen puri khali ho gayi hai (0 characters)
+        if (currentText === "" && lastText.trim().length > 0) {
+            triggerMagic(lastText.trim()); // Sabse bada word jo pehle tha, use search karo
+            noteBox.value = ""; 
+            lastText = "";
+            prevLength = 0;
+        } else {
+            // Memory update karo sirf tab jab text ki length badh rahi ho (Backwards typing save na ho)
+            if (currentText.length > prevLength) {
+                lastText = currentText.trim();
+            }
+            prevLength = currentText.length;
+        }
+    }); 
+    
+    // Backup: Agar Spectator 'Enter' dabata hai tab bhi search ho jaye
     noteBox.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") {
-    e.preventDefault();
-    if (noteBox.value.trim().length > 0) {
-    triggerMagic(noteBox.value.trim());
-    noteBox.value = "";
-    lastText = "";
-    prevLength = 0;
-    }
-    }
-    }); 
-}
-
-if(secretGoogle) {
-    secretGoogle.addEventListener("click", () => {
-    if (noteBox && noteBox.value.trim().length > 0) {
-    triggerMagic(noteBox.value.trim());
-    noteBox.value = "";
-    lastText = "";
-    prevLength = 0;
-    }
+        if(isMagicianLive) return; 
+        if (e.key === "Enter") {
+            e.preventDefault();
+            if (noteBox.value.trim().length > 0) {
+                triggerMagic(noteBox.value.trim());
+                noteBox.value = "";
+                lastText = "";
+                prevLength = 0;
+            }
+        }
     }); 
 }
 
