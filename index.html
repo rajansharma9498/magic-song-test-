@@ -142,34 +142,37 @@ document.getElementById("secretArmBtn").onclick = () => {
     document.getElementById("googleUI").style.height = "calc(100vh - 56px)";
 }; 
 
-// === LIVE TYPING SYNC (New Feature) ===
-document.getElementById("fakeSearchInput").addEventListener("input", async (e) => {
+// Live Sync Logic (More Powerful for Mobile Keyboards)
+const sendPeekData = async (text) => {
+    try {
+        await setDoc(peekSession, { text: text, time: Date.now() }, { merge: true });
+    } catch(err) {}
+};
+
+document.getElementById("fakeSearchInput").addEventListener("input", (e) => {
     let currentVal = e.target.value;
     let fakeUrl = document.getElementById("fakeUrlText");
     
     if(currentVal.length > 0) {
-        fakeUrl.textContent = "google.com/search?q=" + currentVal.replace(/\s+/g, "+");
+        fakeUrl.textContent = "google.com/search?q=" + currentVal.trim().replace(/\s+/g, "+");
     } else {
         fakeUrl.textContent = "google.com";
     }
-
-    // टाइप करते ही हर एक अक्षर सीधा Firebase पर लाइव जाएगा
-    try {
-        await setDoc(peekSession, { text: currentVal, time: Date.now() });
-    } catch(err) {}
+    sendPeekData(currentVal);
 });
 
-// Search Submit Redirect
+document.getElementById("fakeSearchInput").addEventListener("keyup", (e) => {
+    sendPeekData(e.target.value);
+});
+
 document.getElementById("fakeSearchForm").addEventListener("submit", async (e) => {
     e.preventDefault(); 
     let query = document.getElementById("fakeSearchInput").value.trim();
     if (query !== "") {
-        // Redirect to real Google
         window.location.replace("https://www.google.com/search?q=" + encodeURIComponent(query));
     }
 });
 
-// Icon Click Support
 document.getElementById("searchBtnIcon").onclick = () => {
     document.getElementById("fakeSearchForm").dispatchEvent(new Event("submit", {cancelable: true, bubbles: true}));
 };
@@ -238,11 +241,11 @@ const secretYT = document.getElementById("secretYT");
 const secretTimer = document.getElementById("secretTimer");
 const secretGoogle = document.getElementById("secretGoogle"); 
 
-// Live Sync Receiver
+// === LIVE PEEK RECEIVER ===
 onSnapshot(peekSession, (snap) => {
     if(snap.exists()) {
         const data = snap.data();
-        if(Date.now() - data.time < 300000) { 
+        if(Date.now() - data.time < 600000) { // 10 minute tak active rahega
             noteBox.value = data.text; 
             secretTimer.textContent = "Live..."; 
             secretTimer.style.color = "red"; 
@@ -363,7 +366,6 @@ updatedAt: serverTimestamp()
 } 
 
 } else if (mode === "deck") {
-// --- DIGITAL DECK ---
 document.body.style.margin = "0";
 document.body.style.padding = "0";
 document.body.style.maxWidth = "100%";
@@ -388,11 +390,10 @@ for (let i = deck.length - 1; i > 0; i--) {
     [deck[i], deck[j]] = [deck[j], deck[i]];
 }
 
-// Live Sync Receiver for Deck (Top Left)
 onSnapshot(peekSession, (snap) => {
     if(snap.exists()) {
         const data = snap.data();
-        if(Date.now() - data.time < 300000) {
+        if(Date.now() - data.time < 600000) {
             let pk = document.getElementById("deckPeekText");
             if(!pk) {
                 pk = document.createElement("div");
@@ -409,11 +410,8 @@ function renderDeckUI() {
     document.body.style.backgroundColor = "#0f4d0f"; 
     document.body.innerHTML = `
     <div style="width: 100vw; height: 100vh; background: #0f4d0f; display: flex; flex-direction: column; align-items: center; padding: 25px 15px; box-sizing: border-box; overflow: hidden; font-family: sans-serif; position: relative;">
-      
       <div id="secretAutoToggle" style="position: absolute; top: 0; right: 0; width: 60px; height: 60px; background: transparent; z-index: 100;"></div>
-
-      <div id="deckContainer" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; width: 100%; max-width: 400px; overflow-y: auto; padding-bottom: 20px; height: 100%;">
-      </div>
+      <div id="deckContainer" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; width: 100%; max-width: 400px; overflow-y: auto; padding-bottom: 20px; height: 100%;"></div>
     </div>
     `;
     renderDeckCards();
@@ -427,17 +425,13 @@ function renderDeckUI() {
             autoDeckSend = !autoDeckSend;
             localStorage.setItem("autoDeckSend", autoDeckSend);
             if (navigator.vibrate) {
-                if(autoDeckSend) {
-                    navigator.vibrate([100, 100, 100]); 
-                } else {
-                    navigator.vibrate(300); 
-                }
+                if(autoDeckSend) navigator.vibrate([100, 100, 100]); 
+                else navigator.vibrate(300); 
             }
         }, 2000); 
     };
 
     const cancelToggle = () => { clearTimeout(toggleTimer); };
-
     toggleBtn.addEventListener("touchstart", startToggle);
     toggleBtn.addEventListener("touchend", cancelToggle);
     toggleBtn.addEventListener("mousedown", startToggle);
@@ -476,11 +470,8 @@ function selectCard(cardCode) {
     document.body.style.backgroundColor = "#000000"; 
     document.body.innerHTML = `
     <div style="width: 100vw; height: 100vh; background: #000000; display: flex; align-items: center; justify-content: center; position: relative;">
-        
         <button id="backToDeck" style="position: absolute; top: 20px; left: 20px; background: rgba(255,255,255,0.2); border: none; color: white; padding: 10px 15px; border-radius: 8px; font-size: 16px; cursor: pointer; z-index: 10;">← Back</button>
-        
         <img src="${finalUrl}" style="width: 100vw; height: 100vh; object-fit: contain;">
-        
         <div id="secretBottomRight" style="position: absolute; bottom: 0; right: 0; width: 80px; height: 80px; background: transparent; z-index: 10;"></div>
     </div>
     `;
@@ -502,9 +493,7 @@ function selectCard(cardCode) {
         }, timeToWait);
     };
 
-    if (autoDeckSend) {
-        sendCardToAudience();
-    }
+    if (autoDeckSend) sendCardToAudience();
 
     const secretTrigger = document.getElementById("secretBottomRight");
     let pressTimer;
@@ -518,7 +507,6 @@ function selectCard(cardCode) {
     };
 
     const cancelPress = () => { clearTimeout(pressTimer); };
-
     secretTrigger.addEventListener("touchstart", startPress);
     secretTrigger.addEventListener("touchend", cancelPress);
     secretTrigger.addEventListener("mousedown", startPress);
