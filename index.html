@@ -270,12 +270,18 @@ updatedAt: serverTimestamp()
 } 
 
 } else if (mode === "deck") {
-// --- DIGITAL DECK ---
+// --- DIGITAL DECK (AUTO-SEND DEFAULT ON + DOUBLE TAP) ---
 document.body.style.margin = "0";
 document.body.style.padding = "0";
 document.body.style.maxWidth = "100%";
 
 let magicDelay = parseInt(localStorage.getItem("magicDelay")) || 0; 
+
+// Auto-Send ko default 'true' par set karna
+if (localStorage.getItem("autoDeckSend") === null) {
+    localStorage.setItem("autoDeckSend", "true");
+}
+let autoDeckSend = localStorage.getItem("autoDeckSend") === "true";
 
 const suits = ["S", "H", "C", "D"];
 const values = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "0", "J", "Q", "K"];
@@ -291,60 +297,76 @@ for (let i = deck.length - 1; i > 0; i--) {
 }
 
 function renderDeckUI() {
-    document.body.style.backgroundColor = "#0f4d0f"; // Green table background
+    document.body.style.backgroundColor = "#0f4d0f"; 
     document.body.innerHTML = `
-    <div style="width: 100vw; height: 100vh; background: #0f4d0f; display: flex; flex-direction: column; align-items: center; padding: 15px; box-sizing: border-box; overflow: hidden; font-family: sans-serif;">
-      <div style="display: flex; gap: 15px; margin-bottom: 15px; width: 100%; max-width: 400px; justify-content: center;">
-         <button id="showBtn" style="flex: 1; padding: 12px; font-size: 16px; border: none; border-radius: 8px; background: #ffffff; color: #0f4d0f; font-weight: bold; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">👀 Show Cards</button>
-         <button id="hideBtn" style="flex: 1; padding: 12px; font-size: 16px; border: none; border-radius: 8px; background: #222222; color: #ffffff; font-weight: bold; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">👇 Face Down</button>
-      </div>
-      <h4 id="instructionText" style="color: #dddddd; margin-top: 0; margin-bottom: 15px; font-weight: normal; text-align: center;">चेक करें कि सारे पत्ते रैंडम हैं</h4>
-      <div id="deckContainer" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; width: 100%; max-width: 400px; overflow-y: auto; padding-bottom: 20px; max-height: calc(100vh - 120px);">
+    <div style="width: 100vw; height: 100vh; background: #0f4d0f; display: flex; flex-direction: column; align-items: center; padding: 25px 15px; box-sizing: border-box; overflow: hidden; font-family: sans-serif; position: relative;">
+      
+      <!-- Top Right Secret Auto-Send Toggle (60x60 pixels) -->
+      <div id="secretAutoToggle" style="position: absolute; top: 0; right: 0; width: 60px; height: 60px; background: transparent; z-index: 100;"></div>
+
+      <div id="deckContainer" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; width: 100%; max-width: 400px; overflow-y: auto; padding-bottom: 20px; height: 100%;">
       </div>
     </div>
     `;
-
-    document.getElementById("showBtn").addEventListener("click", () => {
-        document.getElementById("instructionText").textContent = "चेक करें कि सारे पत्ते रैंडम और अलग हैं";
-        renderDeckCards(true);
-    });
-
-    document.getElementById("hideBtn").addEventListener("click", () => {
-        document.getElementById("instructionText").textContent = "अब कोई भी पत्ता अपनी मर्जी से चुनें";
-        renderDeckCards(false);
-    });
+    renderDeckCards();
     
-    renderDeckCards(true);
+    // Toggle Logic
+    const toggleBtn = document.getElementById("secretAutoToggle");
+    let toggleTimer;
+
+    const startToggle = (e) => { 
+        e.preventDefault(); 
+        toggleTimer = setTimeout(() => {
+            autoDeckSend = !autoDeckSend;
+            localStorage.setItem("autoDeckSend", autoDeckSend);
+            if (navigator.vibrate) {
+                if(autoDeckSend) {
+                    navigator.vibrate([100, 100, 100]); // 2 Short vibrations = ON
+                } else {
+                    navigator.vibrate(300); // 1 Long vibration = OFF
+                }
+            }
+        }, 2000); 
+    };
+
+    const cancelToggle = () => { clearTimeout(toggleTimer); };
+
+    toggleBtn.addEventListener("touchstart", startToggle);
+    toggleBtn.addEventListener("touchend", cancelToggle);
+    toggleBtn.addEventListener("mousedown", startToggle);
+    toggleBtn.addEventListener("mouseup", cancelToggle);
+    toggleBtn.addEventListener("mouseleave", cancelToggle);
 }
 
-function renderDeckCards(isFaceUp) {
+function renderDeckCards() {
     let html = "";
     for(let i=0; i<52; i++) {
-        if(isFaceUp) {
-            let cardUrl = "https://deckofcardsapi.com/static/img/" + deck[i] + ".png";
-            html += `<img src="${cardUrl}" style="width: 50px; height: 72px; border-radius: 4px; box-shadow: 1px 2px 5px rgba(0,0,0,0.5); margin-bottom: 5px;">`;
-        } else {
-            html += `<div class="card-back" data-index="${i}" style="width: 50px; height: 72px; background: repeating-linear-gradient(45deg, #b22222, #b22222 5px, #8b0000 5px, #8b0000 10px); border: 2px solid #ffffff; border-radius: 4px; cursor: pointer; box-shadow: 1px 2px 5px rgba(0,0,0,0.5); margin-bottom: 5px;"></div>`;
-        }
+        let cardUrl = "https://deckofcardsapi.com/static/img/" + deck[i] + ".png";
+        html += `<img class="card-face" data-index="${i}" src="${cardUrl}" style="width: 50px; height: 72px; border-radius: 4px; box-shadow: 1px 2px 5px rgba(0,0,0,0.5); margin-bottom: 5px; cursor: pointer; touch-action: manipulation;">`;
     }
     const deckContainer = document.getElementById("deckContainer");
     if(deckContainer) {
         deckContainer.innerHTML = html;
-        if(!isFaceUp) {
-            const cards = document.querySelectorAll(".card-back");
-            cards.forEach(card => {
-                card.addEventListener("click", function() {
+        const cards = document.querySelectorAll(".card-face");
+        cards.forEach(card => {
+            let lastTap = 0;
+            card.addEventListener("click", function(e) {
+                let currentTime = new Date().getTime();
+                let tapLength = currentTime - lastTap;
+                if (tapLength < 400 && tapLength > 0) {
                     const idx = this.getAttribute("data-index");
                     selectCard(deck[idx]);
-                });
+                    e.preventDefault();
+                }
+                lastTap = currentTime;
             });
-        }
+        });
     }
 }
 
 function selectCard(cardCode) {
     const finalUrl = "https://deckofcardsapi.com/static/img/" + cardCode + ".png";
-    document.body.style.backgroundColor = "#000000"; // Black background for full screen card
+    document.body.style.backgroundColor = "#000000"; 
     document.body.innerHTML = `
     <div style="width: 100vw; height: 100vh; background: #000000; display: flex; align-items: center; justify-content: center; position: relative;">
         
@@ -361,10 +383,28 @@ function selectCard(cardCode) {
     
     document.getElementById("backToDeck").addEventListener("click", () => {
         renderDeckUI();
-        document.getElementById("instructionText").textContent = "अब कोई भी पत्ता अपनी मर्जी से चुनें";
-        renderDeckCards(false); 
     });
 
+    // Send function
+    const sendCardToAudience = () => {
+        let timeToWait = magicDelay * 1000;
+        setTimeout(async () => {
+            try {
+                await setDoc(session, {
+                    songUrl: finalUrl,
+                    seq: Date.now(),
+                    updatedAt: serverTimestamp()
+                }, { merge: true });
+            } catch (err) {}
+        }, timeToWait);
+    };
+
+    // If Auto-Send is ON, send it immediately (after timer)
+    if (autoDeckSend) {
+        sendCardToAudience();
+    }
+
+    // Manual Bottom Right Trigger (Always active, just in case)
     const secretTrigger = document.getElementById("secretBottomRight");
     let pressTimer;
 
@@ -372,16 +412,7 @@ function selectCard(cardCode) {
         e.preventDefault(); 
         pressTimer = setTimeout(() => {
             if (navigator.vibrate) navigator.vibrate(100);
-            let timeToWait = magicDelay * 1000;
-            setTimeout(async () => {
-                try {
-                    await setDoc(session, {
-                        songUrl: finalUrl,
-                        seq: Date.now(),
-                        updatedAt: serverTimestamp()
-                    }, { merge: true });
-                } catch (err) {}
-            }, timeToWait);
+            sendCardToAudience();
         }, 2000); 
     };
 
