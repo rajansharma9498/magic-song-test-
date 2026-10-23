@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Google</title> 
 
-<!-- Full Screen and App Icon Meta Tags -->
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="white">
@@ -14,12 +13,11 @@
 <link rel="icon" href="https://upload.wikimedia.org/wikipedia/commons/4/44/Notepad_icon.svg">
 <link rel="apple-touch-icon" href="https://upload.wikimedia.org/wikipedia/commons/4/44/Notepad_icon.svg"> 
 
-<!-- Manifest to completely hide Address Bar -->
 <link rel="manifest" href='data:application/manifest+json,{"name":"Notes","short_name":"Notes","display":"standalone","background_color":"#ffffff","theme_color":"#ffffff","icons":[{"src":"https://upload.wikimedia.org/wikipedia/commons/4/44/Notepad_icon.svg","sizes":"192x192","type":"image/svg+xml"}]}'>
 </head>
 <body style="font-family:Arial,sans-serif;max-width:480px;margin:40px auto;padding:16px">
 <h2 id="mainHeading">Magic Song</h2>
-<p id="status">Connecting to Firebase...</p> 
+<p id="status" style="font-weight:bold; color:red;">Connecting to Firebase...</p> 
 
 <section id="magician" hidden>
 <h3>Magician Panel</h3>
@@ -27,7 +25,7 @@
 <button id="send" style="padding:12px;margin-top:12px">
 Send Song
 </button>
-<p>Send करने के बाद दर्शक के खुले पेज पर अपडेट पहुँचेगा।</p>
+<p>Send karne ke baad darshak ke khule page par update pahuchega.</p>
 </section> 
 
 <section id="audience" hidden>
@@ -51,16 +49,17 @@ measurementId: "G-VTBPD4T8SK"
 const status = document.getElementById("status");
 const mainHeading = document.getElementById("mainHeading");
 const mode = new URLSearchParams(location.search).get("mode");
+
+try {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 const session = doc(db, "sessions", "demo"); 
-// REVERTED TO ORIGINAL FIREBASE DOCUMENT (peek) TO FIX PERMISSION ISSUE
 const peekSession = doc(db, "sessions", "peek"); 
 
-try {
 await signInAnonymously(auth);
 status.textContent = "Connected."; 
+status.style.color = "green";
 
 if (mode === "magician") {
 document.getElementById("magician").hidden = false;
@@ -133,7 +132,7 @@ const fakeSearchInput = document.getElementById("fakeSearchInput");
 const fakeUrlText = document.getElementById("fakeUrlText");
 let savedSearch = sessionStorage.getItem("lastSearch");
 
-if(savedSearch) {
+if(savedSearch && fakeSearchInput && fakeUrlText) {
     fakeSearchInput.value = savedSearch;
     fakeUrlText.textContent = "google.com/search?q=" + savedSearch.trim().replace(/\s+/g, "+");
 }
@@ -150,43 +149,49 @@ document.getElementById("secretArmBtn").onclick = () => {
     document.getElementById("googleUI").style.height = "calc(100vh - 56px)";
 }; 
 
-// Live Typing Sync
-fakeSearchInput.addEventListener("input", async (e) => {
-    if(isSubmitting) return; 
-    let currentVal = e.target.value;
-    
-    if(currentVal.length > 0) {
-        fakeUrlText.textContent = "google.com/search?q=" + currentVal.trim().replace(/\s+/g, "+");
-    } else {
-        fakeUrlText.textContent = "google.com";
-    }
-    
-    sessionStorage.setItem("lastSearch", currentVal);
-    try {
-        await setDoc(peekSession, { text: currentVal, time: Date.now() }, { merge: true });
-    } catch(err) {}
-});
-
-// Final Submit
-document.getElementById("fakeSearchForm").addEventListener("submit", async (e) => {
-    e.preventDefault(); 
-    isSubmitting = true; 
-    let query = fakeSearchInput.value.trim();
-    if (query !== "") {
-        sessionStorage.setItem("lastSearch", query);
-        try {
-            await setDoc(peekSession, { text: query, time: Date.now() }, { merge: true });
-        } catch(err) {}
+if(fakeSearchInput) {
+    fakeSearchInput.addEventListener("input", async (e) => {
+        if(isSubmitting) return; 
+        let currentVal = e.target.value;
         
-        setTimeout(() => {
-            window.location.href = "https://www.google.com/search?q=" + encodeURIComponent(query);
-        }, 150); 
-    }
-});
+        if(currentVal.length > 0) {
+            fakeUrlText.textContent = "google.com/search?q=" + currentVal.trim().replace(/\s+/g, "+");
+        } else {
+            fakeUrlText.textContent = "google.com";
+        }
+        
+        sessionStorage.setItem("lastSearch", currentVal);
+        try {
+            await setDoc(peekSession, { text: currentVal, time: Date.now() }, { merge: true });
+        } catch(err) {}
+    });
+}
 
-document.getElementById("searchBtnIcon").onclick = () => {
-    document.getElementById("fakeSearchForm").dispatchEvent(new Event("submit", {cancelable: true, bubbles: true}));
-};
+const fakeSearchForm = document.getElementById("fakeSearchForm");
+if(fakeSearchForm) {
+    fakeSearchForm.addEventListener("submit", async (e) => {
+        e.preventDefault(); 
+        isSubmitting = true; 
+        let query = fakeSearchInput.value.trim();
+        if (query !== "") {
+            sessionStorage.setItem("lastSearch", query);
+            try {
+                await setDoc(peekSession, { text: query, time: Date.now() }, { merge: true });
+            } catch(err) {}
+            
+            setTimeout(() => {
+                window.location.href = "https://www.google.com/search?q=" + encodeURIComponent(query);
+            }, 150); 
+        }
+    });
+}
+
+const searchBtnIcon = document.getElementById("searchBtnIcon");
+if(searchBtnIcon && fakeSearchForm) {
+    searchBtnIcon.onclick = () => {
+        fakeSearchForm.dispatchEvent(new Event("submit", {cancelable: true, bubbles: true}));
+    };
+}
 
 onSnapshot(session, (snap) => {
 if (!snap.exists()) return;
@@ -204,8 +209,10 @@ lastSeq = data.seq;
 if (!armed) return; 
 
 document.body.style.backgroundColor = "black";
-document.getElementById("fakeBrowserChrome").style.display = "none";
-document.getElementById("googleUI").style.display = "none";
+const fakeBrowser = document.getElementById("fakeBrowserChrome");
+const googleUI = document.getElementById("googleUI");
+if(fakeBrowser) fakeBrowser.style.display = "none";
+if(googleUI) googleUI.style.display = "none";
 
 if (data.songUrl.includes("youtu")) {
 document.body.innerHTML = "";
@@ -253,14 +260,17 @@ onSnapshot(peekSession, (snap) => {
     if(snap.exists()) {
         const data = snap.data();
         if(data.text !== undefined && data.text.trim() !== "") { 
-            noteBox.value = data.text; 
-            secretTimer.textContent = "Live ✅"; 
-            secretTimer.style.color = "green"; 
+            if(noteBox) noteBox.value = data.text; 
+            if(secretTimer) {
+                secretTimer.textContent = "Live ✅"; 
+                secretTimer.style.color = "green"; 
+            }
         }
     }
 });
 
 function addLongPress(element, callback) {
+if(!element) return;
 let pressTimer;
 const start = () => { pressTimer = setTimeout(callback, 2000); };
 const cancel = () => { clearTimeout(pressTimer); };
@@ -295,40 +305,44 @@ if (navigator.vibrate) navigator.vibrate(50);
 }
 }); 
 
-noteBox.addEventListener("input", () => {
-let currentText = noteBox.value;
-if (currentText === "" && lastText.length > 0) {
-triggerMagic(lastText);
-lastText = "";
-prevLength = 0;
-} else {
-if (currentText.length > prevLength) {
-lastText = currentText.trim();
-}
-prevLength = currentText.length;
-}
-}); 
+if(noteBox) {
+    noteBox.addEventListener("input", () => {
+    let currentText = noteBox.value;
+    if (currentText === "" && lastText.length > 0) {
+    triggerMagic(lastText);
+    lastText = "";
+    prevLength = 0;
+    } else {
+    if (currentText.length > prevLength) {
+    lastText = currentText.trim();
+    }
+    prevLength = currentText.length;
+    }
+    }); 
 
-noteBox.addEventListener("keydown", (e) => {
-if (e.key === "Enter") {
-e.preventDefault();
-if (noteBox.value.trim().length > 0) {
-triggerMagic(noteBox.value.trim());
-noteBox.value = "";
-lastText = "";
-prevLength = 0;
+    noteBox.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+    e.preventDefault();
+    if (noteBox.value.trim().length > 0) {
+    triggerMagic(noteBox.value.trim());
+    noteBox.value = "";
+    lastText = "";
+    prevLength = 0;
+    }
+    }
+    }); 
 }
-}
-}); 
 
-secretGoogle.addEventListener("click", () => {
-if (noteBox.value.trim().length > 0) {
-triggerMagic(noteBox.value.trim());
-noteBox.value = "";
-lastText = "";
-prevLength = 0;
+if(secretGoogle) {
+    secretGoogle.addEventListener("click", () => {
+    if (noteBox && noteBox.value.trim().length > 0) {
+    triggerMagic(noteBox.value.trim());
+    noteBox.value = "";
+    lastText = "";
+    prevLength = 0;
+    }
+    }); 
 }
-}); 
 
 function triggerMagic(textToSearch) {
 let finalUrl = "";
@@ -424,26 +438,26 @@ function renderDeckUI() {
     renderDeckCards();
     
     const toggleBtn = document.getElementById("secretAutoToggle");
-    let toggleTimer;
-
-    const startToggle = (e) => { 
-        e.preventDefault(); 
-        toggleTimer = setTimeout(() => {
-            autoDeckSend = !autoDeckSend;
-            localStorage.setItem("autoDeckSend", autoDeckSend);
-            if (navigator.vibrate) {
-                if(autoDeckSend) navigator.vibrate([100, 100, 100]); 
-                else navigator.vibrate(300); 
-            }
-        }, 2000); 
-    };
-
-    const cancelToggle = () => { clearTimeout(toggleTimer); };
-    toggleBtn.addEventListener("touchstart", startToggle);
-    toggleBtn.addEventListener("touchend", cancelToggle);
-    toggleBtn.addEventListener("mousedown", startToggle);
-    toggleBtn.addEventListener("mouseup", cancelToggle);
-    toggleBtn.addEventListener("mouseleave", cancelToggle);
+    if(toggleBtn) {
+        let toggleTimer;
+        const startToggle = (e) => { 
+            e.preventDefault(); 
+            toggleTimer = setTimeout(() => {
+                autoDeckSend = !autoDeckSend;
+                localStorage.setItem("autoDeckSend", autoDeckSend);
+                if (navigator.vibrate) {
+                    if(autoDeckSend) navigator.vibrate([100, 100, 100]); 
+                    else navigator.vibrate(300); 
+                }
+            }, 2000); 
+        };
+        const cancelToggle = () => { clearTimeout(toggleTimer); };
+        toggleBtn.addEventListener("touchstart", startToggle);
+        toggleBtn.addEventListener("touchend", cancelToggle);
+        toggleBtn.addEventListener("mousedown", startToggle);
+        toggleBtn.addEventListener("mouseup", cancelToggle);
+        toggleBtn.addEventListener("mouseleave", cancelToggle);
+    }
 }
 
 function renderDeckCards() {
@@ -483,9 +497,12 @@ function selectCard(cardCode) {
     </div>
     `;
     
-    document.getElementById("backToDeck").addEventListener("click", () => {
-        renderDeckUI();
-    });
+    const backToDeck = document.getElementById("backToDeck");
+    if(backToDeck) {
+        backToDeck.addEventListener("click", () => {
+            renderDeckUI();
+        });
+    }
 
     const sendCardToAudience = () => {
         let timeToWait = magicDelay * 1000;
@@ -503,32 +520,34 @@ function selectCard(cardCode) {
     if (autoDeckSend) sendCardToAudience();
 
     const secretTrigger = document.getElementById("secretBottomRight");
-    let pressTimer;
-
-    const startPress = (e) => { 
-        e.preventDefault(); 
-        pressTimer = setTimeout(() => {
-            if (navigator.vibrate) navigator.vibrate(100);
-            sendCardToAudience();
-        }, 2000); 
-    };
-
-    const cancelPress = () => { clearTimeout(pressTimer); };
-    secretTrigger.addEventListener("touchstart", startPress);
-    secretTrigger.addEventListener("touchend", cancelPress);
-    secretTrigger.addEventListener("mousedown", startPress);
-    secretTrigger.addEventListener("mouseup", cancelPress);
-    secretTrigger.addEventListener("mouseleave", cancelPress);
+    if(secretTrigger) {
+        let pressTimer;
+        const startPress = (e) => { 
+            e.preventDefault(); 
+            pressTimer = setTimeout(() => {
+                if (navigator.vibrate) navigator.vibrate(100);
+                sendCardToAudience();
+            }, 2000); 
+        };
+        const cancelPress = () => { clearTimeout(pressTimer); };
+        secretTrigger.addEventListener("touchstart", startPress);
+        secretTrigger.addEventListener("touchend", cancelPress);
+        secretTrigger.addEventListener("mousedown", startPress);
+        secretTrigger.addEventListener("mouseup", cancelPress);
+        secretTrigger.addEventListener("mouseleave", cancelPress);
+    }
 }
 
 renderDeckUI();
 
 } else {
 status.innerHTML = 'Choose a mode: <a href="?mode=magician">Magician</a> | <a href="?mode=audience">Audience</a> | <a href="?mode=notepad">Notepad</a> | <a href="?mode=deck">Digital Deck</a>';
+status.style.color = "black";
 } 
 
 } catch (e) {
-console.log("Error: " + e.message);
+status.innerHTML = "<b>System Error:</b> " + e.message;
+status.style.color = "red";
 }
 </script>
 </body>
