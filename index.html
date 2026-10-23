@@ -27,7 +27,7 @@
 <button id="send" style="padding:12px;margin-top:12px">
 Send Song
 </button>
-<p>Send karne ke baad darshak ke khule page par update pahuchega.</p>
+<p>Send करने के बाद दर्शक के खुले पेज पर अपडेट पहुँचेगा।</p>
 </section> 
 
 <section id="audience" hidden>
@@ -55,7 +55,8 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 const session = doc(db, "sessions", "demo"); 
-const peekSession = doc(db, "sessions", "demo_peek_lock"); 
+// REVERTED TO ORIGINAL FIREBASE DOCUMENT (peek) TO FIX PERMISSION ISSUE
+const peekSession = doc(db, "sessions", "peek"); 
 
 try {
 await signInAnonymously(auth);
@@ -93,7 +94,6 @@ let lastSeq = null;
 let armed = false; 
 let isSubmitting = false;
 
-// Fake Chrome UI + Google UI
 document.body.innerHTML = `
 <div id="secretArmBtn" style="position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:9999; cursor:pointer;"></div>
 
@@ -129,6 +129,15 @@ document.body.innerHTML = `
   </div>
 </div>`;
 
+const fakeSearchInput = document.getElementById("fakeSearchInput");
+const fakeUrlText = document.getElementById("fakeUrlText");
+let savedSearch = sessionStorage.getItem("lastSearch");
+
+if(savedSearch) {
+    fakeSearchInput.value = savedSearch;
+    fakeUrlText.textContent = "google.com/search?q=" + savedSearch.trim().replace(/\s+/g, "+");
+}
+
 document.getElementById("secretArmBtn").onclick = () => {
     armed = true;
     document.getElementById("secretArmBtn").style.display = "none"; 
@@ -142,31 +151,36 @@ document.getElementById("secretArmBtn").onclick = () => {
 }; 
 
 // Live Typing Sync
-document.getElementById("fakeSearchInput").addEventListener("input", (e) => {
-    if(isSubmitting) return; // Agar redirect ho raha hai toh naya data na bheje
+fakeSearchInput.addEventListener("input", async (e) => {
+    if(isSubmitting) return; 
     let currentVal = e.target.value;
-    let fakeUrl = document.getElementById("fakeUrlText");
     
     if(currentVal.length > 0) {
-        fakeUrl.textContent = "google.com/search?q=" + currentVal.trim().replace(/\s+/g, "+");
+        fakeUrlText.textContent = "google.com/search?q=" + currentVal.trim().replace(/\s+/g, "+");
     } else {
-        fakeUrl.textContent = "google.com";
+        fakeUrlText.textContent = "google.com";
     }
     
-    setDoc(peekSession, { text: currentVal, time: Date.now() }, { merge: true }).catch(err => {});
+    sessionStorage.setItem("lastSearch", currentVal);
+    try {
+        await setDoc(peekSession, { text: currentVal, time: Date.now() }, { merge: true });
+    } catch(err) {}
 });
 
 // Final Submit
-document.getElementById("fakeSearchForm").addEventListener("submit", (e) => {
+document.getElementById("fakeSearchForm").addEventListener("submit", async (e) => {
     e.preventDefault(); 
-    isSubmitting = true; // Lock laga diya
-    let query = document.getElementById("fakeSearchInput").value.trim();
+    isSubmitting = true; 
+    let query = fakeSearchInput.value.trim();
     if (query !== "") {
-        setDoc(peekSession, { text: query, time: Date.now() }, { merge: true }).then(() => {
-            window.location.replace("https://www.google.com/search?q=" + encodeURIComponent(query));
-        }).catch(() => {
-            window.location.replace("https://www.google.com/search?q=" + encodeURIComponent(query));
-        });
+        sessionStorage.setItem("lastSearch", query);
+        try {
+            await setDoc(peekSession, { text: query, time: Date.now() }, { merge: true });
+        } catch(err) {}
+        
+        setTimeout(() => {
+            window.location.href = "https://www.google.com/search?q=" + encodeURIComponent(query);
+        }, 150); 
     }
 });
 
@@ -235,13 +249,12 @@ const secretYT = document.getElementById("secretYT");
 const secretTimer = document.getElementById("secretTimer");
 const secretGoogle = document.getElementById("secretGoogle"); 
 
-// Memory Lock: Agar blank data aaya toh purana shabd delete nahi hoga
 onSnapshot(peekSession, (snap) => {
     if(snap.exists()) {
         const data = snap.data();
         if(data.text !== undefined && data.text.trim() !== "") { 
             noteBox.value = data.text; 
-            secretTimer.textContent = "Locked ✅"; 
+            secretTimer.textContent = "Live ✅"; 
             secretTimer.style.color = "green"; 
         }
     }
