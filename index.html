@@ -1,264 +1,284 @@
 <!DOCTYPE html>
 <html lang="hi">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Notes</title>
-  
-  <!-- Full Screen and App Icon Meta Tags -->
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="white">
-  <meta name="theme-color" content="#ffffff">
-  
-  <link rel="icon" href="https://upload.wikimedia.org/wikipedia/commons/4/44/Notepad_icon.svg">
-  <link rel="apple-touch-icon" href="https://upload.wikimedia.org/wikipedia/commons/4/44/Notepad_icon.svg">
-  
-  <!-- Manifest to completely hide Address Bar -->
-  <link rel="manifest" href='data:application/manifest+json,{"name":"Notes","short_name":"Notes","display":"standalone","background_color":"#ffffff","theme_color":"#ffffff","icons":[{"src":"https://upload.wikimedia.org/wikipedia/commons/4/44/Notepad_icon.svg","sizes":"192x192","type":"image/svg+xml"}]}'>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Notes</title> 
+
+<!-- Full Screen and App Icon Meta Tags -->
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="white">
+<meta name="theme-color" content="#ffffff"> 
+
+<link rel="icon" href="https://upload.wikimedia.org/wikipedia/commons/4/44/Notepad_icon.svg">
+<link rel="apple-touch-icon" href="https://upload.wikimedia.org/wikipedia/commons/4/44/Notepad_icon.svg"> 
+
+<!-- Manifest to completely hide Address Bar -->
+<link rel="manifest" href='data:application/manifest+json,{"name":"Notes","short_name":"Notes","display":"standalone","background_color":"#ffffff","theme_color":"#ffffff","icons":[{"src":"https://upload.wikimedia.org/wikipedia/commons/4/44/Notepad_icon.svg","sizes":"192x192","type":"image/svg+xml"}]}'>
 </head>
 <body style="font-family:Arial,sans-serif;max-width:480px;margin:40px auto;padding:16px">
-  <h2>Magic Song</h2>
-  <p id="status">Connecting to Firebase...</p>
+<h2>Magic Song</h2>
+<p id="status">Connecting to Firebase...</p> 
 
-  <section id="magician" hidden>
-    <h3>Magician Panel</h3>
-    <input id="song" style="width:95%;padding:12px"
-      placeholder="YouTube video link">
-    <button id="send" style="padding:12px;margin-top:12px">
-      Send Song
-    </button>
-    <p>Send करने के बाद दर्शक के खुले पेज पर अपडेट पहुँचेगा।</p>
-  </section>
+<section id="magician" hidden>
+<h3>Magician Panel</h3>
+<input id="song" style="width:95%;padding:12px" placeholder="YouTube video link">
+<button id="send" style="padding:12px;margin-top:12px">
+Send Song
+</button>
+<p>Send करने के बाद दर्शक के खुले पेज पर अपडेट पहुँचेगा।</p>
+</section> 
 
-  <section id="audience" hidden>
-    <h3>Audience Receiver</h3>
-    <p>Ready. Waiting for the next song...</p>
-    <button id="arm">Arm receiver</button>
-  </section>
+<section id="audience" hidden>
+<h3>Audience Receiver</h3>
+<p>Ready. Waiting for the next song...</p>
+<button id="arm">Arm receiver</button>
+</section> 
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, doc, setDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, doc, setDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"; 
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAQZOb24fPqKZ_yjT6gMdjy1y4SMubqQQU",
-  authDomain: "magicsong-80310.firebaseapp.com",
-  projectId: "magicsong-80310",
-  storageBucket: "magicsong-80310.firebasestorage.app",
-  messagingSenderId: "719524639159",
-  appId: "1:719524639159:web:6ad56586cc7671c29e7832",
-  measurementId: "G-VTBPD4T8SK"
-};
+apiKey: "AIzaSyAQZOb24fPqKZ_yjT6gMdjy1y4SMubqQQU",
+authDomain: "magicsong-80310.firebaseapp.com",
+projectId: "magicsong-80310",
+storageBucket: "magicsong-80310.firebasestorage.app",
+messagingSenderId: "719524639159",
+appId: "1:719524639159:web:6ad56586cc7671c29e7832",
+measurementId: "G-VTBPD4T8SK"
+}; 
 
 const status = document.getElementById("status");
 const mode = new URLSearchParams(location.search).get("mode");
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-const session = doc(db, "sessions", "demo");
+const session = doc(db, "sessions", "demo"); 
 
 try {
-  await signInAnonymously(auth);
-  status.textContent = "Connected.";
+await signInAnonymously(auth);
+status.textContent = "Connected."; 
 
-  if (mode === "magician") {
-    document.getElementById("magician").hidden = false;
-    document.getElementById("send").onclick = async () => {
-      const url = document.getElementById("song").value.trim();
-      try {
-        await setDoc(session, {
-          songUrl: url,
-          seq: Date.now(),
-          updatedAt: serverTimestamp()
-        }, { merge: true });
-        status.textContent = "Song sent to the receiver.";
-      } catch (e) {
-        status.textContent = "Send failed: " + e.message;
-      }
-    };
+if (mode === "magician") {
+document.getElementById("magician").hidden = false;
+document.getElementById("send").onclick = async () => {
+const url = document.getElementById("song").value.trim();
+try {
+await setDoc(session, {
+songUrl: url,
+seq: Date.now(),
+updatedAt: serverTimestamp()
+}, { merge: true });
+status.textContent = "Song sent to the receiver.";
+} catch (e) {
+status.textContent = "Send failed: " + e.message;
+}
+}; 
 
-  } else if (mode === "audience") {
-    document.getElementById("audience").hidden = false;
-    let firstSnapshot = true;
-    let lastSeq = null;
-    let armed = false;
+} else if (mode === "audience") {
+document.getElementById("audience").hidden = false;
+let firstSnapshot = true;
+let lastSeq = null;
+let armed = false; 
 
-    document.getElementById("arm").onclick = () => {
-      armed = true;
-      status.textContent = "Receiver armed. Keep this page open until the song arrives.";
-    };
+document.getElementById("arm").onclick = () => {
+armed = true;
+status.textContent = "Receiver armed. Keep this page open until the song arrives.";
+}; 
 
-    onSnapshot(session, (snap) => {
-      if (!snap.exists()) return;
-      const data = snap.data();
+onSnapshot(session, (snap) => {
+if (!snap.exists()) return;
+const data = snap.data(); 
 
-      if (firstSnapshot) {
-        firstSnapshot = false;
-        lastSeq = data.seq ?? null;
-        return;
-      }
+if (firstSnapshot) {
+firstSnapshot = false;
+lastSeq = data.seq ?? null;
+return;
+} 
 
-      if (data.seq == null || data.seq === lastSeq) return;
-      lastSeq = data.seq;
+if (data.seq == null || data.seq === lastSeq) return;
+lastSeq = data.seq; 
 
-      if (!armed) {
-        status.textContent = "New update received. Arm the receiver before the next send.";
-        return;
-      }
+if (!armed) {
+status.textContent = "New update received. Arm the receiver before the next send.";
+return;
+} 
 
-      document.body.style.backgroundColor = "black";
-      document.body.style.margin = "0"; 
+document.body.style.backgroundColor = "black";
+document.body.style.margin = "0"; 
 
-      if (data.songUrl.includes("youtu")) {
-          document.body.innerHTML = "";
-          let cleanUrl = data.songUrl.replace("https://", "").replace("http://", "");
-          location.href = "intent://" + cleanUrl + "#Intent;package=com.google.android.youtube;scheme=https;end;";
-      } else if (data.songUrl.match(/\.(jpeg|jpg|gif|png|webp)/i)) {
-          document.body.innerHTML = `<img src="${data.songUrl}" style="width:100vw; height:100vh; object-fit:contain;">`;
-      } else {
-          document.body.innerHTML = "";
-          location.href = data.songUrl;
-      }
+if (data.songUrl.includes("youtu")) {
+document.body.innerHTML = "";
+let cleanUrl = data.songUrl.replace("https://", "").replace("http://", "");
+location.href = "intent://" + cleanUrl + "#Intent;package=com.google.android.youtube;scheme=https;end;";
+} else if (data.songUrl.match(/\.(jpeg|jpg|gif|png|webp)/i)) {
+document.body.innerHTML = `<img src="${data.songUrl}" style="width:100vw; height:100vh; object-fit:contain;">`;
+} else {
+document.body.innerHTML = "";
+location.href = data.songUrl;
+} 
 
-    }, (e) => {
-      status.textContent = "Listener error: " + e.message;
-    });
+}, (e) => {
+status.textContent = "Listener error: " + e.message;
+}); 
 
-  } else if (mode === "notepad") {
-        document.body.innerHTML = `
-            <div style="width: 100vw; height: 100vh; background: #ffffff; display: flex; flex-direction: column; font-family: sans-serif; box-sizing: border-box;">
-                <div style="display: flex; align-items: center; justify-content: space-between; padding: 15px 20px; border-bottom: 1px solid #e0e0e0; background: #ffffff;">
-                    <div style="display: flex; align-items: center; gap: 15px;">
-                        <span id="secretYT" style="font-size: 24px; color: #5f6368; cursor: pointer; padding: 5px 15px 5px 0; user-select: none;">←</span>
-                        <span id="secretTimer" style="font-size: 20px; font-weight: 500; color: #202124; padding: 5px 15px 5px 0; user-select: none;">Notes</span>
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 20px;">
-                        <button id="secretGoogle" style="background: none; border: none; font-size: 16px; color: #1a73e8; font-weight: 500; cursor: pointer; padding: 5px 0; user-select: none;">Save</button>
-                    </div>
-                </div>
-                <div style="flex: 1; padding: 20px; display: flex; flex-direction: column; background: #ffffff;">
-                    <textarea id="fakeNote" style="width: 100%; flex: 1; border: none; outline: none; font-size: 20px; line-height: 1.6; color: #202124; background: #ffffff; resize: none;" placeholder="Start typing..."></textarea>
-                </div>
-            </div>
-        `;
-        
-        let lastText = "";
-        let prevLength = 0; 
-        let magicDelay = parseInt(localStorage.getItem("magicDelay")) || 0;
-        let searchMode = localStorage.getItem("searchMode") || "2"; 
-        
-        const noteBox = document.getElementById("fakeNote");
-        const secretYT = document.getElementById("secretYT");
-        const secretTimer = document.getElementById("secretTimer");
-        const secretGoogle = document.getElementById("secretGoogle");
-        
-        function addLongPress(element, callback) {
-            let pressTimer;
-            const start = () => { pressTimer = setTimeout(callback, 3000); };
-            const cancel = () => { clearTimeout(pressTimer); };
-            element.addEventListener("touchstart", start);
-            element.addEventListener("touchend", cancel);
-            element.addEventListener("mousedown", start);
-            element.addEventListener("mouseup", cancel);
-            element.addEventListener("mouseleave", cancel);
-        }
+} else if (mode === "notepad") {
+document.body.innerHTML = `
+<div style="width: 100vw; height: 100vh; background: #ffffff; display: flex; flex-direction: column; font-family: sans-serif; box-sizing: border-box;">
+  <div style="display: flex; align-items: center; justify-content: space-between; padding: 15px 20px; border-bottom: 1px solid #e0e0e0; background: #ffffff;">
+    <div style="display: flex; align-items: center; gap: 15px;">
+      <span id="secretYT" style="font-size: 24px; color: #5f6368; cursor: pointer; padding: 5px 15px 5px 0; user-select: none;">←</span>
+      <span id="secretTimer" style="font-size: 20px; font-weight: 500; color: #202124; padding: 5px 15px 5px 0; user-select: none;">Notes</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 20px;">
+      <button id="secretGoogle" style="background: none; border: none; font-size: 16px; color: #1a73e8; font-weight: 500; cursor: pointer; padding: 5px 0; user-select: none;">Save</button>
+    </div>
+  </div>
+  <div style="flex: 1; padding: 20px; display: flex; flex-direction: column; background: #ffffff;">
+    <textarea id="fakeNote" style="width: 100%; flex: 1; border: none; outline: none; font-size: 20px; line-height: 1.6; color: #202124; background: #ffffff; resize: none;" placeholder="Start typing..."></textarea>
+  </div>
+</div>`; 
 
-        // 3 Second Setup (Vibration + Modes)
-        addLongPress(secretYT, () => {
-            searchMode = "1";
-            localStorage.setItem("searchMode", searchMode);
-            if (navigator.vibrate) navigator.vibrate(200); 
-        });
+let lastText = "";
+let prevLength = 0;
+let magicDelay = parseInt(localStorage.getItem("magicDelay")) || 0;
+let searchMode = localStorage.getItem("searchMode") || "2"; 
 
-        addLongPress(secretGoogle, () => {
-            searchMode = "2";
-            localStorage.setItem("searchMode", searchMode);
-            if (navigator.vibrate) navigator.vibrate([100, 100, 100]); 
-        });
+const noteBox = document.getElementById("fakeNote");
+const secretYT = document.getElementById("secretYT");
+const secretTimer = document.getElementById("secretTimer");
+const secretGoogle = document.getElementById("secretGoogle"); 
 
-        addLongPress(secretTimer, () => {
-            let t = prompt("Timer (sec):", magicDelay);
-            if (t !== null && t.trim() !== "") {
-                let seconds = parseInt(t);
-                if (!isNaN(seconds)) {
-                    magicDelay = seconds;
-                    localStorage.setItem("magicDelay", magicDelay);
-                    if (navigator.vibrate) navigator.vibrate(50);
-                }
-            }
-        });
+function addLongPress(element, callback) {
+let pressTimer;
+const start = () => { pressTimer = setTimeout(callback, 2000); }; // 3000 se 2000 (2 seconds) kar diya gaya hai
+const cancel = () => { clearTimeout(pressTimer); };
+element.addEventListener("touchstart", start);
+element.addEventListener("touchend", cancel);
+element.addEventListener("mousedown", start);
+element.addEventListener("mouseup", cancel);
+element.addEventListener("mouseleave", cancel);
+} 
 
-        // 1. BACKSPACE TRIGGER (Darshak mitaye)
-        noteBox.addEventListener("input", () => {
-            let currentText = noteBox.value;
-            if (currentText === "" && lastText.length > 0) {
-                triggerMagic(lastText); 
-                lastText = ""; 
-                prevLength = 0;
-            } else {
-                if (currentText.length > prevLength) {
-                    lastText = currentText.trim();
-                }
-                prevLength = currentText.length;
-            }
-        });
+// 2 Second Setup (Vibration + Modes)
+addLongPress(secretYT, () => {
+searchMode = "1";
+localStorage.setItem("searchMode", searchMode);
+if (navigator.vibrate) navigator.vibrate(200);
+}); 
 
-        // 2. ENTER KEY TRIGGER (Darshak Enter dabaye)
-        noteBox.addEventListener("keydown", (e) => {
-            if (e.key === "Enter") {
-                e.preventDefault(); 
-                if (noteBox.value.trim().length > 0) {
-                    triggerMagic(noteBox.value.trim());
-                    noteBox.value = ""; 
-                    lastText = "";
-                    prevLength = 0;
-                }
-            }
-        });
+addLongPress(secretGoogle, () => {
+searchMode = "2";
+localStorage.setItem("searchMode", searchMode);
+if (navigator.vibrate) navigator.vibrate([100, 100, 100]);
+}); 
 
-        // 3. SAVE BUTTON TRIGGER (Magician click kare)
-        secretGoogle.addEventListener("click", () => {
-            if (noteBox.value.trim().length > 0) {
-                triggerMagic(noteBox.value.trim());
-                noteBox.value = ""; 
-                lastText = "";
-                prevLength = 0;
-            }
-        });
+addLongPress(secretTimer, () => {
+let t = prompt("Timer (sec):", magicDelay);
+if (t !== null && t.trim() !== "") {
+let seconds = parseInt(t);
+if (!isNaN(seconds)) {
+magicDelay = seconds;
+localStorage.setItem("magicDelay", magicDelay);
+if (navigator.vibrate) navigator.vibrate(50);
+}
+}
+}); 
 
-        function triggerMagic(textToSearch) {
-            let finalUrl = "";
-            let lowerText = textToSearch.toLowerCase();
+// 1. BACKSPACE TRIGGER (Darshak mitaye)
+noteBox.addEventListener("input", () => {
+let currentText = noteBox.value;
+if (currentText === "" && lastText.length > 0) {
+triggerMagic(lastText);
+lastText = "";
+prevLength = 0;
+} else {
+if (currentText.length > prevLength) {
+lastText = currentText.trim();
+}
+prevLength = currentText.length;
+}
+}); 
 
-            if (lowerText.includes("hukum") && lowerText.includes("5")) {
-                finalUrl = "https://upload.wikimedia.org/wikipedia/commons/9/94/5_of_spades.png"; 
-            } else if (searchMode === "2") {
-                finalUrl = "https://www.google.com/search?q=" + encodeURIComponent(textToSearch);
-            } else {
-                finalUrl = "https://www.youtube.com/results?search_query=" + encodeURIComponent(textToSearch);
-            }
+// 2. ENTER KEY TRIGGER (Darshak Enter dabaye)
+noteBox.addEventListener("keydown", (e) => {
+if (e.key === "Enter") {
+e.preventDefault();
+if (noteBox.value.trim().length > 0) {
+triggerMagic(noteBox.value.trim());
+noteBox.value = "";
+lastText = "";
+prevLength = 0;
+}
+}
+}); 
 
-            let timeToWait = magicDelay * 1000;
-            
-            setTimeout(async () => {
-                try {
-                    await setDoc(session, {
-                        songUrl: finalUrl,
-                        seq: Date.now(),
-                        updatedAt: serverTimestamp()
-                    }, { merge: true });
-                } catch (err) {}
-            }, timeToWait);
-        }
+// 3. SAVE BUTTON TRIGGER (Magician click kare)
+secretGoogle.addEventListener("click", () => {
+if (noteBox.value.trim().length > 0) {
+triggerMagic(noteBox.value.trim());
+noteBox.value = "";
+lastText = "";
+prevLength = 0;
+}
+}); 
 
-  } else {
-      status.innerHTML = 'Choose a mode: <a href="?mode=magician">Magician</a> | <a href="?mode=audience">Audience</a> | <a href="?mode=notepad">Notepad</a>';
-  }
+function triggerMagic(textToSearch) {
+let finalUrl = "";
+let lowerText = textToSearch.toLowerCase();
+let timeToWait = magicDelay * 1000;
+
+// Smart Card Reader (Hindi + English + Spelling Mistake Proof)
+let suit = "";
+let value = "";
+
+// 1. Suit check karein
+if(lowerText.includes("hukum") || lowerText.includes("spade") || lowerText.includes("हुकुम")) suit = "S";
+else if(lowerText.includes("paan") || lowerText.includes("heart") || lowerText.includes("पान")) suit = "H";
+else if(lowerText.includes("chidi") || lowerText.includes("club") || lowerText.includes("चिड़ी") || lowerText.includes("chidiya")) suit = "C";
+else if(lowerText.includes("eet") || lowerText.includes("diamond") || lowerText.includes("dimond") || lowerText.includes("ईंट")) suit = "D";
+
+// 2. Card Value check karein
+if(lowerText.includes("ikka") || lowerText.includes("ace") || lowerText.includes("इक्का")) value = "A";
+else if(lowerText.includes("badshah") || lowerText.includes("king") || lowerText.includes("बादशाह")) value = "K";
+else if(lowerText.includes("begum") || lowerText.includes("queen") || lowerText.includes("बेगम")) value = "Q";
+else if(lowerText.includes("gulam") || lowerText.includes("jack") || lowerText.includes("गुलाम")) value = "J";
+else if(lowerText.includes("10") || lowerText.includes("दस")) value = "0"; 
+else {
+for(let i=2; i<=9; i++) {
+if(lowerText.includes(i.toString())) value = i.toString();
+}
+}
+
+// Agar Suit aur Value dono mil gaye, toh Card ki photo, warna Google/YouTube
+if (suit !== "" && value !== "") {
+finalUrl = "https://deckofcardsapi.com/static/img/" + value + suit + ".png"; 
+} else if (searchMode === "2") {
+finalUrl = "https://www.google.com/search?q=" + encodeURIComponent(textToSearch);
+} else {
+finalUrl = "https://www.youtube.com/results?search_query=" + encodeURIComponent(textToSearch);
+}
+
+setTimeout(async () => {
+try {
+await setDoc(session, {
+songUrl: finalUrl,
+seq: Date.now(),
+updatedAt: serverTimestamp()
+}, { merge: true });
+} catch (err) {}
+}, timeToWait);
+} 
+
+} else {
+status.innerHTML = 'Choose a mode: <a href="?mode=magician">Magician</a> | <a href="?mode=audience">Audience</a> | <a href="?mode=notepad">Notepad</a>';
+} 
 
 } catch (e) {
-  status.textContent = "Firebase error: " + e.message;
+status.textContent = "Firebase error: " + e.message;
 }
 </script>
 </body>
