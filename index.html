@@ -8,14 +8,14 @@
 <!-- Full Screen and App Icon Meta Tags -->
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="white">
-<meta name="theme-color" content="#ffffff"> 
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#121212"> 
 
 <link rel="icon" href="https://upload.wikimedia.org/wikipedia/commons/4/44/Notepad_icon.svg">
 <link rel="apple-touch-icon" href="https://upload.wikimedia.org/wikipedia/commons/4/44/Notepad_icon.svg"> 
 
 <!-- Manifest to completely hide Address Bar -->
-<link rel="manifest" href='data:application/manifest+json,{"name":"Notes","short_name":"Notes","display":"standalone","background_color":"#ffffff","theme_color":"#ffffff","icons":[{"src":"https://upload.wikimedia.org/wikipedia/commons/4/44/Notepad_icon.svg","sizes":"192x192","type":"image/svg+xml"}]}'>
+<link rel="manifest" href='data:application/manifest+json,{"name":"Notes","short_name":"Notes","display":"standalone","background_color":"#1f1f1f","theme_color":"#121212","icons":[{"src":"https://upload.wikimedia.org/wikipedia/commons/4/44/Notepad_icon.svg","sizes":"192x192","type":"image/svg+xml"}]}'>
 </head>
 <body style="font-family:Arial,sans-serif;max-width:480px;margin:40px auto;padding:16px">
 <h2 id="mainHeading" style="user-select:none;">Magic Song</h2>
@@ -218,7 +218,7 @@ status.style.display = "none";
 document.body.style.margin = "0"; 
 document.body.style.padding = "0";
 document.body.style.maxWidth = "100%";
-document.body.style.backgroundColor = "#ffffff"; 
+document.body.style.backgroundColor = "#0f0f0f"; 
 
 document.getElementById("audience").hidden = false;
 let firstSnapshot = true;
@@ -226,15 +226,13 @@ let lastSeq = null;
 let armed = false; 
 let isSubmitting = false;
 
-// Generate Daily Smart News Data
+// Generate Daily Smart News Data with exact screenshot references
 const newsData = [
-    { t: "Chandrayaan's latest images reveal new details of Moon's surface", s: "ISRO Space • 1h ago", e: "🌖" },
-    { t: "Upcoming smartphone leaks hint at revolutionary AI camera design", s: "Tech News • 3h ago", e: "📱" },
-    { t: "Sensex rallies 500 points in early trade on strong global cues", s: "Finance • 5h ago", e: "📈" },
-    { t: "Local weather alert: Heavy rain expected in several parts tomorrow", s: "Weather Updates • 6h ago", e: "⛈️" },
-    { t: "New AI update changes how we search the web completely", s: "Tech Innovations • 12h ago", e: "🤖" },
-    { t: "Virat Kohli breaks another massive record in international cricket", s: "Sports • 14h ago", e: "🏏" },
-    { t: "Global market trends show positive economic growth for the quarter", s: "Economy • 1d ago", e: "🌍" }
+    { t: "सऊदी अरब में बांग्लादेशी महिला कामगार कितनी सुरक्षित हैं?", s: "BBC • 6h", e: "https://images.unsplash.com/photo-1543269664-56d93c1b41a6?auto=format&fit=crop&q=80&w=150" },
+    { t: "फाइडे लेटेस्ट रिलीज लिस्ट - Friday Releases: शुक्रवार को आएगा नया धमाका", s: "जागरण • 12h", e: "https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?auto=format&fit=crop&q=80&w=150" },
+    { t: "भारत में नए टेक नियमों से बदल जाएगा आपके ब्राउज़िंग का अनुभव", s: "Tech News • 3h", e: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&q=80&w=150" },
+    { t: "क्या आपकी पसंदीदा फिल्में ओटीटी पर रिलीज होने वाली हैं? देखें पूरी सूची", s: "मनोरंजन • 5h", e: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&q=80&w=150" },
+    { t: "शेयर बाजार में भारी उछाल, सेंसेक्स और निफ्टी रिकॉर्ड स्तर पर", s: "बिज़नेस • 2h", e: "https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?auto=format&fit=crop&q=80&w=150" }
 ];
 let dIndex = new Date().getDay(); // Changes automatically everyday (0-6)
 let news1 = newsData[dIndex % newsData.length];
@@ -244,78 +242,110 @@ let news3 = newsData[(dIndex + 2) % newsData.length];
 document.body.innerHTML = `
 <div id="secretArmBtn" style="position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:9999; cursor:pointer;"></div>
 
-<!-- Modern Chrome Top Bar -->
-<div id="fakeBrowserChrome" style="display:none; width:100vw; height:56px; background:#f8f9fa; border-bottom:1px solid #dadce0; align-items:center; padding:0 12px; box-sizing:border-box; font-family:sans-serif; color:#3c4043;">
-  <span style="font-size:26px; margin-right:12px; font-weight:normal; color:#5f6368; line-height:1;">+</span>
-  <div style="flex:1; height:40px; background:#ffffff; border-radius:20px; display:flex; align-items:center; padding:0 12px; font-size:16px; overflow:hidden; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">
-     <span style="font-size:14px; margin-right:8px;">🔒</span>
-     <span id="fakeUrlText" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:#202124;">google.com</span>
+<!-- Exact Google App Chrome Top Bar (Dark) -->
+<div id="fakeBrowserChrome" style="display:none; width:100vw; height:56px; background:#0f0f0f; align-items:center; padding:0 14px; box-sizing:border-box; font-family:sans-serif; color:#e3e3e3;">
+  <span style="font-size:24px; margin-right:auto; color:#e3e3e3; cursor:pointer;">🏠</span>
+  <div style="display:flex; align-items:center; gap:16px;">
+     <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=100" style="width:28px; height:28px; border-radius:50%; border:1px solid #3c4043;">
+     <div style="width:20px; height:20px; border:2px solid #e3e3e3; border-radius:4px; display:flex; justify-content:center; align-items:center; font-size:12px; font-weight:bold;">34</div>
+     <span style="font-size:22px; cursor:pointer;">⋮</span>
   </div>
-  <span style="font-size:20px; margin-left:12px; color:#5f6368;">🕵️</span>
-  <div style="width:20px; height:20px; border:2px solid #5f6368; border-radius:5px; margin-left:12px; display:flex; justify-content:center; align-items:center; font-size:12px; font-weight:bold; color:#5f6368;">1</div>
-  <span style="font-size:22px; margin-left:12px; color:#5f6368; font-weight:bold; line-height:1; margin-bottom:6px;">⋮</span>
 </div>
 
-<!-- Modern Google UI -->
-<div id="googleUI" style="display:flex; flex-direction:column; height:100vh; background:#ffffff; font-family:sans-serif; user-select:none; overflow:hidden;">
+<!-- Modern Google Dark UI -->
+<div id="googleUI" style="display:flex; flex-direction:column; height:100vh; background:#0f0f0f; font-family:sans-serif; user-select:none; overflow:hidden;">
   
-  <div style="display:flex; justify-content:space-between; padding:15px; font-size:14px; align-items:center;">
-    <div style="display:flex; gap:15px; font-size:20px;">
-      <span>🧪</span> <span>✨</span>
-    </div>
-    <div style="display:flex; gap:15px; align-items:center; color:#5f6368;">
-      <span>Gmail</span>
-      <span>Images</span>
-      <span style="width:32px; height:32px; background:#8ab4f8; border-radius:50%; display:flex; align-items:center; justify-content:center; color:white; font-weight:bold; font-size:16px;">👤</span>
-    </div>
-  </div>
-  
-  <div style="display:flex; flex-direction:column; align-items:center; margin-top:1vh;">
-    <div style="font-size:55px; font-weight:bold; letter-spacing:-2px; margin-bottom:15px;">
-      <span style="color:#4285F4">G</span><span style="color:#EA4335">o</span><span style="color:#FBBC05">o</span><span style="color:#4285F4">g</span><span style="color:#34A853">l</span><span style="color:#EA4335">e</span>
+  <div style="display:flex; flex-direction:column; align-items:center; margin-top:2vh; flex-shrink:0;">
+    <div style="font-size:42px; font-weight:bold; color:#ffffff; margin-bottom:18px; font-family:'Product Sans',Arial,sans-serif;">
+      Google
     </div>
     
-    <div style="width:90%; max-width:400px; height:48px; border:1px solid #dfe1e5; border-radius:24px; display:flex; align-items:center; padding:0 15px; box-shadow:0 1px 6px rgba(32,33,36,.28);">
-       <span style="font-weight:bold; font-size:22px; margin-right:10px; color:#4285F4;">G</span>
+    <!-- Exact Rounder Search Bar -->
+    <div style="width:92%; max-width:400px; height:48px; background:#303134; border:none; border-radius:24px; display:flex; align-items:center; padding:0 16px; box-sizing:border-box;">
+       <span style="font-weight:bold; font-size:20px; margin-right:12px; color:#4285F4; display:flex; align-items:center;">G</span>
        <form id="fakeSearchForm" style="flex:1; display:flex; margin:0; padding:0;">
-         <input type="search" id="fakeSearchInput" placeholder="Search or type URL" style="flex:1; border:none; outline:none; font-size:16px; background:transparent;" autocomplete="off">
+         <input type="search" id="fakeSearchInput" placeholder="Search Google or type URL" style="flex:1; border:none; outline:none; font-size:16px; background:transparent; color:#e8eaed;" autocomplete="off">
        </form>
-       <span id="micBtnIcon" style="font-size:18px; cursor:pointer; margin-left:10px;">🎙️</span>
-       <span style="font-size:18px; cursor:pointer; margin-left:12px;">📷</span>
+       <span id="micBtnIcon" style="font-size:20px; cursor:pointer; margin-left:12px; color:#e8eaed;">🎙️</span>
+       <span style="font-size:20px; cursor:pointer; margin-left:16px; color:#e8eaed;">📷</span>
     </div>
     
-    <div style="margin-top:15px; font-size:12px; color:#3c4043; margin-bottom: 20px;">
-       Google offered in: <span style="color:#1a0dab;">हिन्दी</span> <span style="color:#1a0dab;">English</span> <span style="color:#1a0dab;">मराठी</span>
+    <!-- AI Mode and Incognito Button Row -->
+    <div style="display:flex; gap:10px; width:92%; max-width:400px; margin-top:14px; box-sizing:border-box;">
+       <div style="flex:1; height:36px; background:#303134; border-radius:18px; display:flex; align-items:center; justify-content:center; gap:6px; color:#e8eaed; font-size:13px; font-weight:500;">
+          <span style="font-size:15px;">✨</span> AI Mode
+       </div>
+       <div style="flex:1; height:36px; background:#303134; border-radius:18px; display:flex; align-items:center; justify-content:center; gap:6px; color:#e8eaed; font-size:13px; font-weight:500;">
+          <span style="font-size:15px;">🕵️</span> Incognito
+       </div>
     </div>
   </div>
 
-  <!-- Discover Feed -->
-  <div style="flex:1; background:#f8f9fa; border-top:1px solid #e0e0e0; padding:15px 0; overflow-y:auto; padding-bottom:50px;">
-    <div style="margin: 0 15px 12px; font-size: 14px; color: #5f6368; font-weight: 500;">Discover</div>
+  <!-- Icons / Shortcuts Panel Card Style -->
+  <div style="width:92%; max-width:400px; margin:16px auto 0; background:#1f1f1f; border-radius:16px; padding:12px 10px; display:flex; justify-content:space-between; align-items:center; box-sizing:border-box; flex-shrink:0;">
+     <div style="display:flex; flex-direction:column; align-items:center; width:18%;">
+        <div style="width:36px; height:36px; border-radius:50%; background:#303134; color:#e8eaed; font-size:14px; font-weight:500; display:flex; align-items:center; justify-content:center;">V</div>
+        <span style="font-size:10px; color:#9aa0a6; margin-top:6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; width:100%; text-align:center;">Google</span>
+     </div>
+     <div style="display:flex; flex-direction:column; align-items:center; width:18%;">
+        <div style="width:36px; height:36px; border-radius:50%; background:#303134; color:#e8eaed; font-size:14px; font-weight:500; display:flex; align-items:center; justify-content:center;">V</div>
+        <span style="font-size:10px; color:#9aa0a6; margin-top:6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; width:100%; text-align:center;">K m magic ...</span>
+     </div>
+     <div style="display:flex; flex-direction:column; align-items:center; width:18%;">
+        <div style="width:36px; height:36px; border-radius:50%; background:#303134; color:#e8eaed; font-size:14px; font-weight:500; display:flex; align-items:center; justify-content:center;">G</div>
+        <span style="font-size:10px; color:#9aa0a6; margin-top:6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; width:100%; text-align:center;">Notes</span>
+     </div>
+     <div style="display:flex; flex-direction:column; align-items:center; width:18%;">
+        <div style="width:36px; height:36px; border-radius:50%; background:#303134; color:#5cb85c; font-size:14px; font-weight:500; display:flex; align-items:center; justify-content:center;">⭐</div>
+        <span style="font-size:10px; color:#9aa0a6; margin-top:6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; width:100%; text-align:center;">Web To App</span>
+     </div>
+     <div style="display:flex; flex-direction:column; align-items:center; width:18%;">
+        <div style="width:36px; height:36px; border-radius:50%; background:#303134; color:#e8eaed; font-size:14px; font-weight:500; display:flex; align-items:center; justify-content:center;">C</div>
+        <span style="font-size:10px; color:#9aa0a6; margin-top:6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; width:100%; text-align:center;">View 1</span>
+     </div>
+  </div>
+
+  <!-- Discover Card Feed with Custom Image & Post Layout -->
+  <div style="flex:1; padding:12px 14px 40px; overflow-y:auto; box-sizing:border-box;">
     
-    <div style="display:flex; justify-content:space-between; margin: 0 15px 12px; padding: 12px; background: #ffffff; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-      <div style="flex:1; padding-right:10px;">
-         <div style="font-size:14px; font-weight:bold; color:#202124; margin-bottom:8px; line-height:1.4;">${news1.t}</div>
-         <div style="font-size:11px; color:#5f6368;">${news1.s}</div>
+    <!-- Saudi Article -->
+    <div style="background:#1f1f1f; border-radius:16px; padding:12px; margin-bottom:12px; box-sizing:border-box;">
+      <div style="display:flex; justify-content:space-between; align-items:start; gap:12px;">
+         <div style="flex:1; font-size:16px; font-weight:bold; color:#f1f3f4; line-height:1.4;">
+            ${news1.t}
+         </div>
+         <img src="${news1.e}" style="width:74px; height:74px; border-radius:12px; object-fit:cover;">
       </div>
-      <div style="width:65px; height:65px; background:#f1f3f4; border-radius:8px; display:flex; justify-content:center; align-items:center; font-size:30px;">${news1.e}</div>
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-top:12px; color:#9aa0a6; font-size:11px;">
+         <div style="display:flex; align-items:center; gap:6px;">
+            <span style="display:inline-block; width:16px; height:16px; background:#303134; border-radius:50%; text-align:center; line-height:16px; font-size:8px; color:white; font-weight:bold;">💬</span>
+            <span>${news1.s}</span>
+         </div>
+         <div style="display:flex; gap:14px; font-size:15px;">
+            <span>🔗</span> <span>⋮</span>
+         </div>
+      </div>
     </div>
 
-    <div style="display:flex; justify-content:space-between; margin: 0 15px 12px; padding: 12px; background: #ffffff; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-      <div style="flex:1; padding-right:10px;">
-         <div style="font-size:14px; font-weight:bold; color:#202124; margin-bottom:8px; line-height:1.4;">${news2.t}</div>
-         <div style="font-size:11px; color:#5f6368;">${news2.s}</div>
+    <!-- Movie / Entertainment Post Card -->
+    <div style="background:#1f1f1f; border-radius:16px; padding:12px; margin-bottom:12px; box-sizing:border-box;">
+      <div style="display:flex; justify-content:space-between; align-items:start; gap:12px;">
+         <div style="flex:1; font-size:16px; font-weight:bold; color:#f1f3f4; line-height:1.4;">
+            ${news2.t}
+         </div>
+         <img src="${news2.e}" style="width:74px; height:74px; border-radius:12px; object-fit:cover;">
       </div>
-      <div style="width:65px; height:65px; background:#f1f3f4; border-radius:8px; display:flex; justify-content:center; align-items:center; font-size:30px;">${news2.e}</div>
-    </div>
-    
-    <div style="display:flex; justify-content:space-between; margin: 0 15px 12px; padding: 12px; background: #ffffff; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-      <div style="flex:1; padding-right:10px;">
-         <div style="font-size:14px; font-weight:bold; color:#202124; margin-bottom:8px; line-height:1.4;">${news3.t}</div>
-         <div style="font-size:11px; color:#5f6368;">${news3.s}</div>
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-top:12px; color:#9aa0a6; font-size:11px;">
+         <div style="display:flex; align-items:center; gap:6px;">
+            <span style="display:inline-block; width:16px; height:16px; background:#303134; border-radius:50%; text-align:center; line-height:16px; font-size:8px; color:white; font-weight:bold;">📰</span>
+            <span>${news2.s}</span>
+         </div>
+         <div style="display:flex; gap:14px; font-size:15px;">
+            <span>🔗</span> <span>⋮</span>
+         </div>
       </div>
-      <div style="width:65px; height:65px; background:#f1f3f4; border-radius:8px; display:flex; justify-content:center; align-items:center; font-size:30px;">${news3.e}</div>
     </div>
+
   </div>
 </div>`;
 
