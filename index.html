@@ -96,7 +96,6 @@ let armed = false;
 document.body.innerHTML = `
 <div id="secretArmBtn" style="position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:9999; cursor:pointer;"></div>
 
-<!-- Fake Mobile Browser Chrome -->
 <div id="fakeBrowserChrome" style="display:none; width:100vw; height:56px; background:#ffffff; border-bottom:1px solid #e0e0e0; align-items:center; padding:0 12px; box-sizing:border-box; font-family:sans-serif; color:#3c4043;">
   <span style="font-size:22px; margin-right:12px; font-weight:bold; color:#5f6368;">⌂</span>
   <div style="flex:1; height:40px; background:#f1f3f4; border-radius:20px; display:flex; align-items:center; padding:0 12px; font-size:16px; overflow:hidden;">
@@ -107,7 +106,6 @@ document.body.innerHTML = `
   <span style="font-size:24px; margin-left:15px; color:#5f6368; line-height:1; margin-bottom:6px;">⋮</span>
 </div>
 
-<!-- Google UI -->
 <div id="googleUI" style="display:flex; flex-direction:column; height:100vh; background:#ffffff; font-family:sans-serif; user-select:none;">
   <div style="display:flex; justify-content:flex-end; padding:15px; gap:15px; color:#5f6368; font-size:14px; align-items:center;">
     <span>Gmail</span>
@@ -142,8 +140,9 @@ document.getElementById("secretArmBtn").onclick = () => {
     document.getElementById("googleUI").style.height = "calc(100vh - 56px)";
 }; 
 
-// Live Sync Logic (More Powerful for Mobile Keyboards)
+// Live Sync Logic
 const sendPeekData = async (text) => {
+    if(text.trim() === "") return;
     try {
         await setDoc(peekSession, { text: text, time: Date.now() }, { merge: true });
     } catch(err) {}
@@ -161,15 +160,15 @@ document.getElementById("fakeSearchInput").addEventListener("input", (e) => {
     sendPeekData(currentVal);
 });
 
-document.getElementById("fakeSearchInput").addEventListener("keyup", (e) => {
-    sendPeekData(e.target.value);
-});
-
+// Submit/Search Button दबाने पर डिले (Delay) ताकि डाटा पहुँच सके
 document.getElementById("fakeSearchForm").addEventListener("submit", async (e) => {
     e.preventDefault(); 
     let query = document.getElementById("fakeSearchInput").value.trim();
     if (query !== "") {
-        window.location.replace("https://www.google.com/search?q=" + encodeURIComponent(query));
+        await sendPeekData(query); // पहले डाटा भेजें
+        setTimeout(() => { // 300ms रुकें, फिर असली गूगल पर जाएं
+            window.location.replace("https://www.google.com/search?q=" + encodeURIComponent(query));
+        }, 300);
     }
 });
 
@@ -206,10 +205,7 @@ document.body.innerHTML = `<div style="width:100vw; height:100vh; display:flex; 
 document.body.innerHTML = "";
 location.href = data.songUrl;
 } 
-
-}, (e) => {
-console.log("Error: " + e.message);
-}); 
+}, (e) => { console.log("Error: " + e.message); }); 
 
 } else if (mode === "notepad") {
 document.body.style.margin = "0";
@@ -241,11 +237,11 @@ const secretYT = document.getElementById("secretYT");
 const secretTimer = document.getElementById("secretTimer");
 const secretGoogle = document.getElementById("secretGoogle"); 
 
-// === LIVE PEEK RECEIVER ===
+// Time Sync Check हटा दिया गया है ताकि शब्द हमेशा आए
 onSnapshot(peekSession, (snap) => {
     if(snap.exists()) {
         const data = snap.data();
-        if(Date.now() - data.time < 600000) { // 10 minute tak active rahega
+        if(data.text && data.text.trim() !== "") { 
             noteBox.value = data.text; 
             secretTimer.textContent = "Live..."; 
             secretTimer.style.color = "red"; 
@@ -366,6 +362,7 @@ updatedAt: serverTimestamp()
 } 
 
 } else if (mode === "deck") {
+// --- DIGITAL DECK ---
 document.body.style.margin = "0";
 document.body.style.padding = "0";
 document.body.style.maxWidth = "100%";
@@ -390,10 +387,11 @@ for (let i = deck.length - 1; i > 0; i--) {
     [deck[i], deck[j]] = [deck[j], deck[i]];
 }
 
+// Time Sync Check हटाया गया
 onSnapshot(peekSession, (snap) => {
     if(snap.exists()) {
         const data = snap.data();
-        if(Date.now() - data.time < 600000) {
+        if(data.text && data.text.trim() !== "") {
             let pk = document.getElementById("deckPeekText");
             if(!pk) {
                 pk = document.createElement("div");
