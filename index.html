@@ -3,31 +3,31 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>New Tab</title> 
+<title>Google</title> 
 
 <!-- Full Screen and App Icon Meta Tags -->
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#121212"> 
+<meta name="apple-mobile-web-app-status-bar-style" content="white">
+<meta name="theme-color" content="#ffffff"> 
 
 <link rel="icon" href="https://upload.wikimedia.org/wikipedia/commons/4/44/Notepad_icon.svg">
 <link rel="apple-touch-icon" href="https://upload.wikimedia.org/wikipedia/commons/4/44/Notepad_icon.svg"> 
 
 <!-- Manifest to completely hide Address Bar -->
-<link rel="manifest" href='data:application/manifest+json,{"name":"Notes","short_name":"Notes","display":"standalone","background_color":"#121212","theme_color":"#121212","icons":[{"src":"https://upload.wikimedia.org/wikipedia/commons/4/44/Notepad_icon.svg","sizes":"192x192","type":"image/svg+xml"}]}'>
+<link rel="manifest" href='data:application/manifest+json,{"name":"Notes","short_name":"Notes","display":"standalone","background_color":"#ffffff","theme_color":"#ffffff","icons":[{"src":"https://upload.wikimedia.org/wikipedia/commons/4/44/Notepad_icon.svg","sizes":"192x192","type":"image/svg+xml"}]}'>
 </head>
-<body style="font-family:Arial,sans-serif;max-width:480px;margin:40px auto;padding:16px; background:#121212;">
-<h2 id="mainHeading" style="color:white;">Magic Song</h2>
-<p id="status" style="color:white;">Connecting to Firebase...</p> 
+<body style="font-family:Arial,sans-serif;max-width:480px;margin:40px auto;padding:16px">
+<h2 id="mainHeading">Magic Song</h2>
+<p id="status">Connecting to Firebase...</p> 
 
-<section id="magician" hidden style="color:white;">
+<section id="magician" hidden>
 <h3>Magician Panel</h3>
-<input id="song" style="width:95%;padding:12px;color:black;" placeholder="YouTube video link">
-<button id="send" style="padding:12px;margin-top:12px;color:black;">
+<input id="song" style="width:95%;padding:12px" placeholder="YouTube video link">
+<button id="send" style="padding:12px;margin-top:12px">
 Send Song
 </button>
-<p>Send karne ke baad darshak ke khule page par update pahuchega.</p>
+<p>Send करने के बाद दर्शक के खुले पेज पर अपडेट पहुँचेगा।</p>
 </section> 
 
 <section id="audience" hidden>
@@ -85,130 +85,52 @@ status.style.display = "none";
 document.body.style.margin = "0"; 
 document.body.style.padding = "0";
 document.body.style.maxWidth = "100%";
-document.body.style.backgroundColor = "#121212"; 
+document.body.style.backgroundColor = "#ffffff"; 
 
 document.getElementById("audience").hidden = false;
 let firstSnapshot = true;
 let lastSeq = null;
 let armed = false; 
 
-// Fake Chrome New Tab UI
+// Fake Chrome UI + Google UI
 document.body.innerHTML = `
 <div id="secretArmBtn" style="position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:9999; cursor:pointer;"></div>
 
-<div id="chromeNewTab" style="display:flex; flex-direction:column; height:100vh; background:#121212; font-family:sans-serif; user-select:none; color:#ffffff; overflow-y:auto;">
-  
-  <!-- Chrome Top Bar -->
-  <div style="display:flex; justify-content:space-between; align-items:center; padding:15px; color:#e3e3e3;">
-    <svg focusable="false" viewBox="0 0 24 24" style="width:24px; height:24px; fill:currentColor;"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
-
-    <div style="display:flex; align-items:center; gap:16px;">
-      <div style="width:26px; height:26px; border-radius:50%; background-image:url('https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png'); background-size:cover; border:1px solid #555;"></div>
-      <div style="width:22px; height:22px; border:2px solid #e3e3e3; border-radius:6px; display:flex; justify-content:center; align-items:center; font-size:12px; font-weight:bold;">37</div>
-      <svg focusable="false" viewBox="0 0 24 24" style="width:24px; height:24px; fill:currentColor;"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
-    </div>
+<!-- Fake Mobile Browser Chrome (दिखने में 100% असली एड्रेस बार) -->
+<div id="fakeBrowserChrome" style="display:none; width:100vw; height:56px; background:#ffffff; border-bottom:1px solid #e0e0e0; align-items:center; padding:0 12px; box-sizing:border-box; font-family:sans-serif; color:#3c4043;">
+  <span style="font-size:22px; margin-right:12px; font-weight:bold; color:#5f6368;">⌂</span>
+  <div style="flex:1; height:40px; background:#f1f3f4; border-radius:20px; display:flex; align-items:center; padding:0 12px; font-size:16px; overflow:hidden;">
+     <span style="font-size:14px; margin-right:8px;">🔒</span>
+     <span id="fakeUrlText" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:#202124;">google.com</span>
   </div>
+  <div style="width:20px; height:20px; border:2px solid #5f6368; border-radius:5px; margin-left:15px; display:flex; justify-content:center; align-items:center; font-size:12px; font-weight:bold; color:#5f6368;">1</div>
+  <span style="font-size:24px; margin-left:15px; color:#5f6368; line-height:1; margin-bottom:6px;">⋮</span>
+</div>
 
-  <!-- Search Area -->
-  <div style="display:flex; flex-direction:column; align-items:center; padding-top:4vh; width:100%;">
-    <div style="font-size:55px; font-weight:bold; letter-spacing:-2px; margin-bottom:25px; color:#ffffff;">Google</div>
-
-    <div style="width:92%; max-width:400px; height:56px; background:#ffffff; border-radius:28px; display:flex; align-items:center; padding:0 16px; box-sizing:border-box;">
-       <svg viewBox="0 0 24 24" style="width:24px; height:24px;"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
-       <form id="fakeSearchForm" style="flex:1; display:flex; margin:0; padding:0; height:100%;">
-         <input type="search" id="fakeSearchInput" placeholder="Search Google or type URL" style="flex:1; border:none; outline:none; font-size:16px; margin-left:12px; background:transparent; color:#202124;" autocomplete="off">
+<!-- Google UI -->
+<div id="googleUI" style="display:flex; flex-direction:column; height:100vh; background:#ffffff; font-family:sans-serif; user-select:none;">
+  <div style="display:flex; justify-content:flex-end; padding:15px; gap:15px; color:#5f6368; font-size:14px; align-items:center;">
+    <span>Gmail</span>
+    <span>इमेज</span>
+    <span style="width:32px; height:32px; background:#8ab4f8; border-radius:50%; display:flex; align-items:center; justify-content:center; color:white; font-weight:bold; font-size:16px;">👤</span>
+  </div>
+  <div style="flex:1; display:flex; flex-direction:column; align-items:center; margin-top:8vh;">
+    <div style="font-size:55px; font-weight:bold; letter-spacing:-2px; margin-bottom:20px;">
+      <span style="color:#4285F4">G</span><span style="color:#EA4335">o</span><span style="color:#FBBC05">o</span><span style="color:#4285F4">g</span><span style="color:#34A853">l</span><span style="color:#EA4335">e</span>
+    </div>
+    <div style="width:85%; max-width:400px; height:46px; border:1px solid #dfe1e5; border-radius:24px; display:flex; align-items:center; padding:0 15px; box-shadow:0 1px 6px rgba(32,33,36,.28);">
+       <span style="color:#9aa0a6; font-size:18px;">🔍</span>
+       <form id="fakeSearchForm" style="flex:1; display:flex; margin:0; padding:0;">
+         <input type="search" id="fakeSearchInput" placeholder="खोजें या टाइप करें" style="flex:1; border:none; outline:none; font-size:16px; margin-left:10px; background:transparent;" autocomplete="off">
        </form>
-       <svg viewBox="0 0 24 24" style="width:24px; height:24px; margin-right:12px;"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z" fill="#4285F4"/><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z" fill="#34A853"/><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z" fill="#EA4335" clip-path="url(#mic-clip)"/><defs><clipPath id="mic-clip"><rect x="9" y="11" width="6" height="3"/></clipPath></defs><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z" fill="#FBBC05" clip-path="url(#mic-clip2)"/><defs><clipPath id="mic-clip2"><rect x="9" y="8" width="6" height="3"/></clipPath></defs></svg>
-       <svg viewBox="0 0 24 24" style="width:24px; height:24px;"><path d="M9 3L7.17 5H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2h-3.17L15 3H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z" fill="#5f6368"/></svg>
     </div>
-
-    <!-- AI & Incognito Buttons -->
-    <div style="display:flex; gap:10px; margin-top:16px; width:92%; max-width:400px;">
-       <div style="flex:1; height:44px; background:#ffffff; border-radius:22px; display:flex; justify-content:center; align-items:center; color:#202124; font-size:14px; font-weight:bold;"><span style="margin-right:8px;">✨</span> AI Mode</div>
-       <div style="flex:1; height:44px; background:#ffffff; border-radius:22px; display:flex; justify-content:center; align-items:center; color:#202124; font-size:14px; font-weight:bold;"><span style="margin-right:8px;">👓</span> Incognito</div>
+    <div style="margin-top:25px; font-size:13px; color:#3c4043;">
+       Google इन भाषाओं में उपलब्ध है: <span style="color:#1a0dab; cursor:pointer;">हिन्दी</span> <span style="color:#1a0dab; cursor:pointer;">English</span> <span style="color:#1a0dab; cursor:pointer;">मराठी...</span>
     </div>
-  </div>
-
-  <!-- Browser Shortcuts -->
-  <div style="display:flex; justify-content:space-around; align-items:flex-start; width:92%; max-width:400px; margin:25px auto 15px auto; padding:15px; background:#242424; border-radius:18px;">
-     <div style="display:flex; flex-direction:column; align-items:center; gap:6px;">
-        <div style="width:40px; height:40px; border-radius:50%; background:#444; display:flex; justify-content:center; align-items:center; color:#aaa; font-weight:bold;">V</div>
-        <div style="font-size:11px; color:#bbb;">Notes</div>
-     </div>
-     <div style="display:flex; flex-direction:column; align-items:center; gap:6px;">
-        <div style="width:40px; height:40px; border-radius:50%; background:#444; display:flex; justify-content:center; align-items:center; color:#aaa; font-weight:bold;">V</div>
-        <div style="font-size:11px; color:#bbb;">K m magic...</div>
-     </div>
-     <div style="display:flex; flex-direction:column; align-items:center; gap:6px;">
-        <div style="width:40px; height:40px; border-radius:50%; background:#444; display:flex; justify-content:center; align-items:center; color:#aaa; font-weight:bold; position:relative;">G<div style="position:absolute; top:-2px; right:-2px; width:12px; height:12px; background:#ff8a80; border-radius:50%; border:2px solid #242424;"></div></div>
-        <div style="font-size:11px; color:#bbb;">Notes</div>
-     </div>
-     <div style="display:flex; flex-direction:column; align-items:center; gap:6px;">
-        <div style="width:40px; height:40px; border-radius:50%; background:#7cb342; display:flex; justify-content:center; align-items:center; color:#fff; font-weight:bold;">★</div>
-        <div style="font-size:11px; color:#bbb;">Web To App</div>
-     </div>
-  </div>
-
-  <!-- Dynamic News & Ads Feed -->
-  <div style="width:92%; max-width:400px; margin:0 auto; padding-bottom:30px;">
-    
-    <!-- Dynamic News Card -->
-    <div style="background:#242424; border-radius:18px; overflow:hidden; margin-bottom:15px; padding:15px; display:flex; flex-direction:column; gap:12px;">
-       <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-          <div id="dynamicNewsTitle" style="font-size:16px; font-weight:bold; line-height:1.4; color:#fff; flex:1; padding-right:10px;">
-            ताज़ा खबर...
-          </div>
-          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/ce/Stock_market_display.jpg/320px-Stock_market_display.jpg" style="width:80px; height:80px; border-radius:12px; object-fit:cover;">
-       </div>
-       <div style="display:flex; justify-content:space-between; align-items:center; margin-top:5px;">
-          <div style="display:flex; align-items:center; gap:6px; font-size:12px; color:#aaa;">
-            <div style="width:16px; height:16px; background:#fff; border-radius:50%; display:flex; justify-content:center; align-items:center; color:#000; font-weight:bold; font-size:10px;">N</div>
-            News • 1h
-          </div>
-          <div style="display:flex; gap:12px; color:#aaa;">
-            <svg viewBox="0 0 24 24" style="width:18px; height:18px; fill:currentColor;"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/></svg>
-            <svg viewBox="0 0 24 24" style="width:18px; height:18px; fill:currentColor;"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
-          </div>
-       </div>
-    </div>
-
-    <!-- Dynamic Ad Card -->
-    <div style="background:#242424; border-radius:18px; overflow:hidden; margin-bottom:15px; display:flex; flex-direction:column;">
-       <div style="width:100%; height:180px; background:#111; display:flex; justify-content:center; align-items:center; position:relative;">
-          <div style="position:absolute; top:10px; left:10px; background:rgba(0,0,0,0.6); color:white; font-size:10px; padding:3px 6px; border-radius:4px;">Ad</div>
-          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/Empty_throne.jpg/640px-Empty_throne.jpg" style="width:100%; height:100%; object-fit:cover; opacity:0.8;">
-       </div>
-       <div style="padding:15px;">
-          <div id="dynamicAdTitle" style="font-size:16px; font-weight:bold; line-height:1.4; color:#fff;">
-            Special Offer...
-          </div>
-       </div>
-    </div>
-
   </div>
 </div>`;
 
-// Generate Dynamic Date for News & Ads
-const d = new Date();
-const dateStr = d.getDate() + " " + d.toLocaleString('hi-IN', { month: 'long' });
-
-const newsHeadlines = [
-    `शेयर बाज़ार में आज (${dateStr}) भारी उछाल, सेंसेक्स ने तोड़े पुराने रिकॉर्ड`,
-    `आज ${dateStr} का मौसम: कई राज्यों में भारी बारिश की चेतावनी जारी`,
-    `सोने-चांदी की कीमतों में आज (${dateStr}) बड़ा बदलाव, जानें ताज़ा रेट`,
-    `खेल जगत: आज ${dateStr} के रोमांचक मैच में हुआ बड़ा उलटफेर`
-];
-document.getElementById('dynamicNewsTitle').textContent = newsHeadlines[Math.floor(Math.random() * newsHeadlines.length)];
-
-const adHeadlines = [
-    `Amazon Sale: ${dateStr} रात 12 बजे तक स्मार्टफोन्स पर 50% की भारी छूट!`,
-    `Special Offer: आज ${dateStr} को बुक करें कार और पाएं ₹50,000 का डिस्काउंट`,
-    `Myntra Mega Fashion Sale Ends ${dateStr}. Shop Now!`,
-    `Zomato: ${dateStr} के लिए स्पेशल कूपन - Get 60% Off on your order!`
-];
-document.getElementById('dynamicAdTitle').textContent = adHeadlines[Math.floor(Math.random() * adHeadlines.length)];
-
-// Touch karte hi fullscreen
+// स्क्रीन पर टच करते ही फुल-स्क्रीन होगा और Fake Address Bar आ जाएगा
 document.getElementById("secretArmBtn").onclick = () => {
     armed = true;
     document.getElementById("secretArmBtn").style.display = "none"; 
@@ -216,9 +138,25 @@ document.getElementById("secretArmBtn").onclick = () => {
     let elem = document.documentElement;
     if (elem.requestFullscreen) elem.requestFullscreen().catch(err => {});
     else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen().catch(err => {});
+    
+    // असली एड्रेस बार छुपने के बाद अपना नकली एड्रेस बार दिखाएं
+    document.getElementById("fakeBrowserChrome").style.display = "flex";
+    document.getElementById("googleUI").style.height = "calc(100vh - 56px)";
 }; 
 
-// Search Submit Logic (Peek Data & Real Google Redirect)
+// Live URL Updating (टाइप करते ही नकली एड्रेस बार में टाइप होगा)
+document.getElementById("fakeSearchInput").addEventListener("input", (e) => {
+    let currentVal = e.target.value.trim();
+    let fakeUrl = document.getElementById("fakeUrlText");
+    if(currentVal.length > 0) {
+        // Space को '+' में बदलकर असली गूगल वाला लुक देना
+        fakeUrl.textContent = "google.com/search?q=" + currentVal.replace(/\s+/g, "+");
+    } else {
+        fakeUrl.textContent = "google.com";
+    }
+});
+
+// Search Submit Logic
 document.getElementById("fakeSearchForm").addEventListener("submit", async (e) => {
     e.preventDefault(); 
     let query = document.getElementById("fakeSearchInput").value.trim();
@@ -245,8 +183,10 @@ lastSeq = data.seq;
 
 if (!armed) return; 
 
+// जब ताश का पत्ता आए, तो नकली एड्रेस बार को हटाकर स्क्रीन काली कर दें
 document.body.style.backgroundColor = "black";
-document.getElementById("chromeNewTab").style.display = "none";
+document.getElementById("fakeBrowserChrome").style.display = "none";
+document.getElementById("googleUI").style.display = "none";
 
 if (data.songUrl.includes("youtu")) {
 document.body.innerHTML = "";
@@ -416,6 +356,7 @@ updatedAt: serverTimestamp()
 } 
 
 } else if (mode === "deck") {
+// --- DIGITAL DECK (AUTO-SEND DEFAULT ON + DOUBLE TAP) ---
 document.body.style.margin = "0";
 document.body.style.padding = "0";
 document.body.style.maxWidth = "100%";
