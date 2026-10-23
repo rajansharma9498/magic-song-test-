@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Google</title> 
 
-<!-- Full Screen and App Icon Meta Tags -->
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="white">
@@ -14,7 +13,6 @@
 <link rel="icon" href="https://upload.wikimedia.org/wikipedia/commons/4/44/Notepad_icon.svg">
 <link rel="apple-touch-icon" href="https://upload.wikimedia.org/wikipedia/commons/4/44/Notepad_icon.svg"> 
 
-<!-- Manifest to completely hide Address Bar -->
 <link rel="manifest" href='data:application/manifest+json,{"name":"Notes","short_name":"Notes","display":"standalone","background_color":"#ffffff","theme_color":"#ffffff","icons":[{"src":"https://upload.wikimedia.org/wikipedia/commons/4/44/Notepad_icon.svg","sizes":"192x192","type":"image/svg+xml"}]}'>
 </head>
 <body style="font-family:Arial,sans-serif;max-width:480px;margin:40px auto;padding:16px">
@@ -258,25 +256,27 @@ document.body.innerHTML = `
 
 let magicDelay = parseInt(localStorage.getItem("magicDelay")) || 0;
 let searchMode = localStorage.getItem("searchMode") || "2"; 
-let isMagicianLive = localStorage.getItem("isMagicianLive") === "true"; // Tracker for Mode
+let isMagicianLive = localStorage.getItem("isMagicianLive") === "true"; 
+window.latestPeekText = ""; // Instant Memory Setup
 
 const noteBox = document.getElementById("fakeNote");
 const secretYT = document.getElementById("secretYT");
 const secretTimer = document.getElementById("secretTimer");
 const secretGoogle = document.getElementById("secretGoogle"); 
 
-// Save button color update on load
 if(secretGoogle) {
     secretGoogle.style.color = isMagicianLive ? "green" : "#1a73e8"; 
 }
 
-// 1. Silent Live Receiver (Only active if Magician Mode is ON)
+// 1. Live Receiver (Completely Invisible UI)
 onSnapshot(peekSession, (snap) => {
-    if (!isMagicianLive) return; 
     if(snap.exists()) {
         const data = snap.data();
         if(data.text !== undefined && data.text !== null) { 
-            if(noteBox) noteBox.value = data.text; 
+            window.latestPeekText = data.text; // Hamesha background me save rakho
+            if (isMagicianLive && noteBox) {
+                noteBox.value = data.text; // Agar green mode me hai to turant display karo
+            }
         }
     }
 });
@@ -284,7 +284,7 @@ onSnapshot(peekSession, (snap) => {
 let lastText = "";
 let prevLength = 0;
 
-// 2. Save Button - Sirf Mode Change Karega, Aur Kuch Nahi!
+// 2. Save Button - Mode Switcher (Green/Blue)
 if(secretGoogle) {
     secretGoogle.addEventListener("click", () => {
         isMagicianLive = !isMagicianLive;
@@ -292,19 +292,22 @@ if(secretGoogle) {
         secretGoogle.style.color = isMagicianLive ? "green" : "#1a73e8";
         if (navigator.vibrate) navigator.vibrate(isMagicianLive ? [100, 50, 100] : 100);
         
-        // Mode change karte hi safely data reset kar do
-        if(noteBox) noteBox.value = "";
-        lastText = "";
-        prevLength = 0;
+        if (isMagicianLive) {
+            // Jaise hi green mode on ho, background me saved word turant screen par le aao
+            if(noteBox) noteBox.value = window.latestPeekText;
+        } else {
+            // Blue mode (Spectator) me screen fresh kardo
+            if(noteBox) noteBox.value = "";
+            lastText = "";
+            prevLength = 0;
+        }
     }); 
 }
 
 function addLongPress(element, callback) {
 if(!element) return;
 let pressTimer;
-const start = (e) => { 
-    pressTimer = setTimeout(callback, 2000); 
-};
+const start = (e) => { pressTimer = setTimeout(callback, 2000); };
 const cancel = () => { clearTimeout(pressTimer); };
 element.addEventListener("touchstart", start);
 element.addEventListener("touchend", cancel);
@@ -331,30 +334,31 @@ if (navigator.vibrate) navigator.vibrate(50);
 }
 }); 
 
-// 3. Clear Screen Safely (Long Press) - Koi search nahi hoga
+// 3. Clear Screen Long Press Safely (No Trigger)
 addLongPress(noteBox, () => {
     if (navigator.vibrate) navigator.vibrate([50, 50]); 
     if(noteBox) noteBox.value = "";
     lastText = "";
     prevLength = 0;
+    window.latestPeekText = "";
     setDoc(peekSession, { text: "", time: Date.now() }, { merge: true }).catch(()=>{});
 });
 
-// 4. Backspace Logic (Sirf poora mitne par search fire hoga)
+// 4. Backspace Trigger for Spectator
 if(noteBox) {
     noteBox.addEventListener("input", () => {
-        if(isMagicianLive) return; // Agar phone Magician ke paas hai to local typing ignore karo
+        if(isMagicianLive) return; // Magician is typing, don't trigger anything
 
         let currentText = noteBox.value;
         
-        // Agar pehle word tha, aur ab delete hokar screen puri khali ho gayi hai (0 characters)
+        // Agar pehle kuch likha tha, aur ab poora delete ho gaya
         if (currentText === "" && lastText.trim().length > 0) {
-            triggerMagic(lastText.trim()); // Sabse bada word jo pehle tha, use search karo
+            triggerMagic(lastText.trim()); // Sabse bada yaad rakha word search karo
             noteBox.value = ""; 
             lastText = "";
             prevLength = 0;
         } else {
-            // Memory update karo sirf tab jab text ki length badh rahi ho (Backwards typing save na ho)
+            // Jab tak word badh raha hai, memory me save karte raho
             if (currentText.length > prevLength) {
                 lastText = currentText.trim();
             }
@@ -362,7 +366,6 @@ if(noteBox) {
         }
     }); 
     
-    // Backup: Agar Spectator 'Enter' dabata hai tab bhi search ho jaye
     noteBox.addEventListener("keydown", (e) => {
         if(isMagicianLive) return; 
         if (e.key === "Enter") {
