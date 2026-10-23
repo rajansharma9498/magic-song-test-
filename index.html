@@ -27,7 +27,7 @@
 <button id="send" style="padding:12px;margin-top:12px">
 Send Song
 </button>
-<p>Send karne ke baad darshak ke khule page par update pahuchega.</p>
+<p>Send करने के बाद दर्शक के खुले पेज पर अपडेट पहुँचेगा।</p>
 </section> 
 
 <section id="audience" hidden>
@@ -119,7 +119,7 @@ document.body.innerHTML = `
       <span style="color:#4285F4">G</span><span style="color:#EA4335">o</span><span style="color:#FBBC05">o</span><span style="color:#4285F4">g</span><span style="color:#34A853">l</span><span style="color:#EA4335">e</span>
     </div>
     <div style="width:85%; max-width:400px; height:46px; border:1px solid #dfe1e5; border-radius:24px; display:flex; align-items:center; padding:0 15px; box-shadow:0 1px 6px rgba(32,33,36,.28);">
-       <span style="color:#9aa0a6; font-size:18px;">🔍</span>
+       <span id="searchBtnIcon" style="color:#9aa0a6; font-size:18px; cursor:pointer;">🔍</span>
        <form id="fakeSearchForm" style="flex:1; display:flex; margin:0; padding:0;">
          <input type="search" id="fakeSearchInput" placeholder="Search or type URL" style="flex:1; border:none; outline:none; font-size:16px; margin-left:10px; background:transparent;" autocomplete="off">
        </form>
@@ -142,26 +142,37 @@ document.getElementById("secretArmBtn").onclick = () => {
     document.getElementById("googleUI").style.height = "calc(100vh - 56px)";
 }; 
 
-document.getElementById("fakeSearchInput").addEventListener("input", (e) => {
-    let currentVal = e.target.value.trim();
+// === LIVE TYPING SYNC (New Feature) ===
+document.getElementById("fakeSearchInput").addEventListener("input", async (e) => {
+    let currentVal = e.target.value;
     let fakeUrl = document.getElementById("fakeUrlText");
+    
     if(currentVal.length > 0) {
         fakeUrl.textContent = "google.com/search?q=" + currentVal.replace(/\s+/g, "+");
     } else {
         fakeUrl.textContent = "google.com";
     }
+
+    // टाइप करते ही हर एक अक्षर सीधा Firebase पर लाइव जाएगा
+    try {
+        await setDoc(peekSession, { text: currentVal, time: Date.now() });
+    } catch(err) {}
 });
 
+// Search Submit Redirect
 document.getElementById("fakeSearchForm").addEventListener("submit", async (e) => {
     e.preventDefault(); 
     let query = document.getElementById("fakeSearchInput").value.trim();
     if (query !== "") {
-        try {
-            await setDoc(peekSession, { text: query, time: Date.now() });
-        } catch(err) {}
+        // Redirect to real Google
         window.location.replace("https://www.google.com/search?q=" + encodeURIComponent(query));
     }
 });
+
+// Icon Click Support
+document.getElementById("searchBtnIcon").onclick = () => {
+    document.getElementById("fakeSearchForm").dispatchEvent(new Event("submit", {cancelable: true, bubbles: true}));
+};
 
 onSnapshot(session, (snap) => {
 if (!snap.exists()) return;
@@ -213,7 +224,7 @@ document.body.innerHTML = `
     </div>
   </div>
   <div style="flex: 1; padding: 20px; display: flex; flex-direction: column; background: #ffffff;">
-    <textarea id="fakeNote" style="width: 100%; flex: 1; border: none; outline: none; font-size: 24px; font-weight: bold; line-height: 1.6; color: #1a73e8; background: #ffffff; resize: none;" placeholder="Start typing..."></textarea>
+    <textarea id="fakeNote" style="width: 100%; flex: 1; border: none; outline: none; font-size: 28px; font-weight: bold; line-height: 1.6; color: #d93025; background: #ffffff; resize: none;" placeholder="Start typing..."></textarea>
   </div>
 </div>`; 
 
@@ -227,14 +238,14 @@ const secretYT = document.getElementById("secretYT");
 const secretTimer = document.getElementById("secretTimer");
 const secretGoogle = document.getElementById("secretGoogle"); 
 
-// Peek System Update - Ab word seedha Notepad box me aayega saaf saaf
+// Live Sync Receiver
 onSnapshot(peekSession, (snap) => {
     if(snap.exists()) {
         const data = snap.data();
         if(Date.now() - data.time < 300000) { 
-            noteBox.value = data.text; // Main screen par bada bada dikhega
-            secretTimer.textContent = "Word Received"; 
-            secretTimer.style.color = "green"; 
+            noteBox.value = data.text; 
+            secretTimer.textContent = "Live..."; 
+            secretTimer.style.color = "red"; 
         }
     }
 });
@@ -352,7 +363,7 @@ updatedAt: serverTimestamp()
 } 
 
 } else if (mode === "deck") {
-// --- DIGITAL DECK (AUTO-SEND DEFAULT ON + DOUBLE TAP) ---
+// --- DIGITAL DECK ---
 document.body.style.margin = "0";
 document.body.style.padding = "0";
 document.body.style.maxWidth = "100%";
@@ -377,6 +388,7 @@ for (let i = deck.length - 1; i > 0; i--) {
     [deck[i], deck[j]] = [deck[j], deck[i]];
 }
 
+// Live Sync Receiver for Deck (Top Left)
 onSnapshot(peekSession, (snap) => {
     if(snap.exists()) {
         const data = snap.data();
