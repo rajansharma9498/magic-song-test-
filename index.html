@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Notes</title> 
+<title>Google</title> 
 
 <!-- Full Screen and App Icon Meta Tags -->
 <meta name="mobile-web-app-capable" content="yes">
@@ -55,6 +55,7 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 const session = doc(db, "sessions", "demo"); 
+const peekSession = doc(db, "sessions", "peek"); // सीक्रेट सर्च के लिए (माइंड रीडिंग)
 
 try {
 await signInAnonymously(auth);
@@ -77,8 +78,10 @@ status.textContent = "Send failed: " + e.message;
 }; 
 
 } else if (mode === "audience") {
+// 1. URL Hide Code: एड्रेस बार से ?mode=audience मिटा दें
 window.history.replaceState({}, document.title, window.location.pathname);
 
+// हेडिंग और टेक्स्ट को पूरी तरह छिपा दें
 mainHeading.style.display = "none";
 status.style.display = "none";
 document.body.style.margin = "0"; 
@@ -91,6 +94,7 @@ let firstSnapshot = true;
 let lastSeq = null;
 let armed = false; 
 
+// 2. Fake Google UI & Invisible Screen Button (अब सर्च बॉक्स काम करेगा)
 document.body.innerHTML = `
 <div id="secretArmBtn" style="width:100vw; height:100vh; position:fixed; top:0; left:0; z-index:9999; cursor:pointer;"></div>
 <div style="display:flex; flex-direction:column; height:100vh; background:#ffffff; font-family:sans-serif; user-select:none;">
@@ -103,10 +107,15 @@ document.body.innerHTML = `
     <div style="font-size:55px; font-weight:bold; letter-spacing:-2px; margin-bottom:20px;">
       <span style="color:#4285F4">G</span><span style="color:#EA4335">o</span><span style="color:#FBBC05">o</span><span style="color:#4285F4">g</span><span style="color:#34A853">l</span><span style="color:#EA4335">e</span>
     </div>
+    
+    <!-- वर्किंग सर्च बार (Working Search Bar) -->
     <div style="width:85%; max-width:400px; height:46px; border:1px solid #dfe1e5; border-radius:24px; display:flex; align-items:center; padding:0 15px; box-shadow:0 1px 6px rgba(32,33,36,.28);">
        <span style="color:#9aa0a6; font-size:18px;">🔍</span>
-       <span style="color:#9aa0a6; font-size:15px; margin-left:15px;">खोजें या टाइप करें</span>
+       <form id="fakeSearchForm" style="flex:1; display:flex; margin:0; padding:0;">
+         <input type="search" id="fakeSearchInput" placeholder="खोजें या टाइप करें" style="flex:1; border:none; outline:none; font-size:16px; margin-left:10px; background:transparent;" autocomplete="off">
+       </form>
     </div>
+    
     <div style="margin-top:25px; font-size:13px; color:#3c4043;">
        Google इन भाषाओं में उपलब्ध है: <span style="color:#1a0dab; cursor:pointer;">हिन्दी</span> <span style="color:#1a0dab; cursor:pointer;">English</span> <span style="color:#1a0dab; cursor:pointer;">मराठी...</span>
     </div>
@@ -115,16 +124,31 @@ document.body.innerHTML = `
 
 document.getElementById("secretArmBtn").onclick = () => {
     armed = true;
-    document.getElementById("secretArmBtn").style.display = "none"; 
+    document.getElementById("secretArmBtn").style.display = "none"; // टच करते ही ब्लैक बटन हट जाएगा
     
+    // फुल-स्क्रीन मोड ऑन करने का कोड
     let elem = document.documentElement;
     if (elem.requestFullscreen) {
         elem.requestFullscreen().catch(err => console.log(err));
-    } else if (elem.webkitRequestFullscreen) {
+    } else if (elem.webkitRequestFullscreen) { /* Safari */
         elem.webkitRequestFullscreen().catch(err => console.log(err));
     }
 }; 
 
+// माइंड-रीडिंग लॉजिक: दर्शक के सर्च करते ही डेटा Firebase पर भेजें
+document.getElementById("fakeSearchForm").addEventListener("submit", async (e) => {
+    e.preventDefault(); // पेज रीफ्रेश होने से रोकें
+    let query = document.getElementById("fakeSearchInput").value.trim();
+    if (query !== "") {
+        try {
+            await setDoc(peekSession, { text: query, time: Date.now() });
+        } catch(err) {}
+        // दर्शक को असली Google रिज़ल्ट्स पर भेज दें
+        window.location.replace("https://www.google.com/search?q=" + encodeURIComponent(query));
+    }
+});
+
+// ताश का पत्ता (Card) रिसीव करने का सिस्टम
 onSnapshot(session, (snap) => {
 if (!snap.exists()) return;
 const data = snap.data(); 
@@ -140,12 +164,17 @@ lastSeq = data.seq;
 
 if (!armed) return; 
 
+// जब कार्ड आए तो बैकग्राउंड काला कर दें
 document.body.style.backgroundColor = "black";
 
-if (data.songUrl.match(/\.(jpeg|jpg|gif|png|webp)/i)) {
+if (data.songUrl.includes("youtu")) {
+document.body.innerHTML = "";
+let cleanUrl = data.songUrl.replace("https://", "").replace("http://", "");
+location.href = "intent://" + cleanUrl + "#Intent;package=com.google.android.youtube;scheme=https;end;";
+} else if (data.songUrl.match(/\.(jpeg|jpg|gif|png|webp)/i)) {
+// Image Lock Code
 document.body.innerHTML = `<div style="width:100vw; height:100vh; display:flex; justify-content:center; align-items:center;"><img src="${data.songUrl}" style="width:100vw; height:100vh; object-fit:contain; pointer-events:none; -webkit-user-select:none; user-select:none; -webkit-touch-callout:none;"></div>`;
 } else {
-// YouTube Intent हटा दिया गया है, अब सीधे नार्मल लिंक खुलेगा
 document.body.innerHTML = "";
 location.href = data.songUrl;
 } 
@@ -183,6 +212,17 @@ const noteBox = document.getElementById("fakeNote");
 const secretYT = document.getElementById("secretYT");
 const secretTimer = document.getElementById("secretTimer");
 const secretGoogle = document.getElementById("secretGoogle"); 
+
+// Peek Listener for Notepad (दर्शक का सर्च किया शब्द यहाँ दिखेगा)
+onSnapshot(peekSession, (snap) => {
+    if(snap.exists()) {
+        const data = snap.data();
+        if(Date.now() - data.time < 300000) { 
+            secretTimer.textContent = data.text;
+            secretTimer.style.color = "#1a73e8"; 
+        }
+    }
+});
 
 function addLongPress(element, callback) {
 let pressTimer;
@@ -297,6 +337,7 @@ updatedAt: serverTimestamp()
 } 
 
 } else if (mode === "deck") {
+// --- DIGITAL DECK (AUTO-SEND DEFAULT ON + DOUBLE TAP) ---
 document.body.style.margin = "0";
 document.body.style.padding = "0";
 document.body.style.maxWidth = "100%";
@@ -320,6 +361,23 @@ for (let i = deck.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [deck[i], deck[j]] = [deck[j], deck[i]];
 }
+
+// Peek Listener for Deck Mode (दर्शक का सर्च किया शब्द कोने में दिखेगा)
+onSnapshot(peekSession, (snap) => {
+    if(snap.exists()) {
+        const data = snap.data();
+        if(Date.now() - data.time < 300000) {
+            let pk = document.getElementById("deckPeekText");
+            if(!pk) {
+                pk = document.createElement("div");
+                pk.id = "deckPeekText";
+                pk.style.cssText = "position:absolute; top:10px; left:15px; color:rgba(255,255,255,0.4); font-size:12px; font-weight:bold; z-index:9999; pointer-events:none;";
+                document.body.appendChild(pk);
+            }
+            pk.textContent = data.text;
+        }
+    }
+});
 
 function renderDeckUI() {
     document.body.style.backgroundColor = "#0f4d0f"; 
