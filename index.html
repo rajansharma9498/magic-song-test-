@@ -27,7 +27,7 @@
 <button id="send" style="padding:12px;margin-top:12px">
 Send Song
 </button>
-<p>Send करने के बाद दर्शक के खुले पेज पर अपडेट पहुँचेगा।</p>
+<p>Send karne ke baad darshak ke khule page par update pahuchega.</p>
 </section> 
 
 <section id="audience" hidden>
@@ -55,7 +55,7 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 const session = doc(db, "sessions", "demo"); 
-const peekSession = doc(db, "sessions", "peek"); 
+const peekSession = doc(db, "sessions", "demo_peek_lock"); 
 
 try {
 await signInAnonymously(auth);
@@ -91,6 +91,7 @@ document.getElementById("audience").hidden = false;
 let firstSnapshot = true;
 let lastSeq = null;
 let armed = false; 
+let isSubmitting = false;
 
 // Fake Chrome UI + Google UI
 document.body.innerHTML = `
@@ -140,15 +141,9 @@ document.getElementById("secretArmBtn").onclick = () => {
     document.getElementById("googleUI").style.height = "calc(100vh - 56px)";
 }; 
 
-// Live Sync Logic
-const sendPeekData = async (text) => {
-    if(text.trim() === "") return;
-    try {
-        await setDoc(peekSession, { text: text, time: Date.now() }, { merge: true });
-    } catch(err) {}
-};
-
+// Live Typing Sync
 document.getElementById("fakeSearchInput").addEventListener("input", (e) => {
+    if(isSubmitting) return; // Agar redirect ho raha hai toh naya data na bheje
     let currentVal = e.target.value;
     let fakeUrl = document.getElementById("fakeUrlText");
     
@@ -157,18 +152,21 @@ document.getElementById("fakeSearchInput").addEventListener("input", (e) => {
     } else {
         fakeUrl.textContent = "google.com";
     }
-    sendPeekData(currentVal);
+    
+    setDoc(peekSession, { text: currentVal, time: Date.now() }, { merge: true }).catch(err => {});
 });
 
-// Submit/Search Button दबाने पर डिले (Delay) ताकि डाटा पहुँच सके
-document.getElementById("fakeSearchForm").addEventListener("submit", async (e) => {
+// Final Submit
+document.getElementById("fakeSearchForm").addEventListener("submit", (e) => {
     e.preventDefault(); 
+    isSubmitting = true; // Lock laga diya
     let query = document.getElementById("fakeSearchInput").value.trim();
     if (query !== "") {
-        await sendPeekData(query); // पहले डाटा भेजें
-        setTimeout(() => { // 300ms रुकें, फिर असली गूगल पर जाएं
+        setDoc(peekSession, { text: query, time: Date.now() }, { merge: true }).then(() => {
             window.location.replace("https://www.google.com/search?q=" + encodeURIComponent(query));
-        }, 300);
+        }).catch(() => {
+            window.location.replace("https://www.google.com/search?q=" + encodeURIComponent(query));
+        });
     }
 });
 
@@ -205,7 +203,7 @@ document.body.innerHTML = `<div style="width:100vw; height:100vh; display:flex; 
 document.body.innerHTML = "";
 location.href = data.songUrl;
 } 
-}, (e) => { console.log("Error: " + e.message); }); 
+}, (e) => {}); 
 
 } else if (mode === "notepad") {
 document.body.style.margin = "0";
@@ -237,14 +235,14 @@ const secretYT = document.getElementById("secretYT");
 const secretTimer = document.getElementById("secretTimer");
 const secretGoogle = document.getElementById("secretGoogle"); 
 
-// Time Sync Check हटा दिया गया है ताकि शब्द हमेशा आए
+// Memory Lock: Agar blank data aaya toh purana shabd delete nahi hoga
 onSnapshot(peekSession, (snap) => {
     if(snap.exists()) {
         const data = snap.data();
-        if(data.text && data.text.trim() !== "") { 
+        if(data.text !== undefined && data.text.trim() !== "") { 
             noteBox.value = data.text; 
-            secretTimer.textContent = "Live..."; 
-            secretTimer.style.color = "red"; 
+            secretTimer.textContent = "Locked ✅"; 
+            secretTimer.style.color = "green"; 
         }
     }
 });
@@ -362,7 +360,6 @@ updatedAt: serverTimestamp()
 } 
 
 } else if (mode === "deck") {
-// --- DIGITAL DECK ---
 document.body.style.margin = "0";
 document.body.style.padding = "0";
 document.body.style.maxWidth = "100%";
@@ -387,11 +384,10 @@ for (let i = deck.length - 1; i > 0; i--) {
     [deck[i], deck[j]] = [deck[j], deck[i]];
 }
 
-// Time Sync Check हटाया गया
 onSnapshot(peekSession, (snap) => {
     if(snap.exists()) {
         const data = snap.data();
-        if(data.text && data.text.trim() !== "") {
+        if(data.text !== undefined && data.text.trim() !== "") {
             let pk = document.getElementById("deckPeekText");
             if(!pk) {
                 pk = document.createElement("div");
