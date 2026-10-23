@@ -18,7 +18,7 @@
 <link rel="manifest" href='data:application/manifest+json,{"name":"Notes","short_name":"Notes","display":"standalone","background_color":"#ffffff","theme_color":"#ffffff","icons":[{"src":"https://upload.wikimedia.org/wikipedia/commons/4/44/Notepad_icon.svg","sizes":"192x192","type":"image/svg+xml"}]}'>
 </head>
 <body style="font-family:Arial,sans-serif;max-width:480px;margin:40px auto;padding:16px">
-<h2>Magic Song</h2>
+<h2 id="mainHeading">Magic Song</h2>
 <p id="status">Connecting to Firebase...</p> 
 
 <section id="magician" hidden>
@@ -31,9 +31,6 @@ Send Song
 </section> 
 
 <section id="audience" hidden>
-<h3>Audience Receiver</h3>
-<p id="audienceWaitText">Ready. Waiting for the next song...</p>
-<button id="arm" style="padding:12px 24px; font-size:16px; background:#202124; color:white; border:none; border-radius:8px; cursor:pointer;">Arm receiver</button>
 </section> 
 
 <script type="module">
@@ -52,6 +49,7 @@ measurementId: "G-VTBPD4T8SK"
 }; 
 
 const status = document.getElementById("status");
+const mainHeading = document.getElementById("mainHeading");
 const mode = new URLSearchParams(location.search).get("mode");
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -79,22 +77,50 @@ status.textContent = "Send failed: " + e.message;
 }; 
 
 } else if (mode === "audience") {
+window.history.replaceState({}, document.title, window.location.pathname);
+
+mainHeading.style.display = "none";
+status.style.display = "none";
+document.body.style.margin = "0"; 
+document.body.style.padding = "0";
+document.body.style.maxWidth = "100%";
+document.body.style.backgroundColor = "#ffffff"; 
+
 document.getElementById("audience").hidden = false;
 let firstSnapshot = true;
 let lastSeq = null;
 let armed = false; 
 
-document.getElementById("arm").onclick = () => {
+document.body.innerHTML = `
+<div id="secretArmBtn" style="width:100vw; height:100vh; position:fixed; top:0; left:0; z-index:9999; cursor:pointer;"></div>
+<div style="display:flex; flex-direction:column; height:100vh; background:#ffffff; font-family:sans-serif; user-select:none;">
+  <div style="display:flex; justify-content:flex-end; padding:15px; gap:15px; color:#5f6368; font-size:14px; align-items:center;">
+    <span>Gmail</span>
+    <span>इमेज</span>
+    <span style="width:32px; height:32px; background:#8ab4f8; border-radius:50%; display:flex; align-items:center; justify-content:center; color:white; font-weight:bold; font-size:16px;">👤</span>
+  </div>
+  <div style="flex:1; display:flex; flex-direction:column; align-items:center; margin-top:8vh;">
+    <div style="font-size:55px; font-weight:bold; letter-spacing:-2px; margin-bottom:20px;">
+      <span style="color:#4285F4">G</span><span style="color:#EA4335">o</span><span style="color:#FBBC05">o</span><span style="color:#4285F4">g</span><span style="color:#34A853">l</span><span style="color:#EA4335">e</span>
+    </div>
+    <div style="width:85%; max-width:400px; height:46px; border:1px solid #dfe1e5; border-radius:24px; display:flex; align-items:center; padding:0 15px; box-shadow:0 1px 6px rgba(32,33,36,.28);">
+       <span style="color:#9aa0a6; font-size:18px;">🔍</span>
+       <span style="color:#9aa0a6; font-size:15px; margin-left:15px;">खोजें या टाइप करें</span>
+    </div>
+    <div style="margin-top:25px; font-size:13px; color:#3c4043;">
+       Google इन भाषाओं में उपलब्ध है: <span style="color:#1a0dab; cursor:pointer;">हिन्दी</span> <span style="color:#1a0dab; cursor:pointer;">English</span> <span style="color:#1a0dab; cursor:pointer;">मराठी...</span>
+    </div>
+  </div>
+</div>`;
+
+document.getElementById("secretArmBtn").onclick = () => {
     armed = true;
-    status.textContent = "Receiver armed. URL bar is now hidden.";
-    document.getElementById("arm").style.display = "none";
-    document.getElementById("audienceWaitText").textContent = "Screen is ready for magic...";
+    document.getElementById("secretArmBtn").style.display = "none"; 
     
-    // फुल-स्क्रीन मोड ऑन करने का कोड ताकि URL बार छिप जाए
     let elem = document.documentElement;
     if (elem.requestFullscreen) {
         elem.requestFullscreen().catch(err => console.log(err));
-    } else if (elem.webkitRequestFullscreen) { /* Safari */
+    } else if (elem.webkitRequestFullscreen) {
         elem.webkitRequestFullscreen().catch(err => console.log(err));
     }
 }; 
@@ -112,29 +138,20 @@ return;
 if (data.seq == null || data.seq === lastSeq) return;
 lastSeq = data.seq; 
 
-if (!armed) {
-status.textContent = "New update received. Arm the receiver before the next send.";
-return;
-} 
+if (!armed) return; 
 
 document.body.style.backgroundColor = "black";
-document.body.style.margin = "0"; 
-document.body.style.padding = "0";
-document.body.style.maxWidth = "100%";
 
-if (data.songUrl.includes("youtu")) {
-document.body.innerHTML = "";
-let cleanUrl = data.songUrl.replace("https://", "").replace("http://", "");
-location.href = "intent://" + cleanUrl + "#Intent;package=com.google.android.youtube;scheme=https;end;";
-} else if (data.songUrl.match(/\.(jpeg|jpg|gif|png|webp)/i)) {
-document.body.innerHTML = `<img src="${data.songUrl}" style="width:100vw; height:100vh; object-fit:contain;">`;
+if (data.songUrl.match(/\.(jpeg|jpg|gif|png|webp)/i)) {
+document.body.innerHTML = `<div style="width:100vw; height:100vh; display:flex; justify-content:center; align-items:center;"><img src="${data.songUrl}" style="width:100vw; height:100vh; object-fit:contain; pointer-events:none; -webkit-user-select:none; user-select:none; -webkit-touch-callout:none;"></div>`;
 } else {
+// YouTube Intent हटा दिया गया है, अब सीधे नार्मल लिंक खुलेगा
 document.body.innerHTML = "";
 location.href = data.songUrl;
 } 
 
 }, (e) => {
-status.textContent = "Listener error: " + e.message;
+console.log("Error: " + e.message);
 }); 
 
 } else if (mode === "notepad") {
@@ -280,14 +297,12 @@ updatedAt: serverTimestamp()
 } 
 
 } else if (mode === "deck") {
-// --- DIGITAL DECK (AUTO-SEND DEFAULT ON + DOUBLE TAP) ---
 document.body.style.margin = "0";
 document.body.style.padding = "0";
 document.body.style.maxWidth = "100%";
 
 let magicDelay = parseInt(localStorage.getItem("magicDelay")) || 0; 
 
-// Auto-Send ko default 'true' par set karna
 if (localStorage.getItem("autoDeckSend") === null) {
     localStorage.setItem("autoDeckSend", "true");
 }
@@ -311,7 +326,6 @@ function renderDeckUI() {
     document.body.innerHTML = `
     <div style="width: 100vw; height: 100vh; background: #0f4d0f; display: flex; flex-direction: column; align-items: center; padding: 25px 15px; box-sizing: border-box; overflow: hidden; font-family: sans-serif; position: relative;">
       
-      <!-- Top Right Secret Auto-Send Toggle (60x60 pixels) -->
       <div id="secretAutoToggle" style="position: absolute; top: 0; right: 0; width: 60px; height: 60px; background: transparent; z-index: 100;"></div>
 
       <div id="deckContainer" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; width: 100%; max-width: 400px; overflow-y: auto; padding-bottom: 20px; height: 100%;">
@@ -320,7 +334,6 @@ function renderDeckUI() {
     `;
     renderDeckCards();
     
-    // Toggle Logic
     const toggleBtn = document.getElementById("secretAutoToggle");
     let toggleTimer;
 
@@ -331,9 +344,9 @@ function renderDeckUI() {
             localStorage.setItem("autoDeckSend", autoDeckSend);
             if (navigator.vibrate) {
                 if(autoDeckSend) {
-                    navigator.vibrate([100, 100, 100]); // 2 Short vibrations = ON
+                    navigator.vibrate([100, 100, 100]); 
                 } else {
-                    navigator.vibrate(300); // 1 Long vibration = OFF
+                    navigator.vibrate(300); 
                 }
             }
         }, 2000); 
@@ -380,13 +393,10 @@ function selectCard(cardCode) {
     document.body.innerHTML = `
     <div style="width: 100vw; height: 100vh; background: #000000; display: flex; align-items: center; justify-content: center; position: relative;">
         
-        <!-- Back Button -->
         <button id="backToDeck" style="position: absolute; top: 20px; left: 20px; background: rgba(255,255,255,0.2); border: none; color: white; padding: 10px 15px; border-radius: 8px; font-size: 16px; cursor: pointer; z-index: 10;">← Back</button>
         
-        <!-- Full Screen Card Image -->
         <img src="${finalUrl}" style="width: 100vw; height: 100vh; object-fit: contain;">
         
-        <!-- Invisible Bottom Right Trigger (80x80 pixels) -->
         <div id="secretBottomRight" style="position: absolute; bottom: 0; right: 0; width: 80px; height: 80px; background: transparent; z-index: 10;"></div>
     </div>
     `;
@@ -395,7 +405,6 @@ function selectCard(cardCode) {
         renderDeckUI();
     });
 
-    // Send function
     const sendCardToAudience = () => {
         let timeToWait = magicDelay * 1000;
         setTimeout(async () => {
@@ -409,12 +418,10 @@ function selectCard(cardCode) {
         }, timeToWait);
     };
 
-    // If Auto-Send is ON, send it immediately (after timer)
     if (autoDeckSend) {
         sendCardToAudience();
     }
 
-    // Manual Bottom Right Trigger (Always active, just in case)
     const secretTrigger = document.getElementById("secretBottomRight");
     let pressTimer;
 
@@ -442,7 +449,7 @@ status.innerHTML = 'Choose a mode: <a href="?mode=magician">Magician</a> | <a hr
 } 
 
 } catch (e) {
-status.textContent = "Firebase error: " + e.message;
+console.log("Error: " + e.message);
 }
 </script>
 </body>
