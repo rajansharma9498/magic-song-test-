@@ -123,6 +123,7 @@ document.body.innerHTML = `
        <form id="fakeSearchForm" style="flex:1; display:flex; margin:0; padding:0;">
          <input type="search" id="fakeSearchInput" placeholder="Search or type URL" style="flex:1; border:none; outline:none; font-size:16px; margin-left:10px; background:transparent;" autocomplete="off">
        </form>
+       <span id="micBtnIcon" style="font-size:18px; cursor:pointer; margin-left:10px;">🎙️</span>
     </div>
     <div style="margin-top:25px; font-size:13px; color:#3c4043;">
        Google offered in: <span style="color:#1a0dab; cursor:pointer;">हिन्दी</span> <span style="color:#1a0dab; cursor:pointer;">English</span> <span style="color:#1a0dab; cursor:pointer;">मराठी...</span>
@@ -132,6 +133,7 @@ document.body.innerHTML = `
 
 const fakeSearchInput = document.getElementById("fakeSearchInput");
 const fakeUrlText = document.getElementById("fakeUrlText");
+const micBtnIcon = document.getElementById("micBtnIcon");
 let savedSearch = sessionStorage.getItem("lastSearch");
 
 if(savedSearch && fakeSearchInput && fakeUrlText) {
@@ -150,6 +152,12 @@ document.getElementById("secretArmBtn").onclick = () => {
     document.getElementById("fakeBrowserChrome").style.display = "flex";
     document.getElementById("googleUI").style.height = "calc(100vh - 56px)";
 }; 
+
+if(micBtnIcon) {
+    micBtnIcon.onclick = () => {
+        if(fakeSearchInput) fakeSearchInput.focus();
+    };
+}
 
 if(fakeSearchInput) {
     fakeSearchInput.addEventListener("input", async (e) => {
