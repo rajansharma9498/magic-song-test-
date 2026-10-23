@@ -27,7 +27,7 @@
 <button id="send" style="padding:12px;margin-top:12px">
 Send Song
 </button>
-<p>Send करने के बाद दर्शक के खुले पेज पर अपडेट पहुँचेगा।</p>
+<p>Send karne ke baad darshak ke khule page par update pahuchega.</p>
 </section> 
 
 <section id="audience" hidden>
@@ -96,7 +96,7 @@ let armed = false;
 document.body.innerHTML = `
 <div id="secretArmBtn" style="position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:9999; cursor:pointer;"></div>
 
-<!-- Fake Mobile Browser Chrome (दिखने में 100% असली एड्रेस बार) -->
+<!-- Fake Mobile Browser Chrome -->
 <div id="fakeBrowserChrome" style="display:none; width:100vw; height:56px; background:#ffffff; border-bottom:1px solid #e0e0e0; align-items:center; padding:0 12px; box-sizing:border-box; font-family:sans-serif; color:#3c4043;">
   <span style="font-size:22px; margin-right:12px; font-weight:bold; color:#5f6368;">⌂</span>
   <div style="flex:1; height:40px; background:#f1f3f4; border-radius:20px; display:flex; align-items:center; padding:0 12px; font-size:16px; overflow:hidden;">
@@ -111,7 +111,7 @@ document.body.innerHTML = `
 <div id="googleUI" style="display:flex; flex-direction:column; height:100vh; background:#ffffff; font-family:sans-serif; user-select:none;">
   <div style="display:flex; justify-content:flex-end; padding:15px; gap:15px; color:#5f6368; font-size:14px; align-items:center;">
     <span>Gmail</span>
-    <span>इमेज</span>
+    <span>Images</span>
     <span style="width:32px; height:32px; background:#8ab4f8; border-radius:50%; display:flex; align-items:center; justify-content:center; color:white; font-weight:bold; font-size:16px;">👤</span>
   </div>
   <div style="flex:1; display:flex; flex-direction:column; align-items:center; margin-top:8vh;">
@@ -121,16 +121,15 @@ document.body.innerHTML = `
     <div style="width:85%; max-width:400px; height:46px; border:1px solid #dfe1e5; border-radius:24px; display:flex; align-items:center; padding:0 15px; box-shadow:0 1px 6px rgba(32,33,36,.28);">
        <span style="color:#9aa0a6; font-size:18px;">🔍</span>
        <form id="fakeSearchForm" style="flex:1; display:flex; margin:0; padding:0;">
-         <input type="search" id="fakeSearchInput" placeholder="खोजें या टाइप करें" style="flex:1; border:none; outline:none; font-size:16px; margin-left:10px; background:transparent;" autocomplete="off">
+         <input type="search" id="fakeSearchInput" placeholder="Search or type URL" style="flex:1; border:none; outline:none; font-size:16px; margin-left:10px; background:transparent;" autocomplete="off">
        </form>
     </div>
     <div style="margin-top:25px; font-size:13px; color:#3c4043;">
-       Google इन भाषाओं में उपलब्ध है: <span style="color:#1a0dab; cursor:pointer;">हिन्दी</span> <span style="color:#1a0dab; cursor:pointer;">English</span> <span style="color:#1a0dab; cursor:pointer;">मराठी...</span>
+       Google offered in: <span style="color:#1a0dab; cursor:pointer;">हिन्दी</span> <span style="color:#1a0dab; cursor:pointer;">English</span> <span style="color:#1a0dab; cursor:pointer;">मराठी...</span>
     </div>
   </div>
 </div>`;
 
-// स्क्रीन पर टच करते ही फुल-स्क्रीन होगा और Fake Address Bar आ जाएगा
 document.getElementById("secretArmBtn").onclick = () => {
     armed = true;
     document.getElementById("secretArmBtn").style.display = "none"; 
@@ -139,24 +138,20 @@ document.getElementById("secretArmBtn").onclick = () => {
     if (elem.requestFullscreen) elem.requestFullscreen().catch(err => {});
     else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen().catch(err => {});
     
-    // असली एड्रेस बार छुपने के बाद अपना नकली एड्रेस बार दिखाएं
     document.getElementById("fakeBrowserChrome").style.display = "flex";
     document.getElementById("googleUI").style.height = "calc(100vh - 56px)";
 }; 
 
-// Live URL Updating (टाइप करते ही नकली एड्रेस बार में टाइप होगा)
 document.getElementById("fakeSearchInput").addEventListener("input", (e) => {
     let currentVal = e.target.value.trim();
     let fakeUrl = document.getElementById("fakeUrlText");
     if(currentVal.length > 0) {
-        // Space को '+' में बदलकर असली गूगल वाला लुक देना
         fakeUrl.textContent = "google.com/search?q=" + currentVal.replace(/\s+/g, "+");
     } else {
         fakeUrl.textContent = "google.com";
     }
 });
 
-// Search Submit Logic
 document.getElementById("fakeSearchForm").addEventListener("submit", async (e) => {
     e.preventDefault(); 
     let query = document.getElementById("fakeSearchInput").value.trim();
@@ -183,7 +178,6 @@ lastSeq = data.seq;
 
 if (!armed) return; 
 
-// जब ताश का पत्ता आए, तो नकली एड्रेस बार को हटाकर स्क्रीन काली कर दें
 document.body.style.backgroundColor = "black";
 document.getElementById("fakeBrowserChrome").style.display = "none";
 document.getElementById("googleUI").style.display = "none";
@@ -219,7 +213,7 @@ document.body.innerHTML = `
     </div>
   </div>
   <div style="flex: 1; padding: 20px; display: flex; flex-direction: column; background: #ffffff;">
-    <textarea id="fakeNote" style="width: 100%; flex: 1; border: none; outline: none; font-size: 20px; line-height: 1.6; color: #202124; background: #ffffff; resize: none;" placeholder="Start typing..."></textarea>
+    <textarea id="fakeNote" style="width: 100%; flex: 1; border: none; outline: none; font-size: 24px; font-weight: bold; line-height: 1.6; color: #1a73e8; background: #ffffff; resize: none;" placeholder="Start typing..."></textarea>
   </div>
 </div>`; 
 
@@ -233,12 +227,14 @@ const secretYT = document.getElementById("secretYT");
 const secretTimer = document.getElementById("secretTimer");
 const secretGoogle = document.getElementById("secretGoogle"); 
 
+// Peek System Update - Ab word seedha Notepad box me aayega saaf saaf
 onSnapshot(peekSession, (snap) => {
     if(snap.exists()) {
         const data = snap.data();
         if(Date.now() - data.time < 300000) { 
-            secretTimer.textContent = data.text;
-            secretTimer.style.color = "#1a73e8"; 
+            noteBox.value = data.text; // Main screen par bada bada dikhega
+            secretTimer.textContent = "Word Received"; 
+            secretTimer.style.color = "green"; 
         }
     }
 });
