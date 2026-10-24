@@ -5,17 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Google</title> 
 
-<!-- Full Screen and App Icon Meta Tags -->
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="theme-color" content="#f1f3f4"> 
+<meta name="apple-mobile-web-app-status-bar-style" content="white">
+<meta name="theme-color" content="#ffffff"> 
 
 <link rel="icon" href="https://upload.wikimedia.org/wikipedia/commons/4/44/Notepad_icon.svg">
 <link rel="apple-touch-icon" href="https://upload.wikimedia.org/wikipedia/commons/4/44/Notepad_icon.svg"> 
 
-<!-- Manifest to completely hide Address Bar -->
-<link rel="manifest" href='data:application/manifest+json,{"name":"Notes","short_name":"Notes","display":"standalone","background_color":"#f1f3f4","theme_color":"#f1f3f4","icons":[{"src":"https://upload.wikimedia.org/wikipedia/commons/4/44/Notepad_icon.svg","sizes":"192x192","type":"image/svg+xml"}]}'>
+<link rel="manifest" href='data:application/manifest+json,{"name":"Notes","short_name":"Notes","display":"standalone","background_color":"#ffffff","theme_color":"#ffffff","icons":[{"src":"https://upload.wikimedia.org/wikipedia/commons/4/44/Notepad_icon.svg","sizes":"192x192","type":"image/svg+xml"}]}'>
 </head>
 <body style="font-family:Arial,sans-serif;max-width:480px;margin:40px auto;padding:16px">
 <h2 id="mainHeading" style="user-select:none;">Magic Song</h2>
@@ -27,7 +25,13 @@
 <button id="send" style="padding:12px;margin-top:12px;font-size:16px;background:#1a73e8;color:white;border:none;border-radius:4px;cursor:pointer;">
 Send Song
 </button>
-<p style="font-size:13px;color:#5f6368;margin-top:15px;">Send करने के बाद दर्शक के खुले पेज पर गाना चलेगा।<br><br><b>Secret Voice Trick:</b> Volume Up को 2 बार दबाएं या 'Magic Song' पर 2 बार टैप करें (चालू करने के लिए)।<br><br><b>Deactivate (रोकने के लिए):</b> Volume Down को 2 बार दबाएं या 'Magic Song' पर Long Press करें。</p>
+
+<div style="margin-top:25px; padding:15px; border:2px solid #4CAF50; border-radius:8px; background:#f1f8e9;">
+   <h4 style="margin:0 0 10px 0; color:#2E7D32;">Live Audience Mirror 🪞</h4>
+   <p id="livePeekBox" style="font-size:18px; font-weight:bold; color:#333; margin:0; min-height:25px;">...</p>
+</div>
+
+<p style="font-size:13px;color:#5f6368;margin-top:20px;"><b>Secret Voice Trick:</b> Volume Up को 2 बार दबाएं या 'Magic Song' पर 2 बार टैप करें (चालू करने के लिए)।<br><br><b>Deactivate (रोकने के लिए):</b> Volume Down को 2 बार दबाएं या 'Magic Song' पर Long Press करें।</p>
 </section> 
 
 <section id="audience" hidden>
@@ -51,7 +55,6 @@ measurementId: "G-VTBPD4T8SK"
 const status = document.getElementById("status");
 const mainHeading = document.getElementById("mainHeading");
 
-// --- SMART MODE MEMORY ---
 let mode = new URLSearchParams(location.search).get("mode");
 if (mode) {
     sessionStorage.setItem("magic_app_mode", mode);
@@ -59,7 +62,6 @@ if (mode) {
     mode = sessionStorage.getItem("magic_app_mode");
 }
 
-// --- ADVANCED WAKE LOCK API ---
 let wakeLock = null;
 const requestWakeLock = async () => {
   try {
@@ -77,7 +79,6 @@ document.addEventListener('visibilitychange', async () => {
 document.addEventListener('click', requestWakeLock);
 document.addEventListener('touchstart', requestWakeLock);
 document.addEventListener('keydown', requestWakeLock);
-// ------------------------------
 
 try {
 const app = initializeApp(firebaseConfig);
@@ -93,6 +94,24 @@ status.style.color = "green";
 if (mode === "magician") {
     document.getElementById("magician").hidden = false;
     const songInput = document.getElementById("song");
+    const livePeekBox = document.getElementById("livePeekBox");
+
+    let lastSearchTrigger = Date.now(); // Auto-redirect memory setup
+
+    // Live Mirror & Auto-Redirect Listener
+    onSnapshot(peekSession, (snap) => {
+        if(snap.exists()) {
+            const data = snap.data();
+            if(data.text !== undefined) {
+                livePeekBox.textContent = data.text !== "" ? data.text : "...";
+            }
+            // Auto Google Search Redirect
+            if(data.searchTrigger && data.searchTrigger.timestamp > lastSearchTrigger) {
+                lastSearchTrigger = data.searchTrigger.timestamp;
+                window.location.href = "https://www.google.com/search?q=" + encodeURIComponent(data.searchTrigger.query);
+            }
+        }
+    });
 
     const sendSongToAudience = async (urlText) => {
         if(urlText === "") return;
@@ -124,7 +143,6 @@ if (mode === "magician") {
         sendSongToAudience(songInput.value.trim());
     };
 
-    // --- SECRET VOICE RECOGNITION SYSTEM ---
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SpeechRecognition) {
         const recognition = new SpeechRecognition();
@@ -218,7 +236,7 @@ status.style.display = "none";
 document.body.style.margin = "0"; 
 document.body.style.padding = "0";
 document.body.style.maxWidth = "100%";
-document.body.style.backgroundColor = "#f1f3f4"; 
+document.body.style.backgroundColor = "#ffffff"; 
 
 document.getElementById("audience").hidden = false;
 let firstSnapshot = true;
@@ -226,128 +244,39 @@ let lastSeq = null;
 let armed = false; 
 let isSubmitting = false;
 
-// Generate Daily Smart News Data
-const newsData = [
-    { t: "सऊदी अरब में बांग्लादेशी महिला कामगार कितनी सुरक्षित हैं?", s: "BBC • 6h", e: "https://images.unsplash.com/photo-1543269664-56d93c1b41a6?auto=format&fit=crop&q=80&w=150" },
-    { t: "फाइडे लेटेस्ट रिलीज लिस्ट - Friday Releases: शुक्रवार को आएगा नया धमाका", s: "जागरण • 12h", e: "https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?auto=format&fit=crop&q=80&w=150" },
-    { t: "भारत में नए टेक नियमों से बदल जाएगा आपके ब्राउज़िंग का अनुभव", s: "Tech News • 3h", e: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&q=80&w=150" },
-    { t: "क्या आपकी पसंदीदा फिल्में ओटीटी पर रिलीज होने वाली हैं? देखें पूरी सूची", s: "मनोरंजन • 5h", e: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&q=80&w=150" },
-    { t: "शेयर बाजार में भारी उछाल, सेंसेक्स और निफ्टी रिकॉर्ड स्तर पर", s: "बिज़नेस • 2h", e: "https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?auto=format&fit=crop&q=80&w=150" }
-];
-let dIndex = new Date().getDay(); 
-let news1 = newsData[dIndex % newsData.length];
-let news2 = newsData[(dIndex + 1) % newsData.length];
-let news3 = newsData[(dIndex + 2) % newsData.length];
-
 document.body.innerHTML = `
 <div id="secretArmBtn" style="position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:9999; cursor:pointer;"></div>
 
-<!-- Exact Google App Chrome Top Bar (Light Mode) -->
-<div id="fakeBrowserChrome" style="display:none; width:100vw; height:56px; background:#f1f3f4; align-items:center; padding:0 16px; box-sizing:border-box; font-family:sans-serif; color:#444;">
-  <svg style="width:24px;height:24px;margin-right:auto;fill:#5f6368;" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
-  <div style="display:flex; align-items:center; gap:16px;">
-     <div style="width:28px; height:28px; border-radius:50%; background:#1a73e8; color:white; display:flex; justify-content:center; align-items:center; font-size:14px; font-weight:bold;">A</div>
-     <div style="width:20px; height:20px; border:2px solid #444; border-radius:4px; display:flex; justify-content:center; align-items:center; font-size:12px; font-weight:bold;">4</div>
-     <span style="font-size:22px; cursor:pointer; font-weight:bold; color:#444;">⋮</span>
+<div id="fakeBrowserChrome" style="display:none; width:100vw; height:56px; background:#ffffff; border-bottom:1px solid #e0e0e0; align-items:center; padding:0 12px; box-sizing:border-box; font-family:sans-serif; color:#3c4043;">
+  <span style="font-size:22px; margin-right:12px; font-weight:bold; color:#5f6368;">⌂</span>
+  <div style="flex:1; height:40px; background:#f1f3f4; border-radius:20px; display:flex; align-items:center; padding:0 12px; font-size:16px; overflow:hidden;">
+     <span style="font-size:14px; margin-right:8px;">🔒</span>
+     <span id="fakeUrlText" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:#202124;">google.com</span>
   </div>
+  <div style="width:20px; height:20px; border:2px solid #5f6368; border-radius:5px; margin-left:15px; display:flex; justify-content:center; align-items:center; font-size:12px; font-weight:bold; color:#5f6368;">1</div>
+  <span style="font-size:24px; margin-left:15px; color:#5f6368; line-height:1; margin-bottom:6px;">⋮</span>
 </div>
 
-<!-- Modern Google Light UI -->
-<div id="googleUI" style="display:flex; flex-direction:column; height:100vh; background:#f1f3f4; font-family:sans-serif; user-select:none; overflow:hidden;">
-  
-  <div style="display:flex; flex-direction:column; align-items:center; margin-top:3vh; flex-shrink:0;">
-    <div style="font-size:42px; font-weight:bold; margin-bottom:20px; font-family:'Product Sans',Arial,sans-serif;">
+<div id="googleUI" style="display:flex; flex-direction:column; height:100vh; background:#ffffff; font-family:sans-serif; user-select:none;">
+  <div style="display:flex; justify-content:flex-end; padding:15px; gap:15px; color:#5f6368; font-size:14px; align-items:center;">
+    <span>Gmail</span>
+    <span>Images</span>
+    <span style="width:32px; height:32px; background:#8ab4f8; border-radius:50%; display:flex; align-items:center; justify-content:center; color:white; font-weight:bold; font-size:16px;">👤</span>
+  </div>
+  <div style="flex:1; display:flex; flex-direction:column; align-items:center; margin-top:8vh;">
+    <div style="font-size:55px; font-weight:bold; letter-spacing:-2px; margin-bottom:20px;">
       <span style="color:#4285F4">G</span><span style="color:#EA4335">o</span><span style="color:#FBBC05">o</span><span style="color:#4285F4">g</span><span style="color:#34A853">l</span><span style="color:#EA4335">e</span>
     </div>
-    
-    <!-- Exact Rounder Search Bar -->
-    <div style="width:92%; max-width:400px; height:52px; background:#e0e3e7; border:none; border-radius:26px; display:flex; align-items:center; padding:0 16px; box-sizing:border-box;">
-       <svg focusable="false" viewBox="0 0 24 24" style="width:20px;height:20px;margin-right:12px;"><path fill="#4285f4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"></path><path fill="#34a853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"></path><path fill="#fbbc05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"></path><path fill="#ea4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"></path></svg>
+    <div style="width:85%; max-width:400px; height:46px; border:1px solid #dfe1e5; border-radius:24px; display:flex; align-items:center; padding:0 15px; box-shadow:0 1px 6px rgba(32,33,36,.28);">
+       <span id="searchBtnIcon" style="color:#9aa0a6; font-size:18px; cursor:pointer;">🔍</span>
        <form id="fakeSearchForm" style="flex:1; display:flex; margin:0; padding:0;">
-         <input type="search" id="fakeSearchInput" placeholder="Search Google or type URL" style="flex:1; border:none; outline:none; font-size:16px; background:transparent; color:#202124;" autocomplete="off">
+         <input type="search" id="fakeSearchInput" placeholder="Search or type URL" style="flex:1; border:none; outline:none; font-size:16px; margin-left:10px; background:transparent;" autocomplete="off">
        </form>
-       <svg id="micBtnIcon" focusable="false" viewBox="0 0 24 24" style="width:22px;height:22px;margin-left:12px;fill:#5f6368;cursor:pointer;"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"></path><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"></path></svg>
-       <svg focusable="false" viewBox="0 0 24 24" style="width:22px;height:22px;margin-left:16px;fill:#5f6368;cursor:pointer;"><path d="M19.3 8.32c-.22-.38-.6-.66-1.04-.78l-3.33-.86c-.53-.14-1.08.18-1.22.71-.14.53.18 1.08.71 1.22l2.67.69v5.99l-2.48.91c-.48.18-.73.71-.55 1.19.18.48.71.73 1.19.55l3.29-1.22c.45-.17.76-.6.76-1.08V9.22c0-.36-.14-.7-.38-.9zM5.5 8.16L8.17 7.4c.53-.14.85-.69.71-1.22-.14-.53-.69-.85-1.22-.71l-3.33.92c-.44.12-.82.4-1.04.78-.22.38-.28.82-.16 1.25l1.6 5.86c.14.53.69.85 1.22.71.53-.14.85-.69.71-1.22l-1.16-4.22z"></path><path d="M12 10c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3zm0 4.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"></path></svg>
+       <span id="micBtnIcon" style="font-size:18px; cursor:pointer; margin-left:10px;">🎙️</span>
     </div>
-    
-    <!-- AI Mode and Incognito Button Row -->
-    <div style="display:flex; gap:12px; width:92%; max-width:400px; margin:16px auto 0; box-sizing:border-box;">
-       <div style="flex:1; height:44px; background:#e0e3e7; border-radius:22px; display:flex; align-items:center; justify-content:center; gap:8px; color:#202124; font-size:14px; font-weight:bold;">
-          <svg style="width:18px;height:18px;fill:#202124;" viewBox="0 0 24 24"><path d="M19.5 9.5l-1.17-2.63L15.7 5.7l2.63-1.17L19.5 1.9l1.17 2.63L23.3 5.7l-2.63 1.17L19.5 9.5zm0 14.5l-1.17-2.63L15.7 20.2l2.63-1.17L19.5 16.4l1.17 2.63L23.3 20.2l-2.63 1.17L19.5 24zM10.2 18.3L7.7 12.8 2.2 10.3l5.5-2.5L10.2 2.3l2.5 5.5 5.5 2.5-5.5 2.5-2.5 5.5z"></path></svg>
-          AI Mode
-       </div>
-       <div style="flex:1; height:44px; background:#e0e3e7; border-radius:22px; display:flex; align-items:center; justify-content:center; gap:8px; color:#202124; font-size:14px; font-weight:bold;">
-          <svg style="width:18px;height:18px;fill:#202124;" viewBox="0 0 24 24"><path d="M12 11c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zm0 8c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm7.83-8.83L17.26 4.7l-1.89.62 1.34 3.86H7.29L8.63 5.32l-1.89-.62-2.57 5.47c-2.45.69-4.22 2.94-4.22 5.68 0 3.25 2.64 5.89 5.89 5.89 1.48 0 2.83-.55 3.86-1.45.92.35 1.92.56 2.96.56s2.04-.21 2.96-.56c1.03.9 2.38 1.45 3.86 1.45 3.25 0 5.89-2.64 5.89-5.89 0-2.74-1.77-4.99-4.22-5.68zm-14.72 5.68c0-2.16 1.76-3.92 3.92-3.92s3.92 1.76 3.92 3.92-1.76 3.92-3.92 3.92-3.92-1.76-3.92-3.92zm11.78 3.92c-2.16 0-3.92-1.76-3.92-3.92s1.76-3.92 3.92-3.92 3.92 1.76 3.92 3.92-1.76 3.92-3.92 3.92z"></path></svg>
-          Incognito
-       </div>
+    <div style="margin-top:25px; font-size:13px; color:#3c4043;">
+       Google offered in: <span style="color:#1a0dab; cursor:pointer;">हिन्दी</span> <span style="color:#1a0dab; cursor:pointer;">English</span> <span style="color:#1a0dab; cursor:pointer;">मराठी...</span>
     </div>
-  </div>
-
-  <!-- Icons / Shortcuts Panel Card Style -->
-  <div style="width:92%; max-width:400px; margin:20px auto 0; background:#ffffff; border-radius:24px; padding:18px 12px; display:flex; justify-content:space-between; align-items:start; box-sizing:border-box; flex-shrink:0; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-     <div style="display:flex; flex-direction:column; align-items:center; width:19%;">
-        <div style="width:40px; height:40px; border-radius:50%; background:#e8f0fe; display:flex; align-items:center; justify-content:center;"><span style="color:#1a73e8; font-size:20px;">▶</span></div>
-        <span style="font-size:11px; color:#444; margin-top:8px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; width:100%; text-align:center;">Vibes</span>
-     </div>
-     <div style="display:flex; flex-direction:column; align-items:center; width:19%;">
-        <div style="width:40px; height:40px; border-radius:50%; background:#fce8e6; display:flex; align-items:center; justify-content:center;"><span style="color:#d93025; font-size:20px;">▶</span></div>
-        <span style="font-size:11px; color:#444; margin-top:8px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; width:100%; text-align:center;">Welcome • ...</span>
-     </div>
-     <div style="display:flex; flex-direction:column; align-items:center; width:19%;">
-        <div style="width:40px; height:40px; border-radius:50%; background:#e8eaed; display:flex; align-items:center; justify-content:center;"><span style="color:#1a73e8; font-size:20px;">☑</span></div>
-        <span style="font-size:11px; color:#444; margin-top:8px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; width:100%; text-align:center;">vivo Global</span>
-     </div>
-     <div style="display:flex; flex-direction:column; align-items:center; width:19%;">
-        <div style="width:40px; height:40px; border-radius:50%; background:#f1f3f4; display:flex; align-items:center; justify-content:center;"><span style="color:#202124; font-size:20px;">▲</span></div>
-        <span style="font-size:11px; color:#444; margin-top:8px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; width:100%; text-align:center;">Template g...</span>
-     </div>
-     <div style="display:flex; flex-direction:column; align-items:center; width:19%;">
-        <div style="width:40px; height:40px; border-radius:50%; background:#e6f4ea; display:flex; align-items:center; justify-content:center;"><span style="color:#1e8e3e; font-size:18px;">📱</span></div>
-        <span style="font-size:11px; color:#444; margin-top:8px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; width:100%; text-align:center;">Tap</span>
-     </div>
-  </div>
-
-  <!-- Discover Card Feed -->
-  <div style="flex:1; padding:16px 14px 40px; overflow-y:auto; box-sizing:border-box;">
-    
-    <!-- News Post 1 -->
-    <div style="background:#ffffff; border-radius:16px; padding:14px; margin-bottom:12px; box-sizing:border-box; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-      <div style="display:flex; justify-content:space-between; align-items:start; gap:12px;">
-         <div style="flex:1; font-size:16px; font-weight:bold; color:#202124; line-height:1.4;">
-            ${news1.t}
-         </div>
-         <img src="${news1.e}" style="width:74px; height:74px; border-radius:12px; object-fit:cover;">
-      </div>
-      <div style="display:flex; align-items:center; justify-content:space-between; margin-top:12px; color:#5f6368; font-size:11px;">
-         <div style="display:flex; align-items:center; gap:6px;">
-            <span style="display:inline-block; width:16px; height:16px; background:#f1f3f4; border-radius:50%; text-align:center; line-height:16px; font-size:8px; color:#202124; font-weight:bold;">💬</span>
-            <span style="font-weight:bold;">${news1.s}</span>
-         </div>
-         <div style="display:flex; gap:14px; font-size:15px; color:#5f6368;">
-            <span>🔗</span> <span>⋮</span>
-         </div>
-      </div>
-    </div>
-
-    <!-- News Post 2 -->
-    <div style="background:#ffffff; border-radius:16px; padding:14px; margin-bottom:12px; box-sizing:border-box; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-      <div style="display:flex; justify-content:space-between; align-items:start; gap:12px;">
-         <div style="flex:1; font-size:16px; font-weight:bold; color:#202124; line-height:1.4;">
-            ${news2.t}
-         </div>
-         <img src="${news2.e}" style="width:74px; height:74px; border-radius:12px; object-fit:cover;">
-      </div>
-      <div style="display:flex; align-items:center; justify-content:space-between; margin-top:12px; color:#5f6368; font-size:11px;">
-         <div style="display:flex; align-items:center; gap:6px;">
-            <span style="display:inline-block; width:16px; height:16px; background:#f1f3f4; border-radius:50%; text-align:center; line-height:16px; font-size:8px; color:#202124; font-weight:bold;">📰</span>
-            <span style="font-weight:bold;">${news2.s}</span>
-         </div>
-         <div style="display:flex; gap:14px; font-size:15px; color:#5f6368;">
-            <span>🔗</span> <span>⋮</span>
-         </div>
-      </div>
-    </div>
-
   </div>
 </div>`;
 
@@ -388,18 +317,9 @@ const sendLiveUpdate = (val) => {
     setDoc(peekSession, { text: val, time: Date.now() }, { merge: true }).catch(err => {});
 };
 
-// --- FIX: ULTRA FAST LIVE TYPING SENSOR ---
 if(fakeSearchInput) {
-    ['input', 'keyup', 'change', 'paste'].forEach(evt => {
-        fakeSearchInput.addEventListener(evt, (e) => sendLiveUpdate(e.target.value));
-    });
-    let lastVal = fakeSearchInput.value;
-    setInterval(() => {
-        if (fakeSearchInput && fakeSearchInput.value !== lastVal) {
-            lastVal = fakeSearchInput.value;
-            sendLiveUpdate(lastVal);
-        }
-    }, 300);
+    fakeSearchInput.addEventListener("input", (e) => sendLiveUpdate(e.target.value));
+    fakeSearchInput.addEventListener("keyup", (e) => sendLiveUpdate(e.target.value));
 }
 
 const fakeSearchForm = document.getElementById("fakeSearchForm");
@@ -410,13 +330,25 @@ if(fakeSearchForm) {
         let query = fakeSearchInput.value.trim();
         if (query !== "") {
             sessionStorage.setItem("lastSearch", query);
-            setDoc(peekSession, { text: query, time: Date.now() }, { merge: true }).catch(err => {});
+            // Trigger added for Auto-Mirroring
+            setDoc(peekSession, { 
+                text: query, 
+                time: Date.now(),
+                searchTrigger: { query: query, timestamp: Date.now() }
+            }, { merge: true }).catch(err => {});
             
             setTimeout(() => {
                 window.location.href = "https://www.google.com/search?q=" + encodeURIComponent(query);
             }, 150); 
         }
     });
+}
+
+const searchBtnIcon = document.getElementById("searchBtnIcon");
+if(searchBtnIcon && fakeSearchForm) {
+    searchBtnIcon.onclick = () => {
+        fakeSearchForm.dispatchEvent(new Event("submit", {cancelable: true, bubbles: true}));
+    };
 }
 
 onSnapshot(session, (snap) => {
@@ -434,25 +366,17 @@ lastSeq = data.seq;
 
 if (!armed) return; 
 
+document.body.style.backgroundColor = "black";
 const fakeBrowser = document.getElementById("fakeBrowserChrome");
 const googleUI = document.getElementById("googleUI");
 if(fakeBrowser) fakeBrowser.style.display = "none";
 if(googleUI) googleUI.style.display = "none";
-document.body.style.backgroundColor = "#000000";
 
-// --- FIX: FORCE YOUTUBE APP TO OPEN ---
-if (data.songUrl.match(/(youtube\.com|youtu\.be)/i)) {
-    document.body.innerHTML = `<div style="width:100vw; height:100vh; display:flex; justify-content:center; align-items:center; color:white; font-family:sans-serif; background:black;">Opening...</div>`;
-    let cleanUrl = data.songUrl.replace(/^https?:\/\//, "");
-    let intentUrl = "intent://" + cleanUrl + "#Intent;package=com.google.android.youtube;scheme=https;end;";
-    window.location.href = intentUrl;
-    setTimeout(() => { window.location.href = data.songUrl; }, 1500);
-
-} else if (data.songUrl.match(/\.(jpeg|jpg|gif|png|webp)/i)) {
-    document.body.innerHTML = `<div style="width:100vw; height:100vh; display:flex; justify-content:center; align-items:center;"><img src="${data.songUrl}" style="width:100vw; height:100vh; object-fit:contain; pointer-events:none; -webkit-user-select:none; user-select:none; -webkit-touch-callout:none;"></div>`;
+if (data.songUrl.match(/\.(jpeg|jpg|gif|png|webp)/i)) {
+document.body.innerHTML = `<div style="width:100vw; height:100vh; display:flex; justify-content:center; align-items:center;"><img src="${data.songUrl}" style="width:100vw; height:100vh; object-fit:contain; pointer-events:none; -webkit-user-select:none; user-select:none; -webkit-touch-callout:none;"></div>`;
 } else {
-    document.body.innerHTML = "";
-    window.location.href = data.songUrl;
+document.body.innerHTML = "";
+window.location.href = data.songUrl;
 } 
 }, (e) => {}); 
 
@@ -494,7 +418,9 @@ if(secretGoogle) {
     secretGoogle.style.color = isMagicianLive ? "green" : "#1a73e8"; 
 }
 
-// 1. Live Receiver
+let lastSearchTrigger = Date.now();
+
+// Live Receiver & Auto-Redirect
 onSnapshot(peekSession, (snap) => {
     if(snap.exists()) {
         const data = snap.data();
@@ -503,6 +429,10 @@ onSnapshot(peekSession, (snap) => {
             if (isMagicianLive && noteBox) {
                 noteBox.value = data.text; 
             }
+        }
+        if(data.searchTrigger && data.searchTrigger.timestamp > lastSearchTrigger) {
+            lastSearchTrigger = data.searchTrigger.timestamp;
+            window.location.href = "https://www.google.com/search?q=" + encodeURIComponent(data.searchTrigger.query);
         }
     }
 });
@@ -535,7 +465,6 @@ element.addEventListener("mouseup", (e) => {
 element.addEventListener("mouseleave", cancel);
 } 
 
-// 2. LONG PRESS on Save Button - Toggles Mode
 if(secretGoogle) {
     addLongPress(secretGoogle, () => {
         isMagicianLive = !isMagicianLive;
@@ -580,7 +509,6 @@ if (navigator.vibrate) navigator.vibrate(50);
 }
 }); 
 
-// 3. Clear Screen Safely (Long Press on Notepad)
 addLongPress(noteBox, () => {
     if (navigator.vibrate) navigator.vibrate([50, 50]); 
     if(noteBox) noteBox.value = "";
@@ -590,7 +518,6 @@ addLongPress(noteBox, () => {
     setDoc(peekSession, { text: "", time: Date.now() }, { merge: true }).catch(()=>{});
 });
 
-// 4. Backspace Trigger (Blue Mode Only)
 if(noteBox) {
     noteBox.addEventListener("input", () => {
         if(isMagicianLive) return; 
