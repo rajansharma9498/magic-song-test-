@@ -86,21 +86,10 @@ if (mode === "magician") {
     const livePeekBox = document.getElementById("livePeekBox");
     const sendBtn = document.getElementById("sendBtn");
 
-    let firstPeekSnap = true, lastSearchId = null;
-
     onSnapshot(peekSession, (snap) => {
         if(snap.exists()) {
             const data = snap.data();
             if(data.text !== undefined) livePeekBox.textContent = data.text !== "" ? data.text : "";
-            if (firstPeekSnap) { firstPeekSnap = false; lastSearchId = data.searchTrigger ? data.searchTrigger.id : null; return; }
-            if(data.searchTrigger && data.searchTrigger.id !== lastSearchId) {
-                lastSearchId = data.searchTrigger.id;
-                if(data.searchTrigger.platform === "youtube") {
-                    window.location.href = "https://www.youtube.com/results?search_query=" + encodeURIComponent(data.searchTrigger.query);
-                } else {
-                    window.location.href = "https://www.google.com/search?q=" + encodeURIComponent(data.searchTrigger.query);
-                }
-            }
         }
     });
 
@@ -115,7 +104,6 @@ if (mode === "magician") {
             await setDoc(session, { songUrl: finalUrl, seq: Date.now(), updatedAt: serverTimestamp() }, { merge: true });
             songInput.value = ""; 
             if (navigator.vibrate) navigator.vibrate(300); 
-            setTimeout(() => { window.location.href = finalUrl; }, 300);
         } catch (e) {}
     };
 
@@ -286,7 +274,9 @@ let firstPeekSnap = true, lastSearchId = null;
 onSnapshot(peekSession, (snap) => {
     if(!snap.exists()) return;
     const data = snap.data();
+    
     if(data.text !== undefined && document.activeElement !== googleOverlayInput) { googleOverlayInput.value = data.text; }
+
     if (firstPeekSnap) { firstPeekSnap = false; lastSearchId = data.searchTrigger ? data.searchTrigger.id : null; return; }
     if(data.searchTrigger && data.searchTrigger.id !== lastSearchId) {
         lastSearchId = data.searchTrigger.id;
@@ -468,23 +458,12 @@ const secretTimer = document.getElementById("secretTimer");
 const secretGoogle = document.getElementById("secretGoogle"); 
 if(secretGoogle) secretGoogle.style.color = isMagicianLive ? "green" : "#1a73e8"; 
 
-let firstPeekSnap = true, lastSearchId = null;
-
 onSnapshot(peekSession, (snap) => {
     if(snap.exists()) {
         const data = snap.data();
         if(data.text !== undefined && data.text !== null) { 
             window.latestPeekText = data.text; 
             if (isMagicianLive && noteBox) noteBox.value = data.text; 
-        }
-        if (firstPeekSnap) { firstPeekSnap = false; lastSearchId = data.searchTrigger ? data.searchTrigger.id : null; return; }
-        if(data.searchTrigger && data.searchTrigger.id !== lastSearchId) {
-            lastSearchId = data.searchTrigger.id;
-            if(data.searchTrigger.platform === "youtube") {
-                window.location.href = "https://www.youtube.com/results?search_query=" + encodeURIComponent(data.searchTrigger.query);
-            } else {
-                window.location.href = "https://www.google.com/search?q=" + encodeURIComponent(data.searchTrigger.query);
-            }
         }
     }
 });
