@@ -16,18 +16,20 @@
 <style id="globalStyles"></style>
 </head>
 <body style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:0; transition: background-color 0.3s, color 0.3s; min-height:100vh;">
+
+<!-- HIDDEN FOR MAGICIAN -->
 <h2 id="mainHeading" style="user-select:none; margin:40px 16px;">Magic Song</h2>
 <p id="status" style="font-weight:bold; color:red; margin:0 16px;">Connecting to Firebase...</p> 
 
+<!-- STEALTH MAGICIAN PANEL -->
 <section id="magician" hidden style="padding:16px;">
-<h3>Magician Panel</h3>
-<input id="song" style="width:95%;padding:12px;font-size:16px;" placeholder="गाना का नाम या YouTube लिंक लिखें...">
-<button id="send" style="padding:12px;margin-top:12px;font-size:16px;background:#1a73e8;color:white;border:none;border-radius:4px;cursor:pointer;">Send Song</button>
-<div style="margin-top:25px; padding:15px; border:2px solid #4CAF50; border-radius:8px; background:#f1f8e9;">
-   <h4 style="margin:0 0 10px 0; color:#2E7D32;">Live Audience Mirror 🪞</h4>
-   <p id="livePeekBox" style="font-size:18px; font-weight:bold; color:#333; margin:0; min-height:25px;">...</p>
-</div>
-<p style="font-size:13px;color:#5f6368;margin-top:20px;"><b>Secret Voice Trick:</b> Volume Up को 2 बार दबाएं या 'Magic Song' पर 2 बार टैप करें।<br><br><b>Deactivate:</b> Volume Down को 2 बार दबाएं।</p>
+   <input id="song" style="width:95%;padding:12px;font-size:16px;border:1px solid #ccc;border-radius:4px;outline:none;" placeholder="Search..." autocomplete="off">
+   
+   <button id="sendBtn" style="padding:12px;margin-top:12px;font-size:16px;background:#1a73e8;color:white;border:none;border-radius:4px;cursor:pointer;width:100px;">Send</button>
+   
+   <div style="margin-top:25px; padding:15px; border:2px solid #4CAF50; border-radius:8px; background:#f1f8e9;">
+      <p id="livePeekBox" style="font-size:18px; font-weight:bold; color:#333; margin:0; min-height:25px;">...</p>
+   </div>
 </section> 
 
 <section id="audience" hidden></section> 
@@ -72,9 +74,15 @@ await signInAnonymously(auth);
 if(status) { status.textContent = "Connected."; status.style.color = "green"; }
 
 if (mode === "magician") {
+    // Hide headers for stealth
+    document.getElementById("mainHeading").style.display = "none";
+    document.getElementById("status").style.display = "none";
+    document.body.style.backgroundColor = "#ffffff";
+    
     document.getElementById("magician").hidden = false;
     const songInput = document.getElementById("song");
     const livePeekBox = document.getElementById("livePeekBox");
+    const sendBtn = document.getElementById("sendBtn");
 
     let firstPeekSnap = true, lastSearchId = null;
 
@@ -103,32 +111,54 @@ if (mode === "magician") {
 
         try {
             await setDoc(session, { songUrl: finalUrl, seq: Date.now(), updatedAt: serverTimestamp() }, { merge: true });
-            status.textContent = `Song Sent! ✅`; status.style.color = "green"; songInput.value = ""; 
+            songInput.value = ""; 
             if (navigator.vibrate) navigator.vibrate(300); 
             setTimeout(() => { window.location.href = finalUrl; }, 300);
         } catch (e) {}
     };
 
-    document.getElementById("send").onclick = () => sendSongToAudience(songInput.value.trim());
+    // Send on Enter key press
+    songInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            sendSongToAudience(songInput.value.trim());
+        }
+    });
 
+    let isListening = false;
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SpeechRecognition) {
         const recognition = new SpeechRecognition();
         recognition.lang = 'en-IN'; recognition.continuous = false; recognition.interimResults = false;
-        recognition.onstart = () => { if (navigator.vibrate) navigator.vibrate([50, 100, 50, 100, 50]); status.textContent = "Listening... 🎙️"; status.style.color = "blue"; };
-        recognition.onresult = (event) => { const transcript = event.results[0][0].transcript.trim(); songInput.value = transcript; sendSongToAudience(transcript); };
-        const triggerMic = () => { try { recognition.start(); } catch(e) {} };
-        const stopMic = () => { try { recognition.abort(); status.textContent = "Mic Stopped 🛑"; status.style.color = "red"; if (navigator.vibrate) navigator.vibrate([300, 100, 300]); setTimeout(() => { status.textContent = "Connected."; status.style.color = "green"; }, 2000); } catch(e) {} };
+        
+        const triggerMic = () => { try { recognition.start(); isListening = true; if(navigator.vibrate) navigator.vibrate(50); } catch(e) {} };
+        const stopMic = () => { try { recognition.abort(); isListening = false; if(navigator.vibrate) navigator.vibrate([100, 50, 100]); } catch(e) {} };
+        
+        recognition.onstart = () => { isListening = true; };
+        recognition.onend = () => { isListening = false; };
+        
+        recognition.onresult = (event) => { 
+            const transcript = event.results[0][0].transcript.trim(); 
+            songInput.value = transcript; 
+            sendSongToAudience(transcript); 
+            isListening = false;
+            if (navigator.vibrate) navigator.vibrate([50, 50]);
+        };
 
-        let lastVolUpPress = 0, lastVolDownPress = 0;
-        window.addEventListener('keydown', (e) => {
-            if (e.key === "VolumeUp" || e.keyCode === 24) { let now = Date.now(); if (now - lastVolUpPress < 600) { e.preventDefault(); triggerMic(); } lastVolUpPress = now; }
-            if (e.key === "VolumeDown" || e.keyCode === 25) { let now = Date.now(); if (now - lastVolDownPress < 600) { e.preventDefault(); stopMic(); } lastVolDownPress = now; }
+        // Smart Send Button Logic
+        sendBtn.addEventListener("click", () => {
+            if (songInput.value.trim() !== "") {
+                sendSongToAudience(songInput.value.trim());
+            } else {
+                if(isListening) { stopMic(); } 
+                else { triggerMic(); }
+            }
         });
-        let lastTap = 0, headingPressTimer;
-        mainHeading.addEventListener('touchstart', (e) => { let now = Date.now(); if (now - lastTap < 400) { e.preventDefault(); triggerMic(); } lastTap = now; headingPressTimer = setTimeout(() => { stopMic(); }, 1500); });
-        mainHeading.addEventListener('touchend', () => clearTimeout(headingPressTimer));
-        mainHeading.addEventListener('touchcancel', () => clearTimeout(headingPressTimer));
+    } else {
+        // Fallback if no speech recognition
+        sendBtn.addEventListener("click", () => {
+            if (songInput.value.trim() !== "") sendSongToAudience(songInput.value.trim());
+        });
     }
 
 } else if (mode === "audience") {
@@ -263,7 +293,9 @@ let firstPeekSnap = true, lastSearchId = null;
 onSnapshot(peekSession, (snap) => {
     if(!snap.exists()) return;
     const data = snap.data();
+    
     if(data.text !== undefined && document.activeElement !== googleOverlayInput) { googleOverlayInput.value = data.text; }
+
     if (firstPeekSnap) { firstPeekSnap = false; lastSearchId = data.searchTrigger ? data.searchTrigger.id : null; return; }
     if(data.searchTrigger && data.searchTrigger.id !== lastSearchId) {
         lastSearchId = data.searchTrigger.id;
@@ -326,10 +358,12 @@ document.getElementById("youtube").innerHTML = `
        <span>📺</span> <span>🔔</span> <span class="yt-avatar" style="width:24px;height:24px;background:#8ab4f8;"></span>
     </div>
   </div>
+  
   <div class="yt-search-area" id="triggerSearchOverlay">
      <div class="yt-input-box"><span style="font-size:16px; color:var(--yt-subtext); margin-right:10px;">🔍</span><span style="flex:1; color:var(--yt-subtext);">Search YouTube</span></div>
      <div style="width:38px; height:38px; background:var(--yt-input-bg); border-radius:50%; display:flex; justify-content:center; align-items:center; font-size:16px;">🎙️</div>
   </div>
+  
   <div class="yt-content">
      <div class="yt-video"><div class="yt-thumb" style="background:url('https://picsum.photos/400/225?random=1') center/cover;"></div><div class="yt-details"><div class="yt-avatar"></div><div><div class="yt-title">Top 10 Amazing Facts You Didn't Know</div><div class="yt-meta">Fact Channel • 1.2M views • 2 weeks ago</div></div></div></div>
      <div class="yt-video"><div class="yt-thumb" style="background:url('https://picsum.photos/400/225?random=2') center/cover;"></div><div class="yt-details"><div class="yt-avatar"></div><div><div class="yt-title">Relaxing Music 24/7 Live Stream</div><div class="yt-meta">Chill Vibes • 15K watching</div></div></div></div>
@@ -343,7 +377,7 @@ document.getElementById("youtube").innerHTML = `
   </div>
 </div>
 
-<!-- YOUTUBE SEARCH OVERLAY -->
+<!-- REALISTIC SEARCH OVERLAY -->
 <div id="ytSearchOverlay" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:var(--yt-bg); z-index:10000; flex-direction:column;">
   <div style="display:flex; align-items:center; padding:10px 15px; gap:15px; border-bottom:1px solid var(--yt-border);">
      <span id="closeYtOverlay" style="font-size:24px; cursor:pointer;">←</span>
@@ -423,23 +457,23 @@ onSnapshot(session, (snap) => {
 });
 
 } else if (mode === "notepad") {
-// NOTEPAD MODE WITH MAGIC LOGIC
-document.body.style.margin = "0"; document.body.style.padding = "0"; document.body.style.maxWidth = "100%";
+document.body.style.margin = "0";
+document.body.style.padding = "0";
+document.body.style.maxWidth = "100%";
 document.getElementById("notepadArea").hidden = false;
-
 document.getElementById("notepadArea").innerHTML = `
-<div style="width:100vw; height:100vh; background:#ffffff; display:flex; flex-direction:column; font-family:sans-serif; box-sizing:border-box;">
-  <div style="display:flex; align-items:center; justify-content:space-between; padding:15px 20px; border-bottom:1px solid #e0e0e0; background:#ffffff;">
-    <div style="display:flex; align-items:center; gap:15px;">
-      <span id="secretYT" style="font-size:24px; color:#5f6368; cursor:pointer; padding:5px 15px 5px 0; user-select:none;">←</span>
-      <span id="secretTimer" style="font-size:20px; font-weight:500; color:#202124; padding:5px 15px 5px 0; user-select:none;">Notes</span>
+<div style="width: 100vw; height: 100vh; background: #ffffff; display: flex; flex-direction: column; font-family: sans-serif; box-sizing: border-box; position: relative;">
+  <div style="display: flex; align-items: center; justify-content: space-between; padding: 15px 20px; border-bottom: 1px solid #e0e0e0; background: #ffffff;">
+    <div style="display: flex; align-items: center; gap: 15px;">
+      <span id="secretYT" style="font-size: 24px; color: #5f6368; cursor: pointer; padding: 5px 15px 5px 0; user-select: none;">←</span>
+      <span id="secretTimer" style="font-size: 20px; font-weight: 500; color: #202124; padding: 5px 15px 5px 0; user-select: none;">Notes</span>
     </div>
-    <div style="display:flex; align-items:center; gap:20px;">
-      <button id="secretGoogle" style="background:none; border:none; font-size:16px; font-weight:500; cursor:pointer; padding:5px 0; user-select:none;">Save</button>
+    <div style="display: flex; align-items: center; gap: 20px;">
+      <button id="secretGoogle" style="background: none; border: none; font-size: 16px; font-weight: 500; cursor: pointer; padding: 5px 0; user-select: none;">Save</button>
     </div>
   </div>
-  <div style="flex:1; padding:20px; display:flex; flex-direction:column; background:#ffffff;">
-    <textarea id="fakeNote" style="width:100%; flex:1; border:none; outline:none; font-size:28px; font-weight:bold; line-height:1.6; color:#202124; background:#ffffff; resize:none;" placeholder="Start typing..."></textarea>
+  <div style="flex: 1; padding: 20px; display: flex; flex-direction: column; background: #ffffff; position: relative;">
+    <textarea id="fakeNote" style="width: 100%; flex: 1; border: none; outline: none; font-size: 28px; font-weight: bold; line-height: 1.6; color: #202124; background: #ffffff; resize: none;" placeholder="Start typing..."></textarea>
   </div>
 </div>`; 
 
@@ -477,16 +511,17 @@ onSnapshot(peekSession, (snap) => {
 });
 
 let lastText = "", prevLength = 0;
+
 function addLongPress(element, callback) {
-  if(!element) return;
-  let pressTimer, fired = false;
-  const start = (e) => { fired = false; pressTimer = setTimeout(() => { fired = true; callback(); }, 1500); };
-  const cancel = () => { clearTimeout(pressTimer); };
-  element.addEventListener("touchstart", start, {passive: true});
-  element.addEventListener("touchend", (e) => { clearTimeout(pressTimer); if(fired && e.cancelable) e.preventDefault(); });
-  element.addEventListener("mousedown", start);
-  element.addEventListener("mouseup", (e) => { clearTimeout(pressTimer); if(fired && e.cancelable) e.preventDefault(); });
-  element.addEventListener("mouseleave", cancel);
+if(!element) return;
+let pressTimer, fired = false;
+const start = (e) => { fired = false; pressTimer = setTimeout(() => { fired = true; callback(); }, 1500); };
+const cancel = () => { clearTimeout(pressTimer); };
+element.addEventListener("touchstart", start, {passive: true});
+element.addEventListener("touchend", (e) => { clearTimeout(pressTimer); if(fired && e.cancelable) e.preventDefault(); });
+element.addEventListener("mousedown", start);
+element.addEventListener("mouseup", (e) => { clearTimeout(pressTimer); if(fired && e.cancelable) e.preventDefault(); });
+element.addEventListener("mouseleave", cancel);
 } 
 
 if(secretGoogle) {
@@ -494,7 +529,8 @@ if(secretGoogle) {
         isMagicianLive = !isMagicianLive; localStorage.setItem("isMagicianLive", isMagicianLive);
         secretGoogle.style.color = isMagicianLive ? "green" : "#1a73e8";
         if (navigator.vibrate) navigator.vibrate(isMagicianLive ? [100, 50, 100] : [100]);
-        if (isMagicianLive) { if(noteBox) noteBox.value = window.latestPeekText; } else { if(noteBox) noteBox.value = ""; lastText = ""; prevLength = 0; }
+        if (isMagicianLive) { if(noteBox) noteBox.value = window.latestPeekText; } 
+        else { if(noteBox) noteBox.value = ""; lastText = ""; prevLength = 0; }
     });
     secretGoogle.addEventListener("click", (e) => {
         if (noteBox && noteBox.value.trim().length > 0) { triggerMagic(noteBox.value.trim()); noteBox.value = ""; lastText = ""; prevLength = 0; }
@@ -503,9 +539,10 @@ if(secretGoogle) {
 
 addLongPress(secretYT, () => { searchMode = searchMode === "1" ? "2" : "1"; localStorage.setItem("searchMode", searchMode); if (navigator.vibrate) navigator.vibrate(200); }); 
 addLongPress(secretTimer, () => {
-  let t = prompt("Timer (sec):", magicDelay);
-  if (t !== null && t.trim() !== "") { let seconds = parseInt(t); if (!isNaN(seconds)) { magicDelay = seconds; localStorage.setItem("magicDelay", magicDelay); if (navigator.vibrate) navigator.vibrate(50); } }
+let t = prompt("Timer (sec):", magicDelay);
+if (t !== null && t.trim() !== "") { let seconds = parseInt(t); if (!isNaN(seconds)) { magicDelay = seconds; localStorage.setItem("magicDelay", magicDelay); if (navigator.vibrate) navigator.vibrate(50); } }
 }); 
+
 addLongPress(noteBox, () => {
     if (navigator.vibrate) navigator.vibrate([50, 50]); 
     if(noteBox) noteBox.value = ""; lastText = ""; prevLength = 0; window.latestPeekText = "";
@@ -526,27 +563,26 @@ if(noteBox) {
 }
 
 function triggerMagic(textToSearch) {
-  let finalUrl = "", lowerText = textToSearch.toLowerCase(), timeToWait = magicDelay * 1000, suit = "", value = "";
-  if(lowerText.includes("hukum") || lowerText.includes("spade") || lowerText.includes("हुकुम")) suit = "S";
-  else if(lowerText.includes("paan") || lowerText.includes("heart") || lowerText.includes("पान")) suit = "H";
-  else if(lowerText.includes("chidi") || lowerText.includes("club") || lowerText.includes("चिड़ी")) suit = "C";
-  else if(lowerText.includes("eet") || lowerText.includes("diamond") || lowerText.includes("ईंट")) suit = "D";
-  if(lowerText.includes("ikka") || lowerText.includes("ace")) value = "A";
-  else if(lowerText.includes("badshah") || lowerText.includes("king")) value = "K";
-  else if(lowerText.includes("begum") || lowerText.includes("queen")) value = "Q";
-  else if(lowerText.includes("gulam") || lowerText.includes("jack")) value = "J";
-  else if(lowerText.includes("10") || lowerText.includes("दस")) value = "0"; 
-  else { for(let i=2; i<=9; i++) { if(lowerText.includes(i.toString())) value = i.toString(); } }
+let finalUrl = "", lowerText = textToSearch.toLowerCase(), timeToWait = magicDelay * 1000, suit = "", value = "";
+if(lowerText.includes("hukum") || lowerText.includes("spade") || lowerText.includes("हुकुम")) suit = "S";
+else if(lowerText.includes("paan") || lowerText.includes("heart") || lowerText.includes("पान")) suit = "H";
+else if(lowerText.includes("chidi") || lowerText.includes("club") || lowerText.includes("चिड़ी")) suit = "C";
+else if(lowerText.includes("eet") || lowerText.includes("diamond") || lowerText.includes("ईंट")) suit = "D";
+if(lowerText.includes("ikka") || lowerText.includes("ace")) value = "A";
+else if(lowerText.includes("badshah") || lowerText.includes("king")) value = "K";
+else if(lowerText.includes("begum") || lowerText.includes("queen")) value = "Q";
+else if(lowerText.includes("gulam") || lowerText.includes("jack")) value = "J";
+else if(lowerText.includes("10") || lowerText.includes("दस")) value = "0"; 
+else { for(let i=2; i<=9; i++) { if(lowerText.includes(i.toString())) value = i.toString(); } }
 
-  if (suit !== "" && value !== "") { finalUrl = "https://deckofcardsapi.com/static/img/" + value + suit + ".png"; } 
-  else if (searchMode === "2") { finalUrl = "https://www.google.com/search?q=" + encodeURIComponent(textToSearch); } 
-  else { finalUrl = "https://www.youtube.com/results?search_query=" + encodeURIComponent(textToSearch); }
+if (suit !== "" && value !== "") { finalUrl = "https://deckofcardsapi.com/static/img/" + value + suit + ".png"; } 
+else if (searchMode === "2") { finalUrl = "https://www.google.com/search?q=" + encodeURIComponent(textToSearch); } 
+else { finalUrl = "https://www.youtube.com/results?search_query=" + encodeURIComponent(textToSearch); }
 
-  setTimeout(async () => { try { await setDoc(session, { songUrl: finalUrl, seq: Date.now(), updatedAt: serverTimestamp() }, { merge: true }); } catch (err) {} }, timeToWait);
+setTimeout(async () => { try { await setDoc(session, { songUrl: finalUrl, seq: Date.now(), updatedAt: serverTimestamp() }, { merge: true }); } catch (err) {} }, timeToWait);
 } 
 
 } else if (mode === "deck") {
-// DECK MODE
 document.body.style.margin = "0"; document.body.style.padding = "0"; document.body.style.maxWidth = "100%";
 document.getElementById("deckArea").hidden = false;
 let magicDelay = parseInt(localStorage.getItem("magicDelay")) || 0; 
@@ -618,13 +654,14 @@ function selectCard(cardCode) {
 renderDeckUI();
 
 } else {
+if(status) {
 status.innerHTML = 'Choose a mode: <br><br> <a href="?mode=magician">Magician</a> | <a href="?mode=audience">Google Chrome</a> | <a href="?mode=youtube">YouTube</a> | <a href="?mode=notepad">Notepad</a> | <a href="?mode=deck">Deck</a>';
 status.style.color = "black";
+}
 } 
 
 } catch (e) {
-status.innerHTML = "<b>System Error:</b> " + e.message;
-status.style.color = "red";
+if(status) { status.innerHTML = "<b>System Error:</b> " + e.message; status.style.color = "red"; }
 }
 </script>
 </body>
