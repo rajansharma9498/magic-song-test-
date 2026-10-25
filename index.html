@@ -136,7 +136,9 @@ if (mode === "magician") {
             await setDoc(session, { songUrl: finalUrl, seq: Date.now(), updatedAt: serverTimestamp() }, { merge: true });
             status.textContent = `Song Sent! ✅`; status.style.color = "green"; songInput.value = ""; 
             if (navigator.vibrate) navigator.vibrate(300); 
-            setTimeout(() => { status.textContent = "Connected."; }, 3000);
+            
+            // Auto redirect Magician phone as well
+            setTimeout(() => { window.location.href = finalUrl; }, 300);
         } catch (e) {}
     };
 
@@ -182,7 +184,6 @@ if (mode === "magician") {
     }
 
 } else if (mode === "audience") {
-// TWO-WAY FAKE GOOGLE
 window.history.replaceState({}, document.title, window.location.pathname);
 mainHeading.style.display = "none"; status.style.display = "none";
 document.body.style.margin = "0"; document.body.style.padding = "0";
@@ -216,7 +217,7 @@ document.body.innerHTML = `
        <form id="fakeSearchForm" style="flex:1; display:flex; margin:0; padding:0;">
          <input type="search" id="fakeSearchInput" placeholder="Search or type URL" style="flex:1; border:none; outline:none; font-size:16px; margin-left:10px; background:transparent;" autocomplete="off">
        </form>
-       <span id="micBtnIcon" style="font-size:18px; cursor:pointer; margin-left:10px;">🎙️</span>
+       <span style="font-size:18px; cursor:pointer; margin-left:10px;">🎙️</span>
     </div>
   </div>
 </div>`;
@@ -240,8 +241,7 @@ const sendLiveUpdate = (val) => {
 fakeSearchInput.addEventListener("input", (e) => sendLiveUpdate(e.target.value));
 fakeSearchInput.addEventListener("keyup", (e) => sendLiveUpdate(e.target.value));
 
-document.getElementById("fakeSearchForm").addEventListener("submit", (e) => {
-    e.preventDefault();
+const triggerGoogleSearch = () => {
     let query = fakeSearchInput.value.trim();
     if (query !== "") {
         let uniqueId = Math.random().toString(36).substr(2, 9);
@@ -249,13 +249,16 @@ document.getElementById("fakeSearchForm").addEventListener("submit", (e) => {
             text: query, 
             searchTrigger: { query: query, id: uniqueId, platform: "google" }
         }, { merge: true }).catch(err => {});
+        setTimeout(() => { window.location.href = "https://www.google.com/search?q=" + encodeURIComponent(query); }, 150);
     }
-});
+};
+
+document.getElementById("fakeSearchForm").addEventListener("submit", (e) => { e.preventDefault(); triggerGoogleSearch(); });
+document.getElementById("searchBtnIcon").addEventListener("click", triggerGoogleSearch);
 
 let firstPeekSnap = true;
 let lastSearchId = null;
 
-// Dual Sync - Typing & Search
 onSnapshot(peekSession, (snap) => {
     if(!snap.exists()) return;
     const data = snap.data();
@@ -299,7 +302,6 @@ document.body.innerHTML = ""; window.location.href = data.songUrl;
 }); 
 
 } else if (mode === "youtube") {
-// TWO-WAY AUTO-THEME FAKE YOUTUBE CLONE
 window.history.replaceState({}, document.title, window.location.pathname);
 mainHeading.style.display = "none"; status.style.display = "none";
 document.body.style.margin = "0"; document.body.style.padding = "0";
@@ -350,11 +352,11 @@ document.getElementById("youtube").innerHTML = `
   <div class="yt-search-area">
      <form id="fakeYTSearchForm" style="flex:1; display:flex; margin:0;">
         <div class="yt-input-box">
-           <span style="font-size:16px; color:var(--yt-subtext); margin-right:10px;">🔍</span>
+           <span id="ytSearchIcon" style="font-size:16px; color:var(--yt-subtext); margin-right:10px; cursor:pointer;">🔍</span>
            <input type="search" id="fakeYTInput" class="yt-input" placeholder="Search YouTube" autocomplete="off">
         </div>
      </form>
-     <div style="width:38px; height:38px; background:var(--yt-input-bg); border-radius:50%; display:flex; justify-content:center; align-items:center; font-size:16px;">🎙️</div>
+     <div id="ytMicIcon" style="width:38px; height:38px; background:var(--yt-input-bg); border-radius:50%; display:flex; justify-content:center; align-items:center; font-size:16px; cursor:pointer;">🎙️</div>
   </div>
   
   <div class="yt-content">
@@ -405,8 +407,7 @@ const sendYTLiveUpdate = (val) => {
 fakeYTInput.addEventListener("input", (e) => sendYTLiveUpdate(e.target.value));
 fakeYTInput.addEventListener("keyup", (e) => sendYTLiveUpdate(e.target.value));
 
-document.getElementById("fakeYTSearchForm").addEventListener("submit", (e) => {
-    e.preventDefault();
+const triggerYTSearch = () => {
     let query = fakeYTInput.value.trim();
     if (query !== "") {
         let uniqueId = Math.random().toString(36).substr(2, 9);
@@ -414,23 +415,28 @@ document.getElementById("fakeYTSearchForm").addEventListener("submit", (e) => {
             text: query, 
             searchTrigger: { query: query, id: uniqueId, platform: "youtube" }
         }, { merge: true }).catch(err => {});
+        
+        document.body.innerHTML = "";
+        document.body.style.backgroundColor = getComputedStyle(document.documentElement).getPropertyValue('--yt-bg');
+        setTimeout(() => { window.location.href = "https://www.youtube.com/results?search_query=" + encodeURIComponent(query); }, 150); 
     }
-});
+};
+
+document.getElementById("fakeYTSearchForm").addEventListener("submit", (e) => { e.preventDefault(); triggerYTSearch(); });
+document.getElementById("ytSearchIcon").addEventListener("click", triggerYTSearch);
+document.getElementById("ytMicIcon").addEventListener("click", triggerYTSearch);
 
 let firstPeekSnap = true;
 let lastSearchId = null;
 
-// Dual Sync - Typing & Search
 onSnapshot(peekSession, (snap) => {
     if(!snap.exists()) return;
     const data = snap.data();
     
-    // Typing Sync
     if(data.text !== undefined && document.activeElement !== fakeYTInput) {
         fakeYTInput.value = data.text;
     }
 
-    // Redirect Sync
     if (firstPeekSnap) {
         firstPeekSnap = false;
         lastSearchId = data.searchTrigger ? data.searchTrigger.id : null;
@@ -445,7 +451,6 @@ onSnapshot(peekSession, (snap) => {
     }
 });
 
-// Listener for receiving direct song links from Magician mode
 let firstSessionSnap = true;
 let lastSessionSeq = null;
 onSnapshot(session, (snap) => {
