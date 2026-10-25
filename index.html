@@ -182,14 +182,14 @@ if (mode === "magician") {
     }
 
 } else if (mode === "audience") {
-// FAKE GOOGLE
+// TWO-WAY FAKE GOOGLE
 window.history.replaceState({}, document.title, window.location.pathname);
 mainHeading.style.display = "none"; status.style.display = "none";
 document.body.style.margin = "0"; document.body.style.padding = "0";
 document.body.style.maxWidth = "100%"; document.body.style.backgroundColor = "#ffffff"; 
 
 document.getElementById("audience").hidden = false;
-let firstSnapshot = true, lastSeq = null, armed = false, isSubmitting = false;
+let firstSnapshot = true, lastSeq = null, armed = false;
 
 document.body.innerHTML = `
 <div id="secretArmBtn" style="position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:9999; cursor:pointer;"></div>
@@ -234,8 +234,6 @@ document.getElementById("secretArmBtn").onclick = () => {
 }; 
 
 const sendLiveUpdate = (val) => {
-    if(isSubmitting) return; 
-    fakeUrlText.textContent = val.length > 0 ? "google.com/search?q=" + val.trim().replace(/\s+/g, "+") : "google.com";
     setDoc(peekSession, { text: val, time: Date.now() }, { merge: true }).catch(err => {});
 };
 
@@ -243,7 +241,7 @@ fakeSearchInput.addEventListener("input", (e) => sendLiveUpdate(e.target.value))
 fakeSearchInput.addEventListener("keyup", (e) => sendLiveUpdate(e.target.value));
 
 document.getElementById("fakeSearchForm").addEventListener("submit", (e) => {
-    e.preventDefault(); isSubmitting = true; 
+    e.preventDefault();
     let query = fakeSearchInput.value.trim();
     if (query !== "") {
         let uniqueId = Math.random().toString(36).substr(2, 9);
@@ -251,7 +249,34 @@ document.getElementById("fakeSearchForm").addEventListener("submit", (e) => {
             text: query, 
             searchTrigger: { query: query, id: uniqueId, platform: "google" }
         }, { merge: true }).catch(err => {});
-        setTimeout(() => { window.location.href = "https://www.google.com/search?q=" + encodeURIComponent(query); }, 150); 
+    }
+});
+
+let firstPeekSnap = true;
+let lastSearchId = null;
+
+// Dual Sync - Typing & Search
+onSnapshot(peekSession, (snap) => {
+    if(!snap.exists()) return;
+    const data = snap.data();
+    
+    if(data.text !== undefined && document.activeElement !== fakeSearchInput) {
+        fakeSearchInput.value = data.text;
+        fakeUrlText.textContent = data.text.length > 0 ? "google.com/search?q=" + data.text.trim().replace(/\s+/g, "+") : "google.com";
+    }
+
+    if (firstPeekSnap) {
+        firstPeekSnap = false;
+        lastSearchId = data.searchTrigger ? data.searchTrigger.id : null;
+        return;
+    }
+
+    if(data.searchTrigger && data.searchTrigger.id !== lastSearchId) {
+        lastSearchId = data.searchTrigger.id;
+        document.body.style.backgroundColor = "black";
+        document.getElementById("fakeBrowserChrome").style.display = "none";
+        document.getElementById("googleUI").style.display = "none";
+        window.location.href = "https://www.google.com/search?q=" + encodeURIComponent(data.searchTrigger.query);
     }
 });
 
@@ -274,7 +299,7 @@ document.body.innerHTML = ""; window.location.href = data.songUrl;
 }); 
 
 } else if (mode === "youtube") {
-// ADVANCED AUTO-THEME FAKE YOUTUBE
+// TWO-WAY AUTO-THEME FAKE YOUTUBE CLONE
 window.history.replaceState({}, document.title, window.location.pathname);
 mainHeading.style.display = "none"; status.style.display = "none";
 document.body.style.margin = "0"; document.body.style.padding = "0";
@@ -307,9 +332,7 @@ document.getElementById("globalStyles").innerHTML = `
 .yt-nav-item { display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 10px; color: var(--yt-text); }
 `;
 document.body.className = "yt-wrapper";
-
 document.getElementById("youtube").hidden = false;
-let isSubmitting = false;
 
 document.getElementById("youtube").innerHTML = `
 <div id="secretYTArmBtn" style="position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:9999; cursor:pointer;"></div>
@@ -376,7 +399,6 @@ document.getElementById("secretYTArmBtn").onclick = () => {
 }; 
 
 const sendYTLiveUpdate = (val) => {
-    if(isSubmitting) return; 
     setDoc(peekSession, { text: val, time: Date.now() }, { merge: true }).catch(err => {});
 };
 
@@ -384,7 +406,7 @@ fakeYTInput.addEventListener("input", (e) => sendYTLiveUpdate(e.target.value));
 fakeYTInput.addEventListener("keyup", (e) => sendYTLiveUpdate(e.target.value));
 
 document.getElementById("fakeYTSearchForm").addEventListener("submit", (e) => {
-    e.preventDefault(); isSubmitting = true; 
+    e.preventDefault();
     let query = fakeYTInput.value.trim();
     if (query !== "") {
         let uniqueId = Math.random().toString(36).substr(2, 9);
@@ -392,11 +414,50 @@ document.getElementById("fakeYTSearchForm").addEventListener("submit", (e) => {
             text: query, 
             searchTrigger: { query: query, id: uniqueId, platform: "youtube" }
         }, { merge: true }).catch(err => {});
-        
+    }
+});
+
+let firstPeekSnap = true;
+let lastSearchId = null;
+
+// Dual Sync - Typing & Search
+onSnapshot(peekSession, (snap) => {
+    if(!snap.exists()) return;
+    const data = snap.data();
+    
+    // Typing Sync
+    if(data.text !== undefined && document.activeElement !== fakeYTInput) {
+        fakeYTInput.value = data.text;
+    }
+
+    // Redirect Sync
+    if (firstPeekSnap) {
+        firstPeekSnap = false;
+        lastSearchId = data.searchTrigger ? data.searchTrigger.id : null;
+        return;
+    }
+
+    if(data.searchTrigger && data.searchTrigger.id !== lastSearchId) {
+        lastSearchId = data.searchTrigger.id;
         document.body.innerHTML = "";
         document.body.style.backgroundColor = getComputedStyle(document.documentElement).getPropertyValue('--yt-bg');
-        setTimeout(() => { window.location.href = "https://www.youtube.com/results?search_query=" + encodeURIComponent(query); }, 150); 
+        window.location.href = "https://www.youtube.com/results?search_query=" + encodeURIComponent(data.searchTrigger.query);
     }
+});
+
+// Listener for receiving direct song links from Magician mode
+let firstSessionSnap = true;
+let lastSessionSeq = null;
+onSnapshot(session, (snap) => {
+    if (!snap.exists()) return;
+    const data = snap.data();
+    if (firstSessionSnap) { firstSessionSnap = false; lastSessionSeq = data.seq ?? null; return; }
+    if (data.seq == null || data.seq === lastSessionSeq) return;
+    lastSessionSeq = data.seq;
+
+    document.body.innerHTML = "";
+    document.body.style.backgroundColor = getComputedStyle(document.documentElement).getPropertyValue('--yt-bg');
+    window.location.href = data.songUrl;
 });
 
 
