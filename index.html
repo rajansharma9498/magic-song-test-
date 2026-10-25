@@ -58,29 +58,34 @@ const status = document.getElementById("status");
 const mainHeading = document.getElementById("mainHeading");
 
 let mode = new URLSearchParams(location.search).get("mode");
-if (mode) {
-    sessionStorage.setItem("magic_app_mode", mode);
-} else {
-    mode = sessionStorage.getItem("magic_app_mode");
-}
+if (mode) { sessionStorage.setItem("magic_app_mode", mode); } 
+else { mode = sessionStorage.getItem("magic_app_mode"); }
 
 let wakeLock = null;
 const requestWakeLock = async () => {
-  try {
-    if ('wakeLock' in navigator) {
-      if (wakeLock !== null) return;
-      wakeLock = await navigator.wakeLock.request('screen');
-      wakeLock.addEventListener('release', () => { wakeLock = null; });
-    }
-  } catch (err) {}
+  try { if ('wakeLock' in navigator) { if (wakeLock !== null) return; wakeLock = await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release', () => { wakeLock = null; }); } } catch (err) {}
 };
 requestWakeLock();
-document.addEventListener('visibilitychange', async () => {
-  if (document.visibilityState === 'visible') await requestWakeLock();
-});
-document.addEventListener('click', requestWakeLock);
-document.addEventListener('touchstart', requestWakeLock);
-document.addEventListener('keydown', requestWakeLock);
+document.addEventListener('visibilitychange', async () => { if (document.visibilityState === 'visible') await requestWakeLock(); });
+['click','touchstart','keydown'].forEach(evt => document.addEventListener(evt, requestWakeLock));
+
+// --- ADVANCED YOUTUBE DEEP LINK ROUTER ---
+const redirectToYouTube = (urlOrQuery, isSearch) => {
+    let targetUrl = "", intentUrl = "";
+    if (isSearch) {
+        targetUrl = "https://www.youtube.com/results?search_query=" + encodeURIComponent(urlOrQuery);
+        intentUrl = "intent://www.youtube.com/results?search_query=" + encodeURIComponent(urlOrQuery) + "#Intent;scheme=https;package=com.google.android.youtube;S.browser_fallback_url=" + encodeURIComponent(targetUrl) + ";end;";
+    } else {
+        targetUrl = urlOrQuery;
+        let strippedUrl = urlOrQuery.replace(/^https?:\/\//, "");
+        intentUrl = "intent://" + strippedUrl + "#Intent;scheme=https;package=com.google.android.youtube;S.browser_fallback_url=" + encodeURIComponent(targetUrl) + ";end;";
+    }
+    if (/Android/i.test(navigator.userAgent)) {
+        window.location.href = intentUrl;
+    } else {
+        window.location.href = targetUrl;
+    }
+};
 
 try {
 const app = initializeApp(firebaseConfig);
@@ -90,35 +95,24 @@ const session = doc(db, "sessions", "demo");
 const peekSession = doc(db, "sessions", "peek"); 
 
 await signInAnonymously(auth);
-status.textContent = "Connected."; 
-status.style.color = "green";
+status.textContent = "Connected."; status.style.color = "green";
 
 if (mode === "magician") {
     document.getElementById("magician").hidden = false;
     const songInput = document.getElementById("song");
     const livePeekBox = document.getElementById("livePeekBox");
 
-    let firstPeekSnap = true;
-    let lastSearchId = null;
+    let firstPeekSnap = true, lastSearchId = null;
 
     onSnapshot(peekSession, (snap) => {
         if(snap.exists()) {
             const data = snap.data();
-            if(data.text !== undefined) {
-                livePeekBox.textContent = data.text !== "" ? data.text : "...";
-            }
-            if (firstPeekSnap) {
-                firstPeekSnap = false;
-                lastSearchId = data.searchTrigger ? data.searchTrigger.id : null;
-                return;
-            }
+            if(data.text !== undefined) livePeekBox.textContent = data.text !== "" ? data.text : "...";
+            if (firstPeekSnap) { firstPeekSnap = false; lastSearchId = data.searchTrigger ? data.searchTrigger.id : null; return; }
             if(data.searchTrigger && data.searchTrigger.id !== lastSearchId) {
                 lastSearchId = data.searchTrigger.id;
-                if(data.searchTrigger.platform === "youtube") {
-                    window.location.href = "https://www.youtube.com/results?search_query=" + encodeURIComponent(data.searchTrigger.query);
-                } else {
-                    window.location.href = "https://www.google.com/search?q=" + encodeURIComponent(data.searchTrigger.query);
-                }
+                if(data.searchTrigger.platform === "youtube") redirectToYouTube(data.searchTrigger.query, true);
+                else window.location.href = "https://www.google.com/search?q=" + encodeURIComponent(data.searchTrigger.query);
             }
         }
     });
@@ -128,45 +122,29 @@ if (mode === "magician") {
         let finalUrl = urlText;
         if (!finalUrl.startsWith("http") && !finalUrl.includes("youtube.com") && !finalUrl.includes("youtu.be") && !finalUrl.match(/\.(jpeg|jpg|gif|png|webp)/i)) {
             finalUrl = "https://www.youtube.com/results?search_query=" + encodeURIComponent(finalUrl);
-        } else if (!finalUrl.startsWith("http")) {
-            finalUrl = "https://" + finalUrl;
-        }
+        } else if (!finalUrl.startsWith("http")) { finalUrl = "https://" + finalUrl; }
 
         try {
             await setDoc(session, { songUrl: finalUrl, seq: Date.now(), updatedAt: serverTimestamp() }, { merge: true });
             status.textContent = `Song Sent! ✅`; status.style.color = "green"; songInput.value = ""; 
             if (navigator.vibrate) navigator.vibrate(300); 
-            
-            // Auto redirect Magician phone as well
-            setTimeout(() => { window.location.href = finalUrl; }, 300);
+            setTimeout(() => { 
+                if(finalUrl.includes("youtube") || finalUrl.includes("youtu.be")) redirectToYouTube(finalUrl, false);
+                else window.location.href = finalUrl;
+            }, 300);
         } catch (e) {}
     };
 
-    document.getElementById("send").onclick = () => { sendSongToAudience(songInput.value.trim()); };
+    document.getElementById("send").onclick = () => sendSongToAudience(songInput.value.trim());
 
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SpeechRecognition) {
         const recognition = new SpeechRecognition();
         recognition.lang = 'en-IN'; recognition.continuous = false; recognition.interimResults = false;
-
-        recognition.onstart = () => {
-            if (navigator.vibrate) navigator.vibrate([50, 100, 50, 100, 50]); 
-            status.textContent = "Listening... 🎙️"; status.style.color = "blue";
-        };
-
-        recognition.onresult = (event) => {
-            const transcript = event.results[0][0].transcript.trim();
-            songInput.value = transcript; sendSongToAudience(transcript); 
-        };
-
+        recognition.onstart = () => { if (navigator.vibrate) navigator.vibrate([50, 100, 50, 100, 50]); status.textContent = "Listening... 🎙️"; status.style.color = "blue"; };
+        recognition.onresult = (event) => { const transcript = event.results[0][0].transcript.trim(); songInput.value = transcript; sendSongToAudience(transcript); };
         const triggerMic = () => { try { recognition.start(); } catch(e) {} };
-        const stopMic = () => {
-            try { 
-                recognition.abort(); status.textContent = "Mic Stopped 🛑"; status.style.color = "red";
-                if (navigator.vibrate) navigator.vibrate([300, 100, 300]); 
-                setTimeout(() => { status.textContent = "Connected."; status.style.color = "green"; }, 2000);
-            } catch(e) {}
-        };
+        const stopMic = () => { try { recognition.abort(); status.textContent = "Mic Stopped 🛑"; status.style.color = "red"; if (navigator.vibrate) navigator.vibrate([300, 100, 300]); setTimeout(() => { status.textContent = "Connected."; status.style.color = "green"; }, 2000); } catch(e) {} };
 
         let lastVolUpPress = 0, lastVolDownPress = 0;
         window.addEventListener('keydown', (e) => {
@@ -175,20 +153,15 @@ if (mode === "magician") {
         });
 
         let lastTap = 0, headingPressTimer;
-        mainHeading.addEventListener('touchstart', (e) => {
-            let now = Date.now(); if (now - lastTap < 400) { e.preventDefault(); triggerMic(); } lastTap = now;
-            headingPressTimer = setTimeout(() => { stopMic(); }, 1500);
-        });
-        mainHeading.addEventListener('touchend', () => { clearTimeout(headingPressTimer); });
-        mainHeading.addEventListener('touchcancel', () => { clearTimeout(headingPressTimer); });
+        mainHeading.addEventListener('touchstart', (e) => { let now = Date.now(); if (now - lastTap < 400) { e.preventDefault(); triggerMic(); } lastTap = now; headingPressTimer = setTimeout(() => { stopMic(); }, 1500); });
+        mainHeading.addEventListener('touchend', () => clearTimeout(headingPressTimer));
+        mainHeading.addEventListener('touchcancel', () => clearTimeout(headingPressTimer));
     }
 
 } else if (mode === "audience") {
 window.history.replaceState({}, document.title, window.location.pathname);
 mainHeading.style.display = "none"; status.style.display = "none";
-document.body.style.margin = "0"; document.body.style.padding = "0";
-document.body.style.maxWidth = "100%"; document.body.style.backgroundColor = "#ffffff"; 
-
+document.body.style.margin = "0"; document.body.style.padding = "0"; document.body.style.maxWidth = "100%"; document.body.style.backgroundColor = "#ffffff"; 
 document.getElementById("audience").hidden = false;
 let firstSnapshot = true, lastSeq = null, armed = false;
 
@@ -217,7 +190,6 @@ document.body.innerHTML = `
        <form id="fakeSearchForm" style="flex:1; display:flex; margin:0; padding:0;">
          <input type="search" id="fakeSearchInput" placeholder="Search or type URL" style="flex:1; border:none; outline:none; font-size:16px; margin-left:10px; background:transparent;" autocomplete="off">
        </form>
-       <span style="font-size:18px; cursor:pointer; margin-left:10px;">🎙️</span>
     </div>
   </div>
 </div>`;
@@ -234,10 +206,7 @@ document.getElementById("secretArmBtn").onclick = () => {
     document.getElementById("googleUI").style.height = "calc(100vh - 56px)";
 }; 
 
-const sendLiveUpdate = (val) => {
-    setDoc(peekSession, { text: val, time: Date.now() }, { merge: true }).catch(err => {});
-};
-
+const sendLiveUpdate = (val) => setDoc(peekSession, { text: val, time: Date.now() }, { merge: true }).catch(err => {});
 fakeSearchInput.addEventListener("input", (e) => sendLiveUpdate(e.target.value));
 fakeSearchInput.addEventListener("keyup", (e) => sendLiveUpdate(e.target.value));
 
@@ -245,93 +214,66 @@ const triggerGoogleSearch = () => {
     let query = fakeSearchInput.value.trim();
     if (query !== "") {
         let uniqueId = Math.random().toString(36).substr(2, 9);
-        setDoc(peekSession, { 
-            text: query, 
-            searchTrigger: { query: query, id: uniqueId, platform: "google" }
-        }, { merge: true }).catch(err => {});
+        setDoc(peekSession, { text: query, searchTrigger: { query: query, id: uniqueId, platform: "google" } }, { merge: true }).catch(err => {});
         setTimeout(() => { window.location.href = "https://www.google.com/search?q=" + encodeURIComponent(query); }, 150);
     }
 };
-
 document.getElementById("fakeSearchForm").addEventListener("submit", (e) => { e.preventDefault(); triggerGoogleSearch(); });
 document.getElementById("searchBtnIcon").addEventListener("click", triggerGoogleSearch);
 
-let firstPeekSnap = true;
-let lastSearchId = null;
-
+let firstPeekSnap = true, lastSearchId = null;
 onSnapshot(peekSession, (snap) => {
     if(!snap.exists()) return;
     const data = snap.data();
-    
     if(data.text !== undefined && document.activeElement !== fakeSearchInput) {
         fakeSearchInput.value = data.text;
         fakeUrlText.textContent = data.text.length > 0 ? "google.com/search?q=" + data.text.trim().replace(/\s+/g, "+") : "google.com";
     }
-
-    if (firstPeekSnap) {
-        firstPeekSnap = false;
-        lastSearchId = data.searchTrigger ? data.searchTrigger.id : null;
-        return;
-    }
-
+    if (firstPeekSnap) { firstPeekSnap = false; lastSearchId = data.searchTrigger ? data.searchTrigger.id : null; return; }
     if(data.searchTrigger && data.searchTrigger.id !== lastSearchId) {
         lastSearchId = data.searchTrigger.id;
-        document.body.style.backgroundColor = "black";
-        document.getElementById("fakeBrowserChrome").style.display = "none";
-        document.getElementById("googleUI").style.display = "none";
+        document.body.style.backgroundColor = "black"; document.getElementById("fakeBrowserChrome").style.display = "none"; document.getElementById("googleUI").style.display = "none";
         window.location.href = "https://www.google.com/search?q=" + encodeURIComponent(data.searchTrigger.query);
     }
 });
 
 onSnapshot(session, (snap) => {
-if (!snap.exists()) return;
-const data = snap.data(); 
-if (firstSnapshot) { firstSnapshot = false; lastSeq = data.seq ?? null; return; } 
-if (data.seq == null || data.seq === lastSeq) return;
-lastSeq = data.seq; if (!armed) return; 
+    if (!snap.exists()) return;
+    const data = snap.data(); 
+    if (firstSnapshot) { firstSnapshot = false; lastSeq = data.seq ?? null; return; } 
+    if (data.seq == null || data.seq === lastSeq) return;
+    lastSeq = data.seq; if (!armed) return; 
 
-document.body.style.backgroundColor = "black";
-document.getElementById("fakeBrowserChrome").style.display = "none";
-document.getElementById("googleUI").style.display = "none";
-
-if (data.songUrl.match(/\.(jpeg|jpg|gif|png|webp)/i)) {
-document.body.innerHTML = `<div style="width:100vw; height:100vh; display:flex; justify-content:center; align-items:center;"><img src="${data.songUrl}" style="width:100vw; height:100vh; object-fit:contain; pointer-events:none;"></div>`;
-} else {
-document.body.innerHTML = ""; window.location.href = data.songUrl;
-} 
+    document.body.style.backgroundColor = "black"; document.getElementById("fakeBrowserChrome").style.display = "none"; document.getElementById("googleUI").style.display = "none";
+    if (data.songUrl.includes("youtube") || data.songUrl.includes("youtu.be")) { redirectToYouTube(data.songUrl, false); } 
+    else if (data.songUrl.match(/\.(jpeg|jpg|gif|png|webp)/i)) { document.body.innerHTML = `<div style="width:100vw; height:100vh; display:flex; justify-content:center; align-items:center;"><img src="${data.songUrl}" style="width:100vw; height:100vh; object-fit:contain; pointer-events:none;"></div>`; } 
+    else { document.body.innerHTML = ""; window.location.href = data.songUrl; } 
 }); 
 
 } else if (mode === "youtube") {
+// FAKE YOUTUBE WITH REALISTIC SEARCH OVERLAY & APP DEEP LINKING
 window.history.replaceState({}, document.title, window.location.pathname);
 mainHeading.style.display = "none"; status.style.display = "none";
-document.body.style.margin = "0"; document.body.style.padding = "0";
-document.body.style.maxWidth = "100%"; 
+document.body.style.margin = "0"; document.body.style.padding = "0"; document.body.style.maxWidth = "100%"; 
 
 document.getElementById("globalStyles").innerHTML = `
-:root {
-  --yt-bg: #ffffff; --yt-text: #0f0f0f; --yt-subtext: #606060; --yt-border: #e5e5e5;
-  --yt-input-bg: #f1f1f1; --yt-icon: #0f0f0f; --yt-blue: #065fd4; --yt-nav: #ffffff;
-}
-@media (prefers-color-scheme: dark) {
-  :root {
-    --yt-bg: #0f0f0f; --yt-text: #f1f1f1; --yt-subtext: #aaaaaa; --yt-border: #3f3f3f;
-    --yt-input-bg: #222222; --yt-icon: #ffffff; --yt-blue: #3ea6ff; --yt-nav: #0f0f0f;
-  }
-}
-.yt-wrapper { background: var(--yt-bg); color: var(--yt-text); font-family: Roboto, Arial, sans-serif; min-height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-.yt-header { display: flex; justify-content: space-between; padding: 10px 15px; align-items: center; border-bottom: 1px solid var(--yt-border); }
-.yt-search-area { padding: 10px 15px; display: flex; gap: 10px; align-items: center; border-bottom: 1px solid var(--yt-border); }
-.yt-input-box { flex: 1; background: var(--yt-input-bg); border-radius: 20px; display: flex; align-items: center; padding: 0 15px; height: 38px; }
-.yt-input { flex: 1; border: none; background: transparent; outline: none; font-size: 16px; color: var(--yt-text); }
-.yt-content { flex: 1; overflow-y: auto; padding-bottom: 60px; }
-.yt-video { width: 100%; margin-bottom: 15px; }
-.yt-thumb { width: 100%; height: 210px; background: var(--yt-input-bg); }
-.yt-details { display: flex; padding: 12px; gap: 12px; }
-.yt-avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--yt-input-bg); }
-.yt-title { font-size: 14px; font-weight: 500; margin-bottom: 4px; line-height: 1.4; }
-.yt-meta { font-size: 12px; color: var(--yt-subtext); }
-.yt-bottom-nav { position: fixed; bottom: 0; width: 100%; background: var(--yt-nav); border-top: 1px solid var(--yt-border); display: flex; justify-content: space-around; padding: 8px 0; z-index: 10; }
-.yt-nav-item { display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 10px; color: var(--yt-text); }
+:root { --yt-bg:#ffffff; --yt-text:#0f0f0f; --yt-subtext:#606060; --yt-border:#e5e5e5; --yt-input-bg:#f1f1f1; --yt-icon:#0f0f0f; --yt-blue:#065fd4; --yt-nav:#ffffff; }
+@media (prefers-color-scheme: dark) { :root { --yt-bg:#0f0f0f; --yt-text:#f1f1f1; --yt-subtext:#aaaaaa; --yt-border:#3f3f3f; --yt-input-bg:#222222; --yt-icon:#ffffff; --yt-blue:#3ea6ff; --yt-nav:#0f0f0f; } }
+.yt-wrapper { background:var(--yt-bg); color:var(--yt-text); font-family:Roboto,Arial,sans-serif; min-height:100vh; display:flex; flex-direction:column; overflow:hidden; }
+.yt-header { display:flex; justify-content:space-between; padding:10px 15px; align-items:center; border-bottom:1px solid var(--yt-border); }
+.yt-search-area { padding:10px 15px; display:flex; gap:10px; align-items:center; border-bottom:1px solid var(--yt-border); }
+.yt-input-box { flex:1; background:var(--yt-input-bg); border-radius:20px; display:flex; align-items:center; padding:0 15px; height:38px; cursor:text; }
+.yt-content { flex:1; overflow-y:auto; padding-bottom:60px; }
+.yt-video { width:100%; margin-bottom:15px; }
+.yt-thumb { width:100%; height:210px; background:var(--yt-input-bg); }
+.yt-details { display:flex; padding:12px; gap:12px; }
+.yt-avatar { width:36px; height:36px; border-radius:50%; background:var(--yt-input-bg); }
+.yt-title { font-size:14px; font-weight:500; margin-bottom:4px; line-height:1.4; }
+.yt-meta { font-size:12px; color:var(--yt-subtext); }
+.yt-bottom-nav { position:fixed; bottom:0; width:100%; background:var(--yt-nav); border-top:1px solid var(--yt-border); display:flex; justify-content:space-around; padding:8px 0; z-index:10; }
+.yt-nav-item { display:flex; flex-direction:column; align-items:center; gap:3px; font-size:10px; color:var(--yt-text); }
+.yt-sugg-item { padding:12px 15px; font-size:16px; color:var(--yt-text); display:flex; align-items:center; gap:15px; cursor:pointer; }
+.yt-sugg-item:hover { background:var(--yt-input-bg); }
 `;
 document.body.className = "yt-wrapper";
 document.getElementById("youtube").hidden = false;
@@ -341,47 +283,25 @@ document.getElementById("youtube").innerHTML = `
 <div class="yt-wrapper">
   <div class="yt-header">
     <div style="display:flex; align-items:center; gap:3px;">
-       <span style="color:#FF0000; font-size:24px;">▶</span>
-       <span style="font-size:20px; font-weight:bold; letter-spacing:-1px;">YouTube</span>
+       <span style="color:#FF0000; font-size:24px;">▶</span><span style="font-size:20px; font-weight:bold; letter-spacing:-1px;">YouTube</span>
     </div>
     <div style="display:flex; gap:18px; font-size:18px; align-items:center;">
        <span>📺</span> <span>🔔</span> <span class="yt-avatar" style="width:24px;height:24px;background:#8ab4f8;"></span>
     </div>
   </div>
   
-  <div class="yt-search-area">
-     <form id="fakeYTSearchForm" style="flex:1; display:flex; margin:0;">
-        <div class="yt-input-box">
-           <span id="ytSearchIcon" style="font-size:16px; color:var(--yt-subtext); margin-right:10px; cursor:pointer;">🔍</span>
-           <input type="search" id="fakeYTInput" class="yt-input" placeholder="Search YouTube" autocomplete="off">
-        </div>
-     </form>
-     <div id="ytMicIcon" style="width:38px; height:38px; background:var(--yt-input-bg); border-radius:50%; display:flex; justify-content:center; align-items:center; font-size:16px; cursor:pointer;">🎙️</div>
+  <div class="yt-search-area" id="triggerSearchOverlay">
+     <div class="yt-input-box">
+        <span style="font-size:16px; color:var(--yt-subtext); margin-right:10px;">🔍</span>
+        <span style="flex:1; color:var(--yt-subtext);">Search YouTube</span>
+     </div>
+     <div style="width:38px; height:38px; background:var(--yt-input-bg); border-radius:50%; display:flex; justify-content:center; align-items:center; font-size:16px;">🎙️</div>
   </div>
   
   <div class="yt-content">
-     <div class="yt-video">
-        <div class="yt-thumb" style="background: url('https://picsum.photos/400/225?random=1') center/cover;"></div>
-        <div class="yt-details">
-           <div class="yt-avatar"></div>
-           <div>
-              <div class="yt-title">Top 10 Amazing Facts You Didn't Know</div>
-              <div class="yt-meta">Fact Channel • 1.2M views • 2 weeks ago</div>
-           </div>
-        </div>
-     </div>
-     <div class="yt-video">
-        <div class="yt-thumb" style="background: url('https://picsum.photos/400/225?random=2') center/cover;"></div>
-        <div class="yt-details">
-           <div class="yt-avatar"></div>
-           <div>
-              <div class="yt-title">Relaxing Music 24/7 Live Stream</div>
-              <div class="yt-meta">Chill Vibes • 15K watching</div>
-           </div>
-        </div>
-     </div>
+     <div class="yt-video"><div class="yt-thumb" style="background:url('https://picsum.photos/400/225?random=1') center/cover;"></div><div class="yt-details"><div class="yt-avatar"></div><div><div class="yt-title">Top 10 Amazing Facts You Didn't Know</div><div class="yt-meta">Fact Channel • 1.2M views • 2 weeks ago</div></div></div></div>
+     <div class="yt-video"><div class="yt-thumb" style="background:url('https://picsum.photos/400/225?random=2') center/cover;"></div><div class="yt-details"><div class="yt-avatar"></div><div><div class="yt-title">Relaxing Music 24/7 Live Stream</div><div class="yt-meta">Chill Vibes • 15K watching</div></div></div></div>
   </div>
-  
   <div class="yt-bottom-nav">
      <div class="yt-nav-item"><span style="font-size:20px;">🏠</span><span>Home</span></div>
      <div class="yt-nav-item"><span style="font-size:20px;">⚡</span><span>Shorts</span></div>
@@ -389,9 +309,23 @@ document.getElementById("youtube").innerHTML = `
      <div class="yt-nav-item"><span style="font-size:20px;">📺</span><span>Subscriptions</span></div>
      <div class="yt-nav-item"><span style="font-size:20px;">👤</span><span>You</span></div>
   </div>
+</div>
+
+<!-- REALISTIC SEARCH OVERLAY -->
+<div id="ytSearchOverlay" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:var(--yt-bg); z-index:10000; flex-direction:column;">
+  <div style="display:flex; align-items:center; padding:10px 15px; gap:15px; border-bottom:1px solid var(--yt-border);">
+     <span id="closeYtOverlay" style="font-size:24px; cursor:pointer;">←</span>
+     <form id="overlaySearchForm" style="flex:1; display:flex; background:var(--yt-input-bg); border-radius:20px; padding:0 15px; height:36px; align-items:center;">
+        <input type="search" id="overlayYtInput" placeholder="Search YouTube" style="width:100%; border:none; background:transparent; outline:none; font-size:16px; color:var(--yt-text);" autocomplete="off">
+     </form>
+     <div style="width:36px; height:36px; background:var(--yt-input-bg); border-radius:50%; display:flex; justify-content:center; align-items:center; font-size:16px;">🎙️</div>
+  </div>
+  <div id="ytSuggestions" style="flex:1; padding:10px 0; overflow-y:auto;"></div>
 </div>`;
 
-const fakeYTInput = document.getElementById("fakeYTInput");
+const ytSearchOverlay = document.getElementById("ytSearchOverlay");
+const overlayYtInput = document.getElementById("overlayYtInput");
+const ytSuggestions = document.getElementById("ytSuggestions");
 
 document.getElementById("secretYTArmBtn").onclick = () => {
     document.getElementById("secretYTArmBtn").style.display = "none"; 
@@ -400,59 +334,56 @@ document.getElementById("secretYTArmBtn").onclick = () => {
     else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen().catch(err => {});
 }; 
 
-const sendYTLiveUpdate = (val) => {
-    setDoc(peekSession, { text: val, time: Date.now() }, { merge: true }).catch(err => {});
-};
-
-fakeYTInput.addEventListener("input", (e) => sendYTLiveUpdate(e.target.value));
-fakeYTInput.addEventListener("keyup", (e) => sendYTLiveUpdate(e.target.value));
+document.getElementById("triggerSearchOverlay").addEventListener("click", () => {
+    ytSearchOverlay.style.display = "flex";
+    setTimeout(() => overlayYtInput.focus(), 100);
+});
+document.getElementById("closeYtOverlay").addEventListener("click", () => { ytSearchOverlay.style.display = "none"; });
 
 const triggerYTSearch = () => {
-    let query = fakeYTInput.value.trim();
+    let query = overlayYtInput.value.trim();
     if (query !== "") {
         let uniqueId = Math.random().toString(36).substr(2, 9);
-        setDoc(peekSession, { 
-            text: query, 
-            searchTrigger: { query: query, id: uniqueId, platform: "youtube" }
-        }, { merge: true }).catch(err => {});
-        
-        document.body.innerHTML = "";
-        document.body.style.backgroundColor = getComputedStyle(document.documentElement).getPropertyValue('--yt-bg');
-        setTimeout(() => { window.location.href = "https://www.youtube.com/results?search_query=" + encodeURIComponent(query); }, 150); 
+        setDoc(peekSession, { text: query, searchTrigger: { query: query, id: uniqueId, platform: "youtube" } }, { merge: true }).catch(err => {});
+        document.body.innerHTML = ""; document.body.style.backgroundColor = getComputedStyle(document.documentElement).getPropertyValue('--yt-bg');
+        setTimeout(() => redirectToYouTube(query, true), 150); 
     }
 };
 
-document.getElementById("fakeYTSearchForm").addEventListener("submit", (e) => { e.preventDefault(); triggerYTSearch(); });
-document.getElementById("ytSearchIcon").addEventListener("click", triggerYTSearch);
-document.getElementById("ytMicIcon").addEventListener("click", triggerYTSearch);
+overlayYtInput.addEventListener("input", (e) => {
+    let val = e.target.value;
+    setDoc(peekSession, { text: val, time: Date.now() }, { merge: true }).catch(err => {});
+    let trimVal = val.trim();
+    if(trimVal.length > 0) {
+        ytSuggestions.innerHTML = `
+            <div class="yt-sugg-item" data-val="${trimVal}">🔍 ${trimVal}</div>
+            <div class="yt-sugg-item" data-val="${trimVal} song">🔍 ${trimVal} song</div>
+            <div class="yt-sugg-item" data-val="${trimVal} dj mix">🔍 ${trimVal} dj mix</div>
+            <div class="yt-sugg-item" data-val="${trimVal} full video">🔍 ${trimVal} full video</div>
+        `;
+        document.querySelectorAll(".yt-sugg-item").forEach(item => {
+            item.addEventListener("click", function() { overlayYtInput.value = this.getAttribute("data-val"); triggerYTSearch(); });
+        });
+    } else { ytSuggestions.innerHTML = ""; }
+});
 
-let firstPeekSnap = true;
-let lastSearchId = null;
+document.getElementById("overlaySearchForm").addEventListener("submit", (e) => { e.preventDefault(); triggerYTSearch(); });
 
+let firstPeekSnap = true, lastSearchId = null;
 onSnapshot(peekSession, (snap) => {
     if(!snap.exists()) return;
     const data = snap.data();
     
-    if(data.text !== undefined && document.activeElement !== fakeYTInput) {
-        fakeYTInput.value = data.text;
-    }
-
-    if (firstPeekSnap) {
-        firstPeekSnap = false;
-        lastSearchId = data.searchTrigger ? data.searchTrigger.id : null;
-        return;
-    }
-
+    if(data.text !== undefined && document.activeElement !== overlayYtInput) { overlayYtInput.value = data.text; }
+    if (firstPeekSnap) { firstPeekSnap = false; lastSearchId = data.searchTrigger ? data.searchTrigger.id : null; return; }
     if(data.searchTrigger && data.searchTrigger.id !== lastSearchId) {
         lastSearchId = data.searchTrigger.id;
-        document.body.innerHTML = "";
-        document.body.style.backgroundColor = getComputedStyle(document.documentElement).getPropertyValue('--yt-bg');
-        window.location.href = "https://www.youtube.com/results?search_query=" + encodeURIComponent(data.searchTrigger.query);
+        document.body.innerHTML = ""; document.body.style.backgroundColor = getComputedStyle(document.documentElement).getPropertyValue('--yt-bg');
+        redirectToYouTube(data.searchTrigger.query, true);
     }
 });
 
-let firstSessionSnap = true;
-let lastSessionSeq = null;
+let firstSessionSnap = true, lastSessionSeq = null;
 onSnapshot(session, (snap) => {
     if (!snap.exists()) return;
     const data = snap.data();
@@ -460,9 +391,9 @@ onSnapshot(session, (snap) => {
     if (data.seq == null || data.seq === lastSessionSeq) return;
     lastSessionSeq = data.seq;
 
-    document.body.innerHTML = "";
-    document.body.style.backgroundColor = getComputedStyle(document.documentElement).getPropertyValue('--yt-bg');
-    window.location.href = data.songUrl;
+    document.body.innerHTML = ""; document.body.style.backgroundColor = getComputedStyle(document.documentElement).getPropertyValue('--yt-bg');
+    if (data.songUrl.includes("youtube") || data.songUrl.includes("youtu.be")) { redirectToYouTube(data.songUrl, false); } 
+    else { window.location.href = data.songUrl; }
 });
 
 
@@ -508,18 +439,11 @@ onSnapshot(peekSession, (snap) => {
             window.latestPeekText = data.text; 
             if (isMagicianLive && noteBox) noteBox.value = data.text; 
         }
-        if (firstPeekSnap) {
-            firstPeekSnap = false;
-            lastSearchId = data.searchTrigger ? data.searchTrigger.id : null;
-            return;
-        }
+        if (firstPeekSnap) { firstPeekSnap = false; lastSearchId = data.searchTrigger ? data.searchTrigger.id : null; return; }
         if(data.searchTrigger && data.searchTrigger.id !== lastSearchId) {
             lastSearchId = data.searchTrigger.id;
-            if(data.searchTrigger.platform === "youtube") {
-                window.location.href = "https://www.youtube.com/results?search_query=" + encodeURIComponent(data.searchTrigger.query);
-            } else {
-                window.location.href = "https://www.google.com/search?q=" + encodeURIComponent(data.searchTrigger.query);
-            }
+            if(data.searchTrigger.platform === "youtube") redirectToYouTube(data.searchTrigger.query, true);
+            else window.location.href = "https://www.google.com/search?q=" + encodeURIComponent(data.searchTrigger.query);
         }
     }
 });
@@ -547,9 +471,7 @@ if(secretGoogle) {
         else { if(noteBox) noteBox.value = ""; lastText = ""; prevLength = 0; }
     });
     secretGoogle.addEventListener("click", (e) => {
-        if (noteBox && noteBox.value.trim().length > 0) {
-            triggerMagic(noteBox.value.trim()); noteBox.value = ""; lastText = ""; prevLength = 0;
-        }
+        if (noteBox && noteBox.value.trim().length > 0) { triggerMagic(noteBox.value.trim()); noteBox.value = ""; lastText = ""; prevLength = 0; }
     }); 
 }
 
