@@ -15,22 +15,29 @@
 
 <style id="globalStyles"></style>
 </head>
-<body style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:0; transition: background-color 0.3s, color 0.3s; min-height:100vh;">
+<body style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:0; transition: background-color 0.3s, color 0.3s; min-height:100vh; background-color:#ffffff;">
 
-<!-- HIDDEN FOR MAGICIAN -->
-<h2 id="mainHeading" style="user-select:none; margin:40px 16px;">Magic Song</h2>
-<p id="status" style="font-weight:bold; color:red; margin:0 16px;">Connecting to Firebase...</p> 
+<div id="errorBox" style="color:red; text-align:center; padding:20px; display:none;"></div>
 
 <!-- STEALTH MAGICIAN PANEL -->
-<section id="magician" hidden style="padding:16px;">
-   <input id="song" style="width:95%;padding:12px;font-size:16px;border:1px solid #ccc;border-radius:4px;outline:none;" placeholder="Search..." autocomplete="off">
+<section id="magician" hidden style="padding:20px;">
+   <input id="song" style="width:100%; box-sizing:border-box; padding:12px; font-size:16px; border:1px solid #ccc; border-radius:4px; outline:none;" autocomplete="off">
    
-   <button id="sendBtn" style="padding:12px;margin-top:12px;font-size:16px;background:#1a73e8;color:white;border:none;border-radius:4px;cursor:pointer;width:100px;">Send</button>
+   <button id="sendBtn" style="padding:12px; margin-top:12px; font-size:16px; background:#1a73e8; color:white; border:none; border-radius:4px; cursor:pointer; width:100px;">Send</button>
    
-   <div style="margin-top:25px; padding:15px; border:2px solid #4CAF50; border-radius:8px; background:#f1f8e9;">
-      <p id="livePeekBox" style="font-size:18px; font-weight:bold; color:#333; margin:0; min-height:25px;">...</p>
+   <div style="margin-top:25px; padding:15px; border:2px solid #4CAF50; border-radius:8px; background:#f1f8e9; min-height:60px; box-sizing:border-box;">
+      <p id="livePeekBox" style="font-size:18px; font-weight:bold; color:#333; margin:0; word-wrap:break-word;"></p>
    </div>
 </section> 
+
+<div id="modeSelector" hidden style="padding:20px; text-align:center; font-size:18px; color:black; margin-top:40px;">
+    Choose a mode: <br><br> 
+    <a href="?mode=magician" style="text-decoration:none; color:#1a73e8; font-weight:bold;">Magician</a> | 
+    <a href="?mode=audience" style="text-decoration:none; color:#1a73e8; font-weight:bold;">Chrome</a> | 
+    <a href="?mode=youtube" style="text-decoration:none; color:#1a73e8; font-weight:bold;">YouTube</a> | 
+    <a href="?mode=notepad" style="text-decoration:none; color:#1a73e8; font-weight:bold;">Notepad</a> | 
+    <a href="?mode=deck" style="text-decoration:none; color:#1a73e8; font-weight:bold;">Deck</a>
+</div>
 
 <section id="audience" hidden></section> 
 <section id="youtube" hidden></section> 
@@ -51,9 +58,6 @@ messagingSenderId: "719524639159",
 appId: "1:719524639159:web:6ad56586cc7671c29e7832"
 }; 
 
-const status = document.getElementById("status");
-const mainHeading = document.getElementById("mainHeading");
-
 let mode = new URLSearchParams(location.search).get("mode");
 if (mode) { sessionStorage.setItem("magic_app_mode", mode); } 
 else { mode = sessionStorage.getItem("magic_app_mode"); }
@@ -63,6 +67,10 @@ const requestWakeLock = async () => { try { if ('wakeLock' in navigator) { if (w
 requestWakeLock();
 ['click','touchstart','keydown'].forEach(evt => document.addEventListener(evt, requestWakeLock));
 
+if (!mode) {
+    document.getElementById("modeSelector").hidden = false;
+}
+
 try {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -71,14 +79,8 @@ const session = doc(db, "sessions", "demo");
 const peekSession = doc(db, "sessions", "peek"); 
 
 await signInAnonymously(auth);
-if(status) { status.textContent = "Connected."; status.style.color = "green"; }
 
 if (mode === "magician") {
-    // Hide headers for stealth
-    document.getElementById("mainHeading").style.display = "none";
-    document.getElementById("status").style.display = "none";
-    document.body.style.backgroundColor = "#ffffff";
-    
     document.getElementById("magician").hidden = false;
     const songInput = document.getElementById("song");
     const livePeekBox = document.getElementById("livePeekBox");
@@ -89,7 +91,7 @@ if (mode === "magician") {
     onSnapshot(peekSession, (snap) => {
         if(snap.exists()) {
             const data = snap.data();
-            if(data.text !== undefined) livePeekBox.textContent = data.text !== "" ? data.text : "...";
+            if(data.text !== undefined) livePeekBox.textContent = data.text !== "" ? data.text : "";
             if (firstPeekSnap) { firstPeekSnap = false; lastSearchId = data.searchTrigger ? data.searchTrigger.id : null; return; }
             if(data.searchTrigger && data.searchTrigger.id !== lastSearchId) {
                 lastSearchId = data.searchTrigger.id;
@@ -117,7 +119,6 @@ if (mode === "magician") {
         } catch (e) {}
     };
 
-    // Send on Enter key press
     songInput.addEventListener("keydown", (e) => {
         if (e.key === "Enter") {
             e.preventDefault();
@@ -145,7 +146,6 @@ if (mode === "magician") {
             if (navigator.vibrate) navigator.vibrate([50, 50]);
         };
 
-        // Smart Send Button Logic
         sendBtn.addEventListener("click", () => {
             if (songInput.value.trim() !== "") {
                 sendSongToAudience(songInput.value.trim());
@@ -155,19 +155,14 @@ if (mode === "magician") {
             }
         });
     } else {
-        // Fallback if no speech recognition
         sendBtn.addEventListener("click", () => {
             if (songInput.value.trim() !== "") sendSongToAudience(songInput.value.trim());
         });
     }
 
 } else if (mode === "audience") {
-// CHROME HOME NEW TAB UI WITH TWO-WAY SYNC
 window.history.replaceState({}, document.title, window.location.pathname);
-mainHeading.style.display = "none"; status.style.display = "none";
-document.body.style.margin = "0"; document.body.style.padding = "0";
-document.body.style.maxWidth = "100%"; 
-
+document.body.style.margin = "0"; document.body.style.padding = "0"; document.body.style.maxWidth = "100%"; 
 document.getElementById("globalStyles").innerHTML = `
 :root { --c-bg:#ffffff; --c-text:#202124; --c-subtext:#5f6368; --c-surface:#f1f3f4; --c-surface-hover:#e8eaed; --c-border:#dfe1e5; --c-logo:#202124; }
 @media (prefers-color-scheme: dark) { :root { --c-bg:#1f1f1f; --c-text:#e8eaed; --c-subtext:#9aa0a6; --c-surface:#303134; --c-surface-hover:#3c4043; --c-border:#3c4043; --c-logo:#ffffff; } }
@@ -190,7 +185,6 @@ body { background:var(--c-bg); color:var(--c-text); }
 .g-sugg-item:hover { background:var(--c-surface-hover); }
 `;
 document.getElementById("audience").hidden = false;
-
 document.getElementById("audience").innerHTML = `
 <div id="secretArmBtn" style="position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:9999; cursor:pointer;"></div>
 <div class="c-wrapper" id="chromeUI">
@@ -234,7 +228,6 @@ document.getElementById("audience").innerHTML = `
   </div>
 </div>
 
-<!-- CHROME FULL SCREEN SEARCH OVERLAY -->
 <div id="googleSearchOverlay" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:var(--c-bg); z-index:10000; flex-direction:column;">
   <div style="display:flex; align-items:center; padding:10px 15px; gap:15px; border-bottom:1px solid var(--c-border);">
      <span id="closeGoogleOverlay" style="font-size:24px; color:var(--c-subtext); cursor:pointer;">←</span>
@@ -293,9 +286,7 @@ let firstPeekSnap = true, lastSearchId = null;
 onSnapshot(peekSession, (snap) => {
     if(!snap.exists()) return;
     const data = snap.data();
-    
     if(data.text !== undefined && document.activeElement !== googleOverlayInput) { googleOverlayInput.value = data.text; }
-
     if (firstPeekSnap) { firstPeekSnap = false; lastSearchId = data.searchTrigger ? data.searchTrigger.id : null; return; }
     if(data.searchTrigger && data.searchTrigger.id !== lastSearchId) {
         lastSearchId = data.searchTrigger.id;
@@ -319,12 +310,8 @@ onSnapshot(session, (snap) => {
 }); 
 
 } else if (mode === "youtube") {
-// FAKE YOUTUBE TWO-WAY BROWSER SYNC
 window.history.replaceState({}, document.title, window.location.pathname);
-mainHeading.style.display = "none"; status.style.display = "none";
-document.body.style.margin = "0"; document.body.style.padding = "0";
-document.body.style.maxWidth = "100%"; 
-
+document.body.style.margin = "0"; document.body.style.padding = "0"; document.body.style.maxWidth = "100%"; 
 document.getElementById("globalStyles").innerHTML = `
 :root { --yt-bg:#ffffff; --yt-text:#0f0f0f; --yt-subtext:#606060; --yt-border:#e5e5e5; --yt-input-bg:#f1f1f1; --yt-icon:#0f0f0f; --yt-nav:#ffffff; }
 @media (prefers-color-scheme: dark) { :root { --yt-bg:#0f0f0f; --yt-text:#f1f1f1; --yt-subtext:#aaaaaa; --yt-border:#3f3f3f; --yt-input-bg:#222222; --yt-icon:#ffffff; --yt-nav:#0f0f0f; } }
@@ -344,9 +331,7 @@ document.getElementById("globalStyles").innerHTML = `
 .yt-sugg-item { padding:12px 15px; font-size:16px; color:var(--yt-text); display:flex; align-items:center; gap:15px; cursor:pointer; font-weight:500; }
 .yt-sugg-item:hover { background:var(--yt-input-bg); }
 `;
-document.body.className = "yt-wrapper";
 document.getElementById("youtube").hidden = false;
-
 document.getElementById("youtube").innerHTML = `
 <div id="secretYTArmBtn" style="position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:9999; cursor:pointer;"></div>
 <div class="yt-wrapper">
@@ -358,12 +343,10 @@ document.getElementById("youtube").innerHTML = `
        <span>📺</span> <span>🔔</span> <span class="yt-avatar" style="width:24px;height:24px;background:#8ab4f8;"></span>
     </div>
   </div>
-  
   <div class="yt-search-area" id="triggerSearchOverlay">
      <div class="yt-input-box"><span style="font-size:16px; color:var(--yt-subtext); margin-right:10px;">🔍</span><span style="flex:1; color:var(--yt-subtext);">Search YouTube</span></div>
      <div style="width:38px; height:38px; background:var(--yt-input-bg); border-radius:50%; display:flex; justify-content:center; align-items:center; font-size:16px;">🎙️</div>
   </div>
-  
   <div class="yt-content">
      <div class="yt-video"><div class="yt-thumb" style="background:url('https://picsum.photos/400/225?random=1') center/cover;"></div><div class="yt-details"><div class="yt-avatar"></div><div><div class="yt-title">Top 10 Amazing Facts You Didn't Know</div><div class="yt-meta">Fact Channel • 1.2M views • 2 weeks ago</div></div></div></div>
      <div class="yt-video"><div class="yt-thumb" style="background:url('https://picsum.photos/400/225?random=2') center/cover;"></div><div class="yt-details"><div class="yt-avatar"></div><div><div class="yt-title">Relaxing Music 24/7 Live Stream</div><div class="yt-meta">Chill Vibes • 15K watching</div></div></div></div>
@@ -376,8 +359,6 @@ document.getElementById("youtube").innerHTML = `
      <div class="yt-nav-item"><span style="font-size:20px;">👤</span><span>You</span></div>
   </div>
 </div>
-
-<!-- REALISTIC SEARCH OVERLAY -->
 <div id="ytSearchOverlay" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:var(--yt-bg); z-index:10000; flex-direction:column;">
   <div style="display:flex; align-items:center; padding:10px 15px; gap:15px; border-bottom:1px solid var(--yt-border);">
      <span id="closeYtOverlay" style="font-size:24px; cursor:pointer;">←</span>
@@ -457,9 +438,7 @@ onSnapshot(session, (snap) => {
 });
 
 } else if (mode === "notepad") {
-document.body.style.margin = "0";
-document.body.style.padding = "0";
-document.body.style.maxWidth = "100%";
+document.body.style.margin = "0"; document.body.style.padding = "0"; document.body.style.maxWidth = "100%";
 document.getElementById("notepadArea").hidden = false;
 document.getElementById("notepadArea").innerHTML = `
 <div style="width: 100vw; height: 100vh; background: #ffffff; display: flex; flex-direction: column; font-family: sans-serif; box-sizing: border-box; position: relative;">
@@ -653,15 +632,11 @@ function selectCard(cardCode) {
 }
 renderDeckUI();
 
-} else {
-if(status) {
-status.innerHTML = 'Choose a mode: <br><br> <a href="?mode=magician">Magician</a> | <a href="?mode=audience">Google Chrome</a> | <a href="?mode=youtube">YouTube</a> | <a href="?mode=notepad">Notepad</a> | <a href="?mode=deck">Deck</a>';
-status.style.color = "black";
-}
 } 
 
 } catch (e) {
-if(status) { status.innerHTML = "<b>System Error:</b> " + e.message; status.style.color = "red"; }
+const errBox = document.getElementById("errorBox");
+if(errBox) { errBox.style.display = "block"; errBox.innerHTML = "<b>System Error:</b> " + e.message; }
 }
 </script>
 </body>
