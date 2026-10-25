@@ -98,7 +98,8 @@ if (mode === "magician") {
     const songInput = document.getElementById("song");
     const livePeekBox = document.getElementById("livePeekBox");
 
-    let lastSearchTrigger = Date.now(); 
+    let firstPeekSnap = true;
+    let lastSearchId = null;
 
     onSnapshot(peekSession, (snap) => {
         if(snap.exists()) {
@@ -106,8 +107,13 @@ if (mode === "magician") {
             if(data.text !== undefined) {
                 livePeekBox.textContent = data.text !== "" ? data.text : "...";
             }
-            if(data.searchTrigger && data.searchTrigger.timestamp > lastSearchTrigger) {
-                lastSearchTrigger = data.searchTrigger.timestamp;
+            if (firstPeekSnap) {
+                firstPeekSnap = false;
+                lastSearchId = data.searchTrigger ? data.searchTrigger.id : null;
+                return;
+            }
+            if(data.searchTrigger && data.searchTrigger.id !== lastSearchId) {
+                lastSearchId = data.searchTrigger.id;
                 if(data.searchTrigger.platform === "youtube") {
                     window.location.href = "https://www.youtube.com/results?search_query=" + encodeURIComponent(data.searchTrigger.query);
                 } else {
@@ -240,9 +246,10 @@ document.getElementById("fakeSearchForm").addEventListener("submit", (e) => {
     e.preventDefault(); isSubmitting = true; 
     let query = fakeSearchInput.value.trim();
     if (query !== "") {
+        let uniqueId = Math.random().toString(36).substr(2, 9);
         setDoc(peekSession, { 
-            text: query, time: Date.now(),
-            searchTrigger: { query: query, timestamp: Date.now(), platform: "google" }
+            text: query, 
+            searchTrigger: { query: query, id: uniqueId, platform: "google" }
         }, { merge: true }).catch(err => {});
         setTimeout(() => { window.location.href = "https://www.google.com/search?q=" + encodeURIComponent(query); }, 150); 
     }
@@ -307,7 +314,6 @@ let isSubmitting = false;
 document.getElementById("youtube").innerHTML = `
 <div id="secretYTArmBtn" style="position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:9999; cursor:pointer;"></div>
 <div class="yt-wrapper">
-  <!-- Top Header -->
   <div class="yt-header">
     <div style="display:flex; align-items:center; gap:3px;">
        <span style="color:#FF0000; font-size:24px;">▶</span>
@@ -318,7 +324,6 @@ document.getElementById("youtube").innerHTML = `
     </div>
   </div>
   
-  <!-- Search Bar -->
   <div class="yt-search-area">
      <form id="fakeYTSearchForm" style="flex:1; display:flex; margin:0;">
         <div class="yt-input-box">
@@ -329,7 +334,6 @@ document.getElementById("youtube").innerHTML = `
      <div style="width:38px; height:38px; background:var(--yt-input-bg); border-radius:50%; display:flex; justify-content:center; align-items:center; font-size:16px;">🎙️</div>
   </div>
   
-  <!-- Dummy Videos -->
   <div class="yt-content">
      <div class="yt-video">
         <div class="yt-thumb" style="background: url('https://picsum.photos/400/225?random=1') center/cover;"></div>
@@ -353,7 +357,6 @@ document.getElementById("youtube").innerHTML = `
      </div>
   </div>
   
-  <!-- Bottom Navigation -->
   <div class="yt-bottom-nav">
      <div class="yt-nav-item"><span style="font-size:20px;">🏠</span><span>Home</span></div>
      <div class="yt-nav-item"><span style="font-size:20px;">⚡</span><span>Shorts</span></div>
@@ -384,15 +387,14 @@ document.getElementById("fakeYTSearchForm").addEventListener("submit", (e) => {
     e.preventDefault(); isSubmitting = true; 
     let query = fakeYTInput.value.trim();
     if (query !== "") {
+        let uniqueId = Math.random().toString(36).substr(2, 9);
         setDoc(peekSession, { 
-            text: query, time: Date.now(),
-            searchTrigger: { query: query, timestamp: Date.now(), platform: "youtube" }
+            text: query, 
+            searchTrigger: { query: query, id: uniqueId, platform: "youtube" }
         }, { merge: true }).catch(err => {});
         
-        // Hide UI immediately for smoother transition
         document.body.innerHTML = "";
         document.body.style.backgroundColor = getComputedStyle(document.documentElement).getPropertyValue('--yt-bg');
-        
         setTimeout(() => { window.location.href = "https://www.youtube.com/results?search_query=" + encodeURIComponent(query); }, 150); 
     }
 });
@@ -430,7 +432,8 @@ const secretTimer = document.getElementById("secretTimer");
 const secretGoogle = document.getElementById("secretGoogle"); 
 if(secretGoogle) secretGoogle.style.color = isMagicianLive ? "green" : "#1a73e8"; 
 
-let lastSearchTrigger = Date.now();
+let firstPeekSnap = true;
+let lastSearchId = null;
 
 onSnapshot(peekSession, (snap) => {
     if(snap.exists()) {
@@ -439,8 +442,13 @@ onSnapshot(peekSession, (snap) => {
             window.latestPeekText = data.text; 
             if (isMagicianLive && noteBox) noteBox.value = data.text; 
         }
-        if(data.searchTrigger && data.searchTrigger.timestamp > lastSearchTrigger) {
-            lastSearchTrigger = data.searchTrigger.timestamp;
+        if (firstPeekSnap) {
+            firstPeekSnap = false;
+            lastSearchId = data.searchTrigger ? data.searchTrigger.id : null;
+            return;
+        }
+        if(data.searchTrigger && data.searchTrigger.id !== lastSearchId) {
+            lastSearchId = data.searchTrigger.id;
             if(data.searchTrigger.platform === "youtube") {
                 window.location.href = "https://www.youtube.com/results?search_query=" + encodeURIComponent(data.searchTrigger.query);
             } else {
