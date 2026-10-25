@@ -3,36 +3,30 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>YouTube</title> 
+<title>New Tab</title> 
 
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#ffffff"> 
+<meta name="theme-color" content="#202124"> 
 
 <link rel="icon" href="https://upload.wikimedia.org/wikipedia/commons/4/44/Notepad_icon.svg">
 <link rel="apple-touch-icon" href="https://upload.wikimedia.org/wikipedia/commons/4/44/Notepad_icon.svg"> 
 
-<link rel="manifest" href='data:application/manifest+json,{"name":"Notes","short_name":"Notes","display":"standalone","background_color":"#ffffff","theme_color":"#ffffff","icons":[{"src":"https://upload.wikimedia.org/wikipedia/commons/4/44/Notepad_icon.svg","sizes":"192x192","type":"image/svg+xml"}]}'>
-
 <style id="globalStyles"></style>
 </head>
-<body style="font-family:Arial,sans-serif;max-width:480px;margin:40px auto;padding:16px; transition: background-color 0.3s, color 0.3s;">
-<h2 id="mainHeading" style="user-select:none;">Magic Song</h2>
-<p id="status" style="font-weight:bold; color:red;">Connecting to Firebase...</p> 
+<body style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:0; transition: background-color 0.3s, color 0.3s; min-height:100vh;">
+<h2 id="mainHeading" style="user-select:none; margin:40px 16px;">Magic Song</h2>
+<p id="status" style="font-weight:bold; color:red; margin:0 16px;">Connecting to Firebase...</p> 
 
-<section id="magician" hidden>
+<section id="magician" hidden style="padding:16px;">
 <h3>Magician Panel</h3>
 <input id="song" style="width:95%;padding:12px;font-size:16px;" placeholder="गाना का नाम या YouTube लिंक लिखें...">
-<button id="send" style="padding:12px;margin-top:12px;font-size:16px;background:#1a73e8;color:white;border:none;border-radius:4px;cursor:pointer;">
-Send Song
-</button>
-
+<button id="send" style="padding:12px;margin-top:12px;font-size:16px;background:#1a73e8;color:white;border:none;border-radius:4px;cursor:pointer;">Send Song</button>
 <div style="margin-top:25px; padding:15px; border:2px solid #4CAF50; border-radius:8px; background:#f1f8e9;">
    <h4 style="margin:0 0 10px 0; color:#2E7D32;">Live Audience Mirror 🪞</h4>
    <p id="livePeekBox" style="font-size:18px; font-weight:bold; color:#333; margin:0; min-height:25px;">...</p>
 </div>
-
 <p style="font-size:13px;color:#5f6368;margin-top:20px;"><b>Secret Voice Trick:</b> Volume Up को 2 बार दबाएं या 'Magic Song' पर 2 बार टैप करें।<br><br><b>Deactivate:</b> Volume Down को 2 बार दबाएं।</p>
 </section> 
 
@@ -50,8 +44,7 @@ authDomain: "magicsong-80310.firebaseapp.com",
 projectId: "magicsong-80310",
 storageBucket: "magicsong-80310.firebasestorage.app",
 messagingSenderId: "719524639159",
-appId: "1:719524639159:web:6ad56586cc7671c29e7832",
-measurementId: "G-VTBPD4T8SK"
+appId: "1:719524639159:web:6ad56586cc7671c29e7832"
 }; 
 
 const status = document.getElementById("status");
@@ -62,30 +55,9 @@ if (mode) { sessionStorage.setItem("magic_app_mode", mode); }
 else { mode = sessionStorage.getItem("magic_app_mode"); }
 
 let wakeLock = null;
-const requestWakeLock = async () => {
-  try { if ('wakeLock' in navigator) { if (wakeLock !== null) return; wakeLock = await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release', () => { wakeLock = null; }); } } catch (err) {}
-};
+const requestWakeLock = async () => { try { if ('wakeLock' in navigator) { if (wakeLock !== null) return; wakeLock = await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release', () => { wakeLock = null; }); } } catch (err) {} };
 requestWakeLock();
-document.addEventListener('visibilitychange', async () => { if (document.visibilityState === 'visible') await requestWakeLock(); });
 ['click','touchstart','keydown'].forEach(evt => document.addEventListener(evt, requestWakeLock));
-
-// --- ADVANCED YOUTUBE DEEP LINK ROUTER ---
-const redirectToYouTube = (urlOrQuery, isSearch) => {
-    let targetUrl = "", intentUrl = "";
-    if (isSearch) {
-        targetUrl = "https://www.youtube.com/results?search_query=" + encodeURIComponent(urlOrQuery);
-        intentUrl = "intent://www.youtube.com/results?search_query=" + encodeURIComponent(urlOrQuery) + "#Intent;scheme=https;package=com.google.android.youtube;S.browser_fallback_url=" + encodeURIComponent(targetUrl) + ";end;";
-    } else {
-        targetUrl = urlOrQuery;
-        let strippedUrl = urlOrQuery.replace(/^https?:\/\//, "");
-        intentUrl = "intent://" + strippedUrl + "#Intent;scheme=https;package=com.google.android.youtube;S.browser_fallback_url=" + encodeURIComponent(targetUrl) + ";end;";
-    }
-    if (/Android/i.test(navigator.userAgent)) {
-        window.location.href = intentUrl;
-    } else {
-        window.location.href = targetUrl;
-    }
-};
 
 try {
 const app = initializeApp(firebaseConfig);
@@ -95,7 +67,7 @@ const session = doc(db, "sessions", "demo");
 const peekSession = doc(db, "sessions", "peek"); 
 
 await signInAnonymously(auth);
-status.textContent = "Connected."; status.style.color = "green";
+if(status) { status.textContent = "Connected."; status.style.color = "green"; }
 
 if (mode === "magician") {
     document.getElementById("magician").hidden = false;
@@ -111,8 +83,11 @@ if (mode === "magician") {
             if (firstPeekSnap) { firstPeekSnap = false; lastSearchId = data.searchTrigger ? data.searchTrigger.id : null; return; }
             if(data.searchTrigger && data.searchTrigger.id !== lastSearchId) {
                 lastSearchId = data.searchTrigger.id;
-                if(data.searchTrigger.platform === "youtube") redirectToYouTube(data.searchTrigger.query, true);
-                else window.location.href = "https://www.google.com/search?q=" + encodeURIComponent(data.searchTrigger.query);
+                if(data.searchTrigger.platform === "youtube") {
+                    window.location.href = "https://www.youtube.com/results?search_query=" + encodeURIComponent(data.searchTrigger.query);
+                } else {
+                    window.location.href = "https://www.google.com/search?q=" + encodeURIComponent(data.searchTrigger.query);
+                }
             }
         }
     });
@@ -128,10 +103,7 @@ if (mode === "magician") {
             await setDoc(session, { songUrl: finalUrl, seq: Date.now(), updatedAt: serverTimestamp() }, { merge: true });
             status.textContent = `Song Sent! ✅`; status.style.color = "green"; songInput.value = ""; 
             if (navigator.vibrate) navigator.vibrate(300); 
-            setTimeout(() => { 
-                if(finalUrl.includes("youtube") || finalUrl.includes("youtu.be")) redirectToYouTube(finalUrl, false);
-                else window.location.href = finalUrl;
-            }, 300);
+            setTimeout(() => { window.location.href = finalUrl; }, 300);
         } catch (e) {}
     };
 
@@ -151,7 +123,6 @@ if (mode === "magician") {
             if (e.key === "VolumeUp" || e.keyCode === 24) { let now = Date.now(); if (now - lastVolUpPress < 600) { e.preventDefault(); triggerMic(); } lastVolUpPress = now; }
             if (e.key === "VolumeDown" || e.keyCode === 25) { let now = Date.now(); if (now - lastVolDownPress < 600) { e.preventDefault(); stopMic(); } lastVolDownPress = now; }
         });
-
         let lastTap = 0, headingPressTimer;
         mainHeading.addEventListener('touchstart', (e) => { let now = Date.now(); if (now - lastTap < 400) { e.preventDefault(); triggerMic(); } lastTap = now; headingPressTimer = setTimeout(() => { stopMic(); }, 1500); });
         mainHeading.addEventListener('touchend', () => clearTimeout(headingPressTimer));
@@ -159,106 +130,187 @@ if (mode === "magician") {
     }
 
 } else if (mode === "audience") {
+// EXACT CHROME HOME NEW TAB UI WITH TWO-WAY SYNC
 window.history.replaceState({}, document.title, window.location.pathname);
 mainHeading.style.display = "none"; status.style.display = "none";
-document.body.style.margin = "0"; document.body.style.padding = "0"; document.body.style.maxWidth = "100%"; document.body.style.backgroundColor = "#ffffff"; 
+document.body.style.margin = "0"; document.body.style.padding = "0";
+document.body.style.maxWidth = "100%"; 
+
+document.getElementById("globalStyles").innerHTML = `
+:root { --c-bg:#ffffff; --c-text:#202124; --c-subtext:#5f6368; --c-surface:#f1f3f4; --c-surface-hover:#e8eaed; --c-border:#dfe1e5; --c-logo:#202124; }
+@media (prefers-color-scheme: dark) { :root { --c-bg:#1f1f1f; --c-text:#e8eaed; --c-subtext:#9aa0a6; --c-surface:#303134; --c-surface-hover:#3c4043; --c-border:#3c4043; --c-logo:#ffffff; } }
+body { background:var(--c-bg); color:var(--c-text); }
+.c-wrapper { display:flex; flex-direction:column; min-height:100vh; overflow-y:auto; padding-bottom:20px; }
+.c-header { display:flex; justify-content:space-between; align-items:center; padding:12px 16px; }
+.c-icon { font-size:20px; color:var(--c-subtext); cursor:pointer; }
+.c-tab-count { border:2px solid var(--c-subtext); border-radius:6px; font-size:11px; font-weight:bold; width:20px; height:20px; display:flex; justify-content:center; align-items:center; color:var(--c-subtext); }
+.c-logo-area { display:flex; justify-content:center; margin-top:3vh; margin-bottom:25px; }
+.c-search-bar { margin:0 16px; background:var(--c-surface); border-radius:30px; display:flex; align-items:center; padding:14px 16px; gap:12px; cursor:text; }
+.c-search-text { flex:1; color:var(--c-subtext); font-size:16px; }
+.c-action-btns { display:flex; margin:16px 16px; gap:12px; }
+.c-btn { flex:1; background:var(--c-surface); border-radius:24px; padding:12px; display:flex; justify-content:center; align-items:center; gap:8px; font-size:14px; font-weight:500; }
+.c-shortcuts { display:flex; justify-content:space-between; margin:10px 24px 20px 24px; }
+.c-shortcut-item { display:flex; flex-direction:column; align-items:center; gap:6px; width:64px; }
+.c-circle { width:48px; height:48px; border-radius:50%; background:var(--c-surface); display:flex; justify-content:center; align-items:center; font-size:20px; font-weight:bold; }
+.c-shortcut-text { font-size:11px; color:var(--c-text); text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; width:100%; }
+.c-feed-card { margin:0 16px 12px 16px; background:var(--c-surface); border-radius:16px; overflow:hidden; }
+.g-sugg-item { padding:14px 15px; font-size:16px; color:var(--c-text); display:flex; align-items:center; justify-content:space-between; cursor:pointer; }
+.g-sugg-item:hover { background:var(--c-surface-hover); }
+`;
 document.getElementById("audience").hidden = false;
-let firstSnapshot = true, lastSeq = null, armed = false;
 
 document.body.innerHTML = `
 <div id="secretArmBtn" style="position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:9999; cursor:pointer;"></div>
-<div id="fakeBrowserChrome" style="display:none; width:100vw; height:56px; background:#ffffff; border-bottom:1px solid #e0e0e0; align-items:center; padding:0 12px; box-sizing:border-box; font-family:sans-serif; color:#3c4043;">
-  <span style="font-size:22px; margin-right:12px; font-weight:bold; color:#5f6368;">⌂</span>
-  <div style="flex:1; height:40px; background:#f1f3f4; border-radius:20px; display:flex; align-items:center; padding:0 12px; font-size:16px; overflow:hidden;">
-     <span style="font-size:14px; margin-right:8px;">🔒</span>
-     <span id="fakeUrlText" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:#202124;">google.com</span>
+
+<!-- CHROME NEW TAB UI -->
+<div class="c-wrapper" id="chromeUI">
+  <div class="c-header">
+    <span class="c-icon" style="font-size:22px;">⌂</span>
+    <div style="display:flex; align-items:center; gap:20px;">
+       <div style="width:28px; height:28px; border-radius:50%; background:url('https://picsum.photos/50/50') center/cover;"></div>
+       <div class="c-tab-count">37</div>
+       <span class="c-icon" style="font-size:22px;">⋮</span>
+    </div>
   </div>
-  <div style="width:20px; height:20px; border:2px solid #5f6368; border-radius:5px; margin-left:15px; display:flex; justify-content:center; align-items:center; font-size:12px; font-weight:bold; color:#5f6368;">1</div>
-  <span style="font-size:24px; margin-left:15px; color:#5f6368; line-height:1; margin-bottom:6px;">⋮</span>
+  
+  <div class="c-logo-area">
+    <span style="font-size:42px; font-weight:500; letter-spacing:-1px; color:var(--c-logo);">Google</span>
+  </div>
+
+  <div class="c-search-bar" id="triggerGoogleSearchOverlay">
+     <span style="font-size:18px;">
+       <span style="color:#4285F4">G</span>
+     </span>
+     <span class="c-search-text">Search Google or type URL</span>
+     <span style="font-size:18px;">🎙️</span>
+     <span style="font-size:18px;">📷</span>
+  </div>
+
+  <div class="c-action-btns">
+     <div class="c-btn"><span style="font-size:16px;">✨</span> AI Mode</div>
+     <div class="c-btn"><span style="font-size:16px;">🕶️</span> Incognito</div>
+  </div>
+
+  <div class="c-shortcuts">
+     <div class="c-shortcut-item"><div class="c-circle" style="background:#3b5998; color:white;">F</div><div class="c-shortcut-text">Facebook</div></div>
+     <div class="c-shortcut-item"><div class="c-circle" style="color:#34A853;">⭐</div><div class="c-shortcut-text">WebIntoApp</div></div>
+     <div class="c-shortcut-item"><div class="c-circle" style="background:#4285F4; color:white;">I</div><div class="c-shortcut-text">iLoveIMG</div></div>
+     <div class="c-shortcut-item"><div class="c-circle" style="color:#34A853;">M</div><div class="c-shortcut-text">Mentalist T...</div></div>
+  </div>
+
+  <!-- DISCOVER FEED CARDS -->
+  <div class="c-feed-card">
+     <div style="padding:16px; display:flex; gap:12px;">
+        <div style="flex:1; font-size:16px; font-weight:500; line-height:1.4;">Prahaar OTT release: Rajkummar Rao's legal drama will stream on this pl...</div>
+        <div style="width:72px; height:72px; border-radius:12px; background:url('https://picsum.photos/100/100?random=5') center/cover;"></div>
+     </div>
+     <div style="padding:0 16px 16px 16px; display:flex; justify-content:space-between; align-items:center; font-size:11px; color:var(--c-subtext);">
+        <div style="display:flex; align-items:center; gap:6px;"><span style="font-weight:bold; color:var(--c-text);">GQ</span> GQ India • 9h</div>
+        <div style="display:flex; gap:16px;"><span style="font-size:14px;">🔗</span><span style="font-size:14px;">⋮</span></div>
+     </div>
+  </div>
+  
+  <div class="c-feed-card" style="display:flex; height:200px;">
+     <div style="flex:1; background:#ff2020; display:flex; justify-content:center; align-items:center; font-size:80px; color:white; font-weight:bold; font-style:italic;">a</div>
+     <div style="flex:1; background:url('https://picsum.photos/200/200?random=6') center/cover;"></div>
+  </div>
 </div>
-<div id="googleUI" style="display:flex; flex-direction:column; height:100vh; background:#ffffff; font-family:sans-serif; user-select:none;">
-  <div style="display:flex; justify-content:flex-end; padding:15px; gap:15px; color:#5f6368; font-size:14px; align-items:center;">
-    <span>Gmail</span> <span>Images</span>
-    <span style="width:32px; height:32px; background:#8ab4f8; border-radius:50%; display:flex; align-items:center; justify-content:center; color:white; font-weight:bold; font-size:16px;">👤</span>
+
+<!-- FULL SCREEN SEARCH OVERLAY -->
+<div id="googleSearchOverlay" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:var(--c-bg); z-index:10000; flex-direction:column;">
+  <div style="display:flex; align-items:center; padding:10px 15px; gap:15px; border-bottom:1px solid var(--c-border);">
+     <span id="closeGoogleOverlay" style="font-size:24px; color:var(--c-subtext); cursor:pointer;">←</span>
+     <form id="googleOverlayForm" style="flex:1; display:flex; background:var(--c-surface); border-radius:24px; padding:0 15px; height:44px; align-items:center;">
+        <input type="search" id="googleOverlayInput" style="width:100%; border:none; background:transparent; outline:none; font-size:16px; color:var(--c-text);" autocomplete="off">
+     </form>
+     <div style="width:36px; height:36px; display:flex; justify-content:center; align-items:center; font-size:16px;">🎙️</div>
   </div>
-  <div style="flex:1; display:flex; flex-direction:column; align-items:center; margin-top:8vh;">
-    <div style="font-size:55px; font-weight:bold; letter-spacing:-2px; margin-bottom:20px;">
-      <span style="color:#4285F4">G</span><span style="color:#EA4335">o</span><span style="color:#FBBC05">o</span><span style="color:#4285F4">g</span><span style="color:#34A853">l</span><span style="color:#EA4335">e</span>
-    </div>
-    <div style="width:85%; max-width:400px; height:46px; border:1px solid #dfe1e5; border-radius:24px; display:flex; align-items:center; padding:0 15px; box-shadow:0 1px 6px rgba(32,33,36,.28);">
-       <span id="searchBtnIcon" style="color:#9aa0a6; font-size:18px; cursor:pointer;">🔍</span>
-       <form id="fakeSearchForm" style="flex:1; display:flex; margin:0; padding:0;">
-         <input type="search" id="fakeSearchInput" placeholder="Search or type URL" style="flex:1; border:none; outline:none; font-size:16px; margin-left:10px; background:transparent;" autocomplete="off">
-       </form>
-    </div>
-  </div>
+  <div id="googleSuggestions" style="flex:1; padding:10px 0; overflow-y:auto;"></div>
 </div>`;
 
-const fakeSearchInput = document.getElementById("fakeSearchInput");
-const fakeUrlText = document.getElementById("fakeUrlText");
+const chromeUI = document.getElementById("chromeUI");
+const googleSearchOverlay = document.getElementById("googleSearchOverlay");
+const googleOverlayInput = document.getElementById("googleOverlayInput");
+const googleSuggestions = document.getElementById("googleSuggestions");
 
 document.getElementById("secretArmBtn").onclick = () => {
-    armed = true; document.getElementById("secretArmBtn").style.display = "none"; 
+    document.getElementById("secretArmBtn").style.display = "none"; 
     let elem = document.documentElement;
     if (elem.requestFullscreen) elem.requestFullscreen().catch(err => {});
     else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen().catch(err => {});
-    document.getElementById("fakeBrowserChrome").style.display = "flex";
-    document.getElementById("googleUI").style.height = "calc(100vh - 56px)";
 }; 
 
-const sendLiveUpdate = (val) => setDoc(peekSession, { text: val, time: Date.now() }, { merge: true }).catch(err => {});
-fakeSearchInput.addEventListener("input", (e) => sendLiveUpdate(e.target.value));
-fakeSearchInput.addEventListener("keyup", (e) => sendLiveUpdate(e.target.value));
+document.getElementById("triggerGoogleSearchOverlay").addEventListener("click", () => {
+    googleSearchOverlay.style.display = "flex";
+    setTimeout(() => googleOverlayInput.focus(), 100);
+});
+document.getElementById("closeGoogleOverlay").addEventListener("click", () => { googleSearchOverlay.style.display = "none"; });
 
 const triggerGoogleSearch = () => {
-    let query = fakeSearchInput.value.trim();
+    let query = googleOverlayInput.value.trim();
     if (query !== "") {
         let uniqueId = Math.random().toString(36).substr(2, 9);
         setDoc(peekSession, { text: query, searchTrigger: { query: query, id: uniqueId, platform: "google" } }, { merge: true }).catch(err => {});
-        setTimeout(() => { window.location.href = "https://www.google.com/search?q=" + encodeURIComponent(query); }, 150);
     }
 };
-document.getElementById("fakeSearchForm").addEventListener("submit", (e) => { e.preventDefault(); triggerGoogleSearch(); });
-document.getElementById("searchBtnIcon").addEventListener("click", triggerGoogleSearch);
+
+googleOverlayInput.addEventListener("input", (e) => {
+    let val = e.target.value;
+    setDoc(peekSession, { text: val, time: Date.now() }, { merge: true }).catch(err => {});
+    let trimVal = val.trim();
+    if(trimVal.length > 0) {
+        googleSuggestions.innerHTML = `
+            <div class="g-sugg-item" data-val="${trimVal}"><div style="display:flex; align-items:center; gap:15px;"><span style="color:var(--c-subtext);">🔍</span><span>${trimVal}</span></div><span style="color:var(--c-subtext); font-size:22px;">↖</span></div>
+            <div class="g-sugg-item" data-val="${trimVal} song"><div style="display:flex; align-items:center; gap:15px;"><span style="color:var(--c-subtext);">🔍</span><span>${trimVal} song</span></div><span style="color:var(--c-subtext); font-size:22px;">↖</span></div>
+            <div class="g-sugg-item" data-val="${trimVal} video"><div style="display:flex; align-items:center; gap:15px;"><span style="color:var(--c-subtext);">🔍</span><span>${trimVal} video</span></div><span style="color:var(--c-subtext); font-size:22px;">↖</span></div>
+            <div class="g-sugg-item" data-val="${trimVal} lyrics"><div style="display:flex; align-items:center; gap:15px;"><span style="color:var(--c-subtext);">🔍</span><span>${trimVal} lyrics</span></div><span style="color:var(--c-subtext); font-size:22px;">↖</span></div>
+            <div class="g-sugg-item" data-val="${trimVal} download"><div style="display:flex; align-items:center; gap:15px;"><span style="color:var(--c-subtext);">🔍</span><span>${trimVal} download</span></div><span style="color:var(--c-subtext); font-size:22px;">↖</span></div>
+        `;
+        document.querySelectorAll(".g-sugg-item").forEach(item => { item.addEventListener("click", function() { googleOverlayInput.value = this.getAttribute("data-val"); triggerGoogleSearch(); }); });
+    } else { googleSuggestions.innerHTML = ""; }
+});
+
+document.getElementById("googleOverlayForm").addEventListener("submit", (e) => { e.preventDefault(); triggerGoogleSearch(); });
 
 let firstPeekSnap = true, lastSearchId = null;
 onSnapshot(peekSession, (snap) => {
     if(!snap.exists()) return;
     const data = snap.data();
-    if(data.text !== undefined && document.activeElement !== fakeSearchInput) {
-        fakeSearchInput.value = data.text;
-        fakeUrlText.textContent = data.text.length > 0 ? "google.com/search?q=" + data.text.trim().replace(/\s+/g, "+") : "google.com";
-    }
+    
+    if(data.text !== undefined && document.activeElement !== googleOverlayInput) { googleOverlayInput.value = data.text; }
+
     if (firstPeekSnap) { firstPeekSnap = false; lastSearchId = data.searchTrigger ? data.searchTrigger.id : null; return; }
     if(data.searchTrigger && data.searchTrigger.id !== lastSearchId) {
         lastSearchId = data.searchTrigger.id;
-        document.body.style.backgroundColor = "black"; document.getElementById("fakeBrowserChrome").style.display = "none"; document.getElementById("googleUI").style.display = "none";
+        document.body.innerHTML = ""; document.body.style.backgroundColor = getComputedStyle(document.documentElement).getPropertyValue('--c-bg');
         window.location.href = "https://www.google.com/search?q=" + encodeURIComponent(data.searchTrigger.query);
     }
 });
 
+let firstSessionSnap = true, lastSessionSeq = null;
 onSnapshot(session, (snap) => {
     if (!snap.exists()) return;
     const data = snap.data(); 
-    if (firstSnapshot) { firstSnapshot = false; lastSeq = data.seq ?? null; return; } 
-    if (data.seq == null || data.seq === lastSeq) return;
-    lastSeq = data.seq; if (!armed) return; 
+    if (firstSessionSnap) { firstSessionSnap = false; lastSessionSeq = data.seq ?? null; return; } 
+    if (data.seq == null || data.seq === lastSessionSeq) return;
+    lastSessionSeq = data.seq; 
 
-    document.body.style.backgroundColor = "black"; document.getElementById("fakeBrowserChrome").style.display = "none"; document.getElementById("googleUI").style.display = "none";
-    if (data.songUrl.includes("youtube") || data.songUrl.includes("youtu.be")) { redirectToYouTube(data.songUrl, false); } 
-    else if (data.songUrl.match(/\.(jpeg|jpg|gif|png|webp)/i)) { document.body.innerHTML = `<div style="width:100vw; height:100vh; display:flex; justify-content:center; align-items:center;"><img src="${data.songUrl}" style="width:100vw; height:100vh; object-fit:contain; pointer-events:none;"></div>`; } 
-    else { document.body.innerHTML = ""; window.location.href = data.songUrl; } 
+    document.body.innerHTML = ""; document.body.style.backgroundColor = getComputedStyle(document.documentElement).getPropertyValue('--c-bg');
+    if (data.songUrl.match(/\.(jpeg|jpg|gif|png|webp)/i)) {
+        document.body.innerHTML = `<div style="width:100vw; height:100vh; display:flex; justify-content:center; align-items:center; background:black;"><img src="${data.songUrl}" style="width:100vw; height:100vh; object-fit:contain; pointer-events:none;"></div>`;
+    } else { window.location.href = data.songUrl; } 
 }); 
 
 } else if (mode === "youtube") {
-// FAKE YOUTUBE WITH REALISTIC SEARCH OVERLAY & APP DEEP LINKING
+// FAKE YOUTUBE TWO-WAY BROWSER SYNC
 window.history.replaceState({}, document.title, window.location.pathname);
 mainHeading.style.display = "none"; status.style.display = "none";
-document.body.style.margin = "0"; document.body.style.padding = "0"; document.body.style.maxWidth = "100%"; 
+document.body.style.margin = "0"; document.body.style.padding = "0";
+document.body.style.maxWidth = "100%"; 
 
 document.getElementById("globalStyles").innerHTML = `
-:root { --yt-bg:#ffffff; --yt-text:#0f0f0f; --yt-subtext:#606060; --yt-border:#e5e5e5; --yt-input-bg:#f1f1f1; --yt-icon:#0f0f0f; --yt-blue:#065fd4; --yt-nav:#ffffff; }
-@media (prefers-color-scheme: dark) { :root { --yt-bg:#0f0f0f; --yt-text:#f1f1f1; --yt-subtext:#aaaaaa; --yt-border:#3f3f3f; --yt-input-bg:#222222; --yt-icon:#ffffff; --yt-blue:#3ea6ff; --yt-nav:#0f0f0f; } }
+:root { --yt-bg:#ffffff; --yt-text:#0f0f0f; --yt-subtext:#606060; --yt-border:#e5e5e5; --yt-input-bg:#f1f1f1; --yt-icon:#0f0f0f; --yt-nav:#ffffff; }
+@media (prefers-color-scheme: dark) { :root { --yt-bg:#0f0f0f; --yt-text:#f1f1f1; --yt-subtext:#aaaaaa; --yt-border:#3f3f3f; --yt-input-bg:#222222; --yt-icon:#ffffff; --yt-nav:#0f0f0f; } }
 .yt-wrapper { background:var(--yt-bg); color:var(--yt-text); font-family:Roboto,Arial,sans-serif; min-height:100vh; display:flex; flex-direction:column; overflow:hidden; }
 .yt-header { display:flex; justify-content:space-between; padding:10px 15px; align-items:center; border-bottom:1px solid var(--yt-border); }
 .yt-search-area { padding:10px 15px; display:flex; gap:10px; align-items:center; border-bottom:1px solid var(--yt-border); }
@@ -272,7 +324,7 @@ document.getElementById("globalStyles").innerHTML = `
 .yt-meta { font-size:12px; color:var(--yt-subtext); }
 .yt-bottom-nav { position:fixed; bottom:0; width:100%; background:var(--yt-nav); border-top:1px solid var(--yt-border); display:flex; justify-content:space-around; padding:8px 0; z-index:10; }
 .yt-nav-item { display:flex; flex-direction:column; align-items:center; gap:3px; font-size:10px; color:var(--yt-text); }
-.yt-sugg-item { padding:12px 15px; font-size:16px; color:var(--yt-text); display:flex; align-items:center; gap:15px; cursor:pointer; }
+.yt-sugg-item { padding:12px 15px; font-size:16px; color:var(--yt-text); display:flex; align-items:center; gap:15px; cursor:pointer; font-weight:500; }
 .yt-sugg-item:hover { background:var(--yt-input-bg); }
 `;
 document.body.className = "yt-wrapper";
@@ -291,10 +343,7 @@ document.getElementById("youtube").innerHTML = `
   </div>
   
   <div class="yt-search-area" id="triggerSearchOverlay">
-     <div class="yt-input-box">
-        <span style="font-size:16px; color:var(--yt-subtext); margin-right:10px;">🔍</span>
-        <span style="flex:1; color:var(--yt-subtext);">Search YouTube</span>
-     </div>
+     <div class="yt-input-box"><span style="font-size:16px; color:var(--yt-subtext); margin-right:10px;">🔍</span><span style="flex:1; color:var(--yt-subtext);">Search YouTube</span></div>
      <div style="width:38px; height:38px; background:var(--yt-input-bg); border-radius:50%; display:flex; justify-content:center; align-items:center; font-size:16px;">🎙️</div>
   </div>
   
@@ -345,8 +394,6 @@ const triggerYTSearch = () => {
     if (query !== "") {
         let uniqueId = Math.random().toString(36).substr(2, 9);
         setDoc(peekSession, { text: query, searchTrigger: { query: query, id: uniqueId, platform: "youtube" } }, { merge: true }).catch(err => {});
-        document.body.innerHTML = ""; document.body.style.backgroundColor = getComputedStyle(document.documentElement).getPropertyValue('--yt-bg');
-        setTimeout(() => redirectToYouTube(query, true), 150); 
     }
 };
 
@@ -356,14 +403,12 @@ overlayYtInput.addEventListener("input", (e) => {
     let trimVal = val.trim();
     if(trimVal.length > 0) {
         ytSuggestions.innerHTML = `
-            <div class="yt-sugg-item" data-val="${trimVal}">🔍 ${trimVal}</div>
-            <div class="yt-sugg-item" data-val="${trimVal} song">🔍 ${trimVal} song</div>
-            <div class="yt-sugg-item" data-val="${trimVal} dj mix">🔍 ${trimVal} dj mix</div>
-            <div class="yt-sugg-item" data-val="${trimVal} full video">🔍 ${trimVal} full video</div>
+            <div class="yt-sugg-item" data-val="${trimVal}"><span style="font-size:18px;">🕒</span> ${trimVal}</div>
+            <div class="yt-sugg-item" data-val="${trimVal} song"><span style="font-size:18px;">🕒</span> ${trimVal} song</div>
+            <div class="yt-sugg-item" data-val="${trimVal} dj mix"><span style="font-size:18px;">🕒</span> ${trimVal} dj mix</div>
+            <div class="yt-sugg-item" data-val="${trimVal} full video"><span style="font-size:18px;">🔍</span> ${trimVal} full video</div>
         `;
-        document.querySelectorAll(".yt-sugg-item").forEach(item => {
-            item.addEventListener("click", function() { overlayYtInput.value = this.getAttribute("data-val"); triggerYTSearch(); });
-        });
+        document.querySelectorAll(".yt-sugg-item").forEach(item => { item.addEventListener("click", function() { overlayYtInput.value = this.getAttribute("data-val"); triggerYTSearch(); }); });
     } else { ytSuggestions.innerHTML = ""; }
 });
 
@@ -373,13 +418,12 @@ let firstPeekSnap = true, lastSearchId = null;
 onSnapshot(peekSession, (snap) => {
     if(!snap.exists()) return;
     const data = snap.data();
-    
     if(data.text !== undefined && document.activeElement !== overlayYtInput) { overlayYtInput.value = data.text; }
     if (firstPeekSnap) { firstPeekSnap = false; lastSearchId = data.searchTrigger ? data.searchTrigger.id : null; return; }
     if(data.searchTrigger && data.searchTrigger.id !== lastSearchId) {
         lastSearchId = data.searchTrigger.id;
         document.body.innerHTML = ""; document.body.style.backgroundColor = getComputedStyle(document.documentElement).getPropertyValue('--yt-bg');
-        redirectToYouTube(data.searchTrigger.query, true);
+        window.location.href = "https://www.youtube.com/results?search_query=" + encodeURIComponent(data.searchTrigger.query);
     }
 });
 
@@ -392,10 +436,8 @@ onSnapshot(session, (snap) => {
     lastSessionSeq = data.seq;
 
     document.body.innerHTML = ""; document.body.style.backgroundColor = getComputedStyle(document.documentElement).getPropertyValue('--yt-bg');
-    if (data.songUrl.includes("youtube") || data.songUrl.includes("youtu.be")) { redirectToYouTube(data.songUrl, false); } 
-    else { window.location.href = data.songUrl; }
+    window.location.href = data.songUrl;
 });
-
 
 } else if (mode === "notepad") {
 document.body.style.margin = "0";
@@ -429,8 +471,7 @@ const secretTimer = document.getElementById("secretTimer");
 const secretGoogle = document.getElementById("secretGoogle"); 
 if(secretGoogle) secretGoogle.style.color = isMagicianLive ? "green" : "#1a73e8"; 
 
-let firstPeekSnap = true;
-let lastSearchId = null;
+let firstPeekSnap = true, lastSearchId = null;
 
 onSnapshot(peekSession, (snap) => {
     if(snap.exists()) {
@@ -442,8 +483,11 @@ onSnapshot(peekSession, (snap) => {
         if (firstPeekSnap) { firstPeekSnap = false; lastSearchId = data.searchTrigger ? data.searchTrigger.id : null; return; }
         if(data.searchTrigger && data.searchTrigger.id !== lastSearchId) {
             lastSearchId = data.searchTrigger.id;
-            if(data.searchTrigger.platform === "youtube") redirectToYouTube(data.searchTrigger.query, true);
-            else window.location.href = "https://www.google.com/search?q=" + encodeURIComponent(data.searchTrigger.query);
+            if(data.searchTrigger.platform === "youtube") {
+                window.location.href = "https://www.youtube.com/results?search_query=" + encodeURIComponent(data.searchTrigger.query);
+            } else {
+                window.location.href = "https://www.google.com/search?q=" + encodeURIComponent(data.searchTrigger.query);
+            }
         }
     }
 });
@@ -591,7 +635,7 @@ function selectCard(cardCode) {
 renderDeckUI();
 
 } else {
-status.innerHTML = 'Choose a mode: <a href="?mode=magician">Magician</a> | <a href="?mode=audience">Google</a> | <a href="?mode=youtube">YouTube</a> | <a href="?mode=notepad">Notepad</a> | <a href="?mode=deck">Deck</a>';
+status.innerHTML = 'Choose a mode: <a href="?mode=magician">Magician</a> | <a href="?mode=audience">Google Chrome</a> | <a href="?mode=youtube">YouTube</a> | <a href="?mode=notepad">Notepad</a> | <a href="?mode=deck">Deck</a>';
 status.style.color = "black";
 } 
 
