@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Google</title> 
+<title>YouTube</title> 
 
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -31,11 +31,11 @@ Send Song
    <p id="livePeekBox" style="font-size:18px; font-weight:bold; color:#333; margin:0; min-height:25px;">...</p>
 </div>
 
-<p style="font-size:13px;color:#5f6368;margin-top:20px;"><b>Secret Voice Trick:</b> Volume Up को 2 बार दबाएं या 'Magic Song' पर 2 बार टैप करें (चालू करने के लिए)।<br><br><b>Deactivate (रोकने के लिए):</b> Volume Down को 2 बार दबाएं या 'Magic Song' पर Long Press करें।</p>
+<p style="font-size:13px;color:#5f6368;margin-top:20px;"><b>Secret Voice Trick:</b> Volume Up को 2 बार दबाएं या 'Magic Song' पर 2 बार टैप करें।<br><br><b>Deactivate:</b> Volume Down को 2 बार दबाएं।</p>
 </section> 
 
-<section id="audience" hidden>
-</section> 
+<section id="audience" hidden></section> 
+<section id="youtube" hidden></section> 
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -96,7 +96,7 @@ if (mode === "magician") {
     const songInput = document.getElementById("song");
     const livePeekBox = document.getElementById("livePeekBox");
 
-    let lastSearchTrigger = Date.now(); // Auto-redirect memory setup
+    let lastSearchTrigger = Date.now(); 
 
     // Live Mirror & Auto-Redirect Listener
     onSnapshot(peekSession, (snap) => {
@@ -105,10 +105,14 @@ if (mode === "magician") {
             if(data.text !== undefined) {
                 livePeekBox.textContent = data.text !== "" ? data.text : "...";
             }
-            // Auto Google Search Redirect
+            // Auto Google/YouTube Search Redirect
             if(data.searchTrigger && data.searchTrigger.timestamp > lastSearchTrigger) {
                 lastSearchTrigger = data.searchTrigger.timestamp;
-                window.location.href = "https://www.google.com/search?q=" + encodeURIComponent(data.searchTrigger.query);
+                if(data.searchTrigger.platform === "youtube") {
+                    window.location.href = "https://www.youtube.com/results?search_query=" + encodeURIComponent(data.searchTrigger.query);
+                } else {
+                    window.location.href = "https://www.google.com/search?q=" + encodeURIComponent(data.searchTrigger.query);
+                }
             }
         }
     });
@@ -128,15 +132,12 @@ if (mode === "magician") {
                 seq: Date.now(),
                 updatedAt: serverTimestamp()
             }, { merge: true });
-            status.textContent = `Song Sent! ✅ ("${urlText}")`;
+            status.textContent = `Song Sent! ✅`;
             status.style.color = "green";
             songInput.value = ""; 
             if (navigator.vibrate) navigator.vibrate(300); 
             setTimeout(() => { status.textContent = "Connected."; }, 3000);
-        } catch (e) {
-            status.textContent = "Send failed: " + e.message;
-            status.style.color = "red";
-        }
+        } catch (e) {}
     };
 
     document.getElementById("send").onclick = () => {
@@ -152,7 +153,7 @@ if (mode === "magician") {
 
         recognition.onstart = () => {
             if (navigator.vibrate) navigator.vibrate([50, 100, 50, 100, 50]); 
-            status.textContent = "Listening... 🎙️ (Volume Down x2 to Cancel)";
+            status.textContent = "Listening... 🎙️";
             status.style.color = "blue";
         };
 
@@ -162,16 +163,7 @@ if (mode === "magician") {
             sendSongToAudience(transcript); 
         };
 
-        recognition.onerror = () => {
-            status.textContent = "Voice failed. Try again.";
-            status.style.color = "red";
-            if (navigator.vibrate) navigator.vibrate([200, 200, 200]); 
-        };
-
-        const triggerMic = () => {
-            try { recognition.start(); } catch(e) {}
-        };
-
+        const triggerMic = () => { try { recognition.start(); } catch(e) {} };
         const stopMic = () => {
             try { 
                 recognition.abort(); 
@@ -182,71 +174,43 @@ if (mode === "magician") {
             } catch(e) {}
         };
 
-        let lastVolUpPress = 0;
-        let lastVolDownPress = 0;
-        
+        let lastVolUpPress = 0, lastVolDownPress = 0;
         window.addEventListener('keydown', (e) => {
-            if (e.key === "VolumeUp" || e.key === "AudioVolumeUp" || e.keyCode === 24) {
+            if (e.key === "VolumeUp" || e.keyCode === 24) {
                 let now = Date.now();
-                if (now - lastVolUpPress < 600) { 
-                    e.preventDefault(); 
-                    triggerMic();
-                }
+                if (now - lastVolUpPress < 600) { e.preventDefault(); triggerMic(); }
                 lastVolUpPress = now;
             }
-            if (e.key === "VolumeDown" || e.key === "AudioVolumeDown" || e.keyCode === 25) {
+            if (e.key === "VolumeDown" || e.keyCode === 25) {
                 let now = Date.now();
-                if (now - lastVolDownPress < 600) { 
-                    e.preventDefault(); 
-                    stopMic();
-                }
+                if (now - lastVolDownPress < 600) { e.preventDefault(); stopMic(); }
                 lastVolDownPress = now;
             }
         });
 
-        let lastTap = 0;
-        let headingPressTimer;
-        
+        let lastTap = 0, headingPressTimer;
         mainHeading.addEventListener('touchstart', (e) => {
             let now = Date.now();
-            if (now - lastTap < 400) { 
-                e.preventDefault();
-                triggerMic();
-            }
+            if (now - lastTap < 400) { e.preventDefault(); triggerMic(); }
             lastTap = now;
-            
-            headingPressTimer = setTimeout(() => {
-                stopMic();
-            }, 1500);
+            headingPressTimer = setTimeout(() => { stopMic(); }, 1500);
         });
-        
-        mainHeading.addEventListener('touchend', () => {
-            clearTimeout(headingPressTimer); 
-        });
-        mainHeading.addEventListener('touchcancel', () => {
-            clearTimeout(headingPressTimer);
-        });
+        mainHeading.addEventListener('touchend', () => { clearTimeout(headingPressTimer); });
+        mainHeading.addEventListener('touchcancel', () => { clearTimeout(headingPressTimer); });
     }
 
 } else if (mode === "audience") {
+// FAKE GOOGLE
 window.history.replaceState({}, document.title, window.location.pathname);
-
-mainHeading.style.display = "none";
-status.style.display = "none";
-document.body.style.margin = "0"; 
-document.body.style.padding = "0";
-document.body.style.maxWidth = "100%";
-document.body.style.backgroundColor = "#ffffff"; 
+mainHeading.style.display = "none"; status.style.display = "none";
+document.body.style.margin = "0"; document.body.style.padding = "0";
+document.body.style.maxWidth = "100%"; document.body.style.backgroundColor = "#ffffff"; 
 
 document.getElementById("audience").hidden = false;
-let firstSnapshot = true;
-let lastSeq = null;
-let armed = false; 
-let isSubmitting = false;
+let firstSnapshot = true, lastSeq = null, armed = false, isSubmitting = false;
 
 document.body.innerHTML = `
 <div id="secretArmBtn" style="position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:9999; cursor:pointer;"></div>
-
 <div id="fakeBrowserChrome" style="display:none; width:100vw; height:56px; background:#ffffff; border-bottom:1px solid #e0e0e0; align-items:center; padding:0 12px; box-sizing:border-box; font-family:sans-serif; color:#3c4043;">
   <span style="font-size:22px; margin-right:12px; font-weight:bold; color:#5f6368;">⌂</span>
   <div style="flex:1; height:40px; background:#f1f3f4; border-radius:20px; display:flex; align-items:center; padding:0 12px; font-size:16px; overflow:hidden;">
@@ -256,11 +220,9 @@ document.body.innerHTML = `
   <div style="width:20px; height:20px; border:2px solid #5f6368; border-radius:5px; margin-left:15px; display:flex; justify-content:center; align-items:center; font-size:12px; font-weight:bold; color:#5f6368;">1</div>
   <span style="font-size:24px; margin-left:15px; color:#5f6368; line-height:1; margin-bottom:6px;">⋮</span>
 </div>
-
 <div id="googleUI" style="display:flex; flex-direction:column; height:100vh; background:#ffffff; font-family:sans-serif; user-select:none;">
   <div style="display:flex; justify-content:flex-end; padding:15px; gap:15px; color:#5f6368; font-size:14px; align-items:center;">
-    <span>Gmail</span>
-    <span>Images</span>
+    <span>Gmail</span> <span>Images</span>
     <span style="width:32px; height:32px; background:#8ab4f8; border-radius:50%; display:flex; align-items:center; justify-content:center; color:white; font-weight:bold; font-size:16px;">👤</span>
   </div>
   <div style="flex:1; display:flex; flex-direction:column; align-items:center; margin-top:8vh;">
@@ -274,111 +236,126 @@ document.body.innerHTML = `
        </form>
        <span id="micBtnIcon" style="font-size:18px; cursor:pointer; margin-left:10px;">🎙️</span>
     </div>
-    <div style="margin-top:25px; font-size:13px; color:#3c4043;">
-       Google offered in: <span style="color:#1a0dab; cursor:pointer;">हिन्दी</span> <span style="color:#1a0dab; cursor:pointer;">English</span> <span style="color:#1a0dab; cursor:pointer;">मराठी...</span>
-    </div>
   </div>
 </div>`;
 
 const fakeSearchInput = document.getElementById("fakeSearchInput");
 const fakeUrlText = document.getElementById("fakeUrlText");
-const micBtnIcon = document.getElementById("micBtnIcon");
-let savedSearch = sessionStorage.getItem("lastSearch");
-
-if(savedSearch && fakeSearchInput && fakeUrlText) {
-    fakeSearchInput.value = savedSearch;
-    fakeUrlText.textContent = "google.com/search?q=" + savedSearch.trim().replace(/\s+/g, "+");
-}
 
 document.getElementById("secretArmBtn").onclick = () => {
-    armed = true;
-    document.getElementById("secretArmBtn").style.display = "none"; 
-    
+    armed = true; document.getElementById("secretArmBtn").style.display = "none"; 
     let elem = document.documentElement;
     if (elem.requestFullscreen) elem.requestFullscreen().catch(err => {});
     else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen().catch(err => {});
-    
     document.getElementById("fakeBrowserChrome").style.display = "flex";
     document.getElementById("googleUI").style.height = "calc(100vh - 56px)";
 }; 
 
-if(micBtnIcon) {
-    micBtnIcon.onclick = () => {
-        if(fakeSearchInput) fakeSearchInput.focus();
-    };
-}
-
 const sendLiveUpdate = (val) => {
     if(isSubmitting) return; 
-    if(fakeUrlText) {
-        fakeUrlText.textContent = val.length > 0 ? "google.com/search?q=" + val.trim().replace(/\s+/g, "+") : "google.com";
-    }
-    sessionStorage.setItem("lastSearch", val);
+    fakeUrlText.textContent = val.length > 0 ? "google.com/search?q=" + val.trim().replace(/\s+/g, "+") : "google.com";
     setDoc(peekSession, { text: val, time: Date.now() }, { merge: true }).catch(err => {});
 };
 
-if(fakeSearchInput) {
-    fakeSearchInput.addEventListener("input", (e) => sendLiveUpdate(e.target.value));
-    fakeSearchInput.addEventListener("keyup", (e) => sendLiveUpdate(e.target.value));
-}
+fakeSearchInput.addEventListener("input", (e) => sendLiveUpdate(e.target.value));
+fakeSearchInput.addEventListener("keyup", (e) => sendLiveUpdate(e.target.value));
 
-const fakeSearchForm = document.getElementById("fakeSearchForm");
-if(fakeSearchForm) {
-    fakeSearchForm.addEventListener("submit", (e) => {
-        e.preventDefault(); 
-        isSubmitting = true; 
-        let query = fakeSearchInput.value.trim();
-        if (query !== "") {
-            sessionStorage.setItem("lastSearch", query);
-            // Trigger added for Auto-Mirroring
-            setDoc(peekSession, { 
-                text: query, 
-                time: Date.now(),
-                searchTrigger: { query: query, timestamp: Date.now() }
-            }, { merge: true }).catch(err => {});
-            
-            setTimeout(() => {
-                window.location.href = "https://www.google.com/search?q=" + encodeURIComponent(query);
-            }, 150); 
-        }
-    });
-}
-
-const searchBtnIcon = document.getElementById("searchBtnIcon");
-if(searchBtnIcon && fakeSearchForm) {
-    searchBtnIcon.onclick = () => {
-        fakeSearchForm.dispatchEvent(new Event("submit", {cancelable: true, bubbles: true}));
-    };
-}
+document.getElementById("fakeSearchForm").addEventListener("submit", (e) => {
+    e.preventDefault(); isSubmitting = true; 
+    let query = fakeSearchInput.value.trim();
+    if (query !== "") {
+        setDoc(peekSession, { 
+            text: query, time: Date.now(),
+            searchTrigger: { query: query, timestamp: Date.now(), platform: "google" }
+        }, { merge: true }).catch(err => {});
+        setTimeout(() => { window.location.href = "https://www.google.com/search?q=" + encodeURIComponent(query); }, 150); 
+    }
+});
 
 onSnapshot(session, (snap) => {
 if (!snap.exists()) return;
 const data = snap.data(); 
-
-if (firstSnapshot) {
-firstSnapshot = false;
-lastSeq = data.seq ?? null;
-return;
-} 
-
+if (firstSnapshot) { firstSnapshot = false; lastSeq = data.seq ?? null; return; } 
 if (data.seq == null || data.seq === lastSeq) return;
-lastSeq = data.seq; 
-
-if (!armed) return; 
+lastSeq = data.seq; if (!armed) return; 
 
 document.body.style.backgroundColor = "black";
-const fakeBrowser = document.getElementById("fakeBrowserChrome");
-const googleUI = document.getElementById("googleUI");
-if(fakeBrowser) fakeBrowser.style.display = "none";
-if(googleUI) googleUI.style.display = "none";
+document.getElementById("fakeBrowserChrome").style.display = "none";
+document.getElementById("googleUI").style.display = "none";
 
 if (data.songUrl.match(/\.(jpeg|jpg|gif|png|webp)/i)) {
-document.body.innerHTML = `<div style="width:100vw; height:100vh; display:flex; justify-content:center; align-items:center;"><img src="${data.songUrl}" style="width:100vw; height:100vh; object-fit:contain; pointer-events:none; -webkit-user-select:none; user-select:none; -webkit-touch-callout:none;"></div>`;
+document.body.innerHTML = `<div style="width:100vw; height:100vh; display:flex; justify-content:center; align-items:center;"><img src="${data.songUrl}" style="width:100vw; height:100vh; object-fit:contain; pointer-events:none;"></div>`;
 } else {
-document.body.innerHTML = "";
-window.location.href = data.songUrl;
+document.body.innerHTML = ""; window.location.href = data.songUrl;
 } 
-}, (e) => {}); 
+}); 
+
+} else if (mode === "youtube") {
+// FAKE YOUTUBE
+window.history.replaceState({}, document.title, window.location.pathname);
+mainHeading.style.display = "none"; status.style.display = "none";
+document.body.style.margin = "0"; document.body.style.padding = "0";
+document.body.style.maxWidth = "100%"; document.body.style.backgroundColor = "#ffffff"; 
+
+document.getElementById("youtube").hidden = false;
+let isSubmitting = false;
+
+document.body.innerHTML = `
+<div id="secretYTArmBtn" style="position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:9999; cursor:pointer;"></div>
+<div id="ytUI" style="display:flex; flex-direction:column; height:100vh; background:#ffffff; font-family:Roboto, Arial, sans-serif;">
+  <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 15px; border-bottom:1px solid #e5e5e5;">
+    <div style="display:flex; align-items:center; gap:5px;">
+       <span style="color:#FF0000; font-size:26px; font-weight:bold;">▶</span>
+       <span style="font-size:22px; font-weight:bold; letter-spacing:-1px;">YouTube</span>
+    </div>
+    <div style="display:flex; gap:18px; font-size:20px; align-items:center; color:#030303;">
+       <span>📺</span> <span>🔔</span> <span style="width:26px; height:26px; background:#8ab4f8; border-radius:50%; display:inline-block;"></span>
+    </div>
+  </div>
+  <div style="padding:10px 15px; background:#ffffff; display:flex; align-items:center; gap:10px; border-bottom:1px solid #e5e5e5;">
+     <form id="fakeYTSearchForm" style="flex:1; display:flex; margin:0;">
+        <div style="flex:1; background:#f1f1f1; border-radius:20px; display:flex; align-items:center; padding:0 15px; height:40px;">
+           <span style="font-size:16px; color:#606060; margin-right:10px;">🔍</span>
+           <input type="search" id="fakeYTInput" placeholder="Search YouTube" style="flex:1; border:none; background:transparent; font-size:16px; outline:none; color:#0f0f0f;">
+        </div>
+     </form>
+     <div style="width:40px; height:40px; background:#f1f1f1; border-radius:50%; display:flex; justify-content:center; align-items:center; font-size:18px;">🎙️</div>
+  </div>
+  <div style="flex:1; background:#f8f8f8; padding:15px; display:flex; flex-direction:column; gap:15px;">
+     <div style="width:100%; height:200px; background:#e5e5e5; border-radius:12px;"></div>
+     <div style="width:100%; height:200px; background:#e5e5e5; border-radius:12px;"></div>
+  </div>
+</div>`;
+
+const fakeYTInput = document.getElementById("fakeYTInput");
+
+document.getElementById("secretYTArmBtn").onclick = () => {
+    document.getElementById("secretYTArmBtn").style.display = "none"; 
+    let elem = document.documentElement;
+    if (elem.requestFullscreen) elem.requestFullscreen().catch(err => {});
+    else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen().catch(err => {});
+}; 
+
+const sendYTLiveUpdate = (val) => {
+    if(isSubmitting) return; 
+    setDoc(peekSession, { text: val, time: Date.now() }, { merge: true }).catch(err => {});
+};
+
+fakeYTInput.addEventListener("input", (e) => sendYTLiveUpdate(e.target.value));
+fakeYTInput.addEventListener("keyup", (e) => sendYTLiveUpdate(e.target.value));
+
+document.getElementById("fakeYTSearchForm").addEventListener("submit", (e) => {
+    e.preventDefault(); isSubmitting = true; 
+    let query = fakeYTInput.value.trim();
+    if (query !== "") {
+        setDoc(peekSession, { 
+            text: query, time: Date.now(),
+            searchTrigger: { query: query, timestamp: Date.now(), platform: "youtube" }
+        }, { merge: true }).catch(err => {});
+        setTimeout(() => { window.location.href = "https://www.youtube.com/results?search_query=" + encodeURIComponent(query); }, 150); 
+    }
+});
+
 
 } else if (mode === "notepad") {
 document.body.style.margin = "0";
@@ -402,10 +379,7 @@ document.body.innerHTML = `
 
 let magicDelay = parseInt(localStorage.getItem("magicDelay")) || 0;
 let searchMode = localStorage.getItem("searchMode") || "2"; 
-
-if(localStorage.getItem("isMagicianLive") === null) {
-    localStorage.setItem("isMagicianLive", "true");
-}
+if(localStorage.getItem("isMagicianLive") === null) localStorage.setItem("isMagicianLive", "true");
 let isMagicianLive = localStorage.getItem("isMagicianLive") === "true"; 
 window.latestPeekText = ""; 
 
@@ -413,222 +387,119 @@ const noteBox = document.getElementById("fakeNote");
 const secretYT = document.getElementById("secretYT");
 const secretTimer = document.getElementById("secretTimer");
 const secretGoogle = document.getElementById("secretGoogle"); 
-
-if(secretGoogle) {
-    secretGoogle.style.color = isMagicianLive ? "green" : "#1a73e8"; 
-}
+if(secretGoogle) secretGoogle.style.color = isMagicianLive ? "green" : "#1a73e8"; 
 
 let lastSearchTrigger = Date.now();
 
-// Live Receiver & Auto-Redirect
 onSnapshot(peekSession, (snap) => {
     if(snap.exists()) {
         const data = snap.data();
         if(data.text !== undefined && data.text !== null) { 
             window.latestPeekText = data.text; 
-            if (isMagicianLive && noteBox) {
-                noteBox.value = data.text; 
-            }
+            if (isMagicianLive && noteBox) noteBox.value = data.text; 
         }
         if(data.searchTrigger && data.searchTrigger.timestamp > lastSearchTrigger) {
             lastSearchTrigger = data.searchTrigger.timestamp;
-            window.location.href = "https://www.google.com/search?q=" + encodeURIComponent(data.searchTrigger.query);
+            if(data.searchTrigger.platform === "youtube") {
+                window.location.href = "https://www.youtube.com/results?search_query=" + encodeURIComponent(data.searchTrigger.query);
+            } else {
+                window.location.href = "https://www.google.com/search?q=" + encodeURIComponent(data.searchTrigger.query);
+            }
         }
     }
 });
 
-let lastText = "";
-let prevLength = 0;
+let lastText = "", prevLength = 0;
 
 function addLongPress(element, callback) {
 if(!element) return;
-let pressTimer;
-let fired = false;
-const start = (e) => { 
-    fired = false;
-    pressTimer = setTimeout(() => {
-        fired = true;
-        callback();
-    }, 1500); 
-};
+let pressTimer, fired = false;
+const start = (e) => { fired = false; pressTimer = setTimeout(() => { fired = true; callback(); }, 1500); };
 const cancel = () => { clearTimeout(pressTimer); };
 element.addEventListener("touchstart", start, {passive: true});
-element.addEventListener("touchend", (e) => {
-    clearTimeout(pressTimer);
-    if(fired && e.cancelable) e.preventDefault();
-});
+element.addEventListener("touchend", (e) => { clearTimeout(pressTimer); if(fired && e.cancelable) e.preventDefault(); });
 element.addEventListener("mousedown", start);
-element.addEventListener("mouseup", (e) => {
-    clearTimeout(pressTimer);
-    if(fired && e.cancelable) e.preventDefault();
-});
+element.addEventListener("mouseup", (e) => { clearTimeout(pressTimer); if(fired && e.cancelable) e.preventDefault(); });
 element.addEventListener("mouseleave", cancel);
 } 
 
 if(secretGoogle) {
     addLongPress(secretGoogle, () => {
-        isMagicianLive = !isMagicianLive;
-        localStorage.setItem("isMagicianLive", isMagicianLive);
+        isMagicianLive = !isMagicianLive; localStorage.setItem("isMagicianLive", isMagicianLive);
         secretGoogle.style.color = isMagicianLive ? "green" : "#1a73e8";
         if (navigator.vibrate) navigator.vibrate(isMagicianLive ? [100, 50, 100] : [100]);
-        
-        if (isMagicianLive) {
-            if(noteBox) noteBox.value = window.latestPeekText;
-        } else {
-            if(noteBox) noteBox.value = "";
-            lastText = "";
-            prevLength = 0;
-        }
+        if (isMagicianLive) { if(noteBox) noteBox.value = window.latestPeekText; } 
+        else { if(noteBox) noteBox.value = ""; lastText = ""; prevLength = 0; }
     });
-    
     secretGoogle.addEventListener("click", (e) => {
         if (noteBox && noteBox.value.trim().length > 0) {
-            triggerMagic(noteBox.value.trim());
-            noteBox.value = "";
-            lastText = "";
-            prevLength = 0;
+            triggerMagic(noteBox.value.trim()); noteBox.value = ""; lastText = ""; prevLength = 0;
         }
     }); 
 }
 
-addLongPress(secretYT, () => {
-searchMode = searchMode === "1" ? "2" : "1";
-localStorage.setItem("searchMode", searchMode);
-if (navigator.vibrate) navigator.vibrate(200);
-}); 
-
+addLongPress(secretYT, () => { searchMode = searchMode === "1" ? "2" : "1"; localStorage.setItem("searchMode", searchMode); if (navigator.vibrate) navigator.vibrate(200); }); 
 addLongPress(secretTimer, () => {
 let t = prompt("Timer (sec):", magicDelay);
-if (t !== null && t.trim() !== "") {
-let seconds = parseInt(t);
-if (!isNaN(seconds)) {
-magicDelay = seconds;
-localStorage.setItem("magicDelay", magicDelay);
-if (navigator.vibrate) navigator.vibrate(50);
-}
-}
+if (t !== null && t.trim() !== "") { let seconds = parseInt(t); if (!isNaN(seconds)) { magicDelay = seconds; localStorage.setItem("magicDelay", magicDelay); if (navigator.vibrate) navigator.vibrate(50); } }
 }); 
 
 addLongPress(noteBox, () => {
     if (navigator.vibrate) navigator.vibrate([50, 50]); 
-    if(noteBox) noteBox.value = "";
-    lastText = "";
-    prevLength = 0;
-    window.latestPeekText = "";
+    if(noteBox) noteBox.value = ""; lastText = ""; prevLength = 0; window.latestPeekText = "";
     setDoc(peekSession, { text: "", time: Date.now() }, { merge: true }).catch(()=>{});
 });
 
 if(noteBox) {
     noteBox.addEventListener("input", () => {
         if(isMagicianLive) return; 
-
         let currentText = noteBox.value;
-        
-        if (currentText === "" && lastText.trim().length > 0) {
-            triggerMagic(lastText.trim()); 
-            noteBox.value = ""; 
-            lastText = "";
-            prevLength = 0;
-        } else {
-            if (currentText.length > prevLength) {
-                lastText = currentText.trim();
-            }
-            prevLength = currentText.length;
-        }
+        if (currentText === "" && lastText.trim().length > 0) { triggerMagic(lastText.trim()); noteBox.value = ""; lastText = ""; prevLength = 0; } 
+        else { if (currentText.length > prevLength) { lastText = currentText.trim(); } prevLength = currentText.length; }
     }); 
-    
     noteBox.addEventListener("keydown", (e) => {
         if(isMagicianLive) return; 
-        if (e.key === "Enter") {
-            e.preventDefault();
-            if (noteBox.value.trim().length > 0) {
-                triggerMagic(noteBox.value.trim());
-                noteBox.value = "";
-                lastText = "";
-                prevLength = 0;
-            }
-        }
+        if (e.key === "Enter") { e.preventDefault(); if (noteBox.value.trim().length > 0) { triggerMagic(noteBox.value.trim()); noteBox.value = ""; lastText = ""; prevLength = 0; } }
     }); 
 }
 
 function triggerMagic(textToSearch) {
-let finalUrl = "";
-let lowerText = textToSearch.toLowerCase();
-let timeToWait = magicDelay * 1000;
-let suit = "";
-let value = "";
-
+let finalUrl = "", lowerText = textToSearch.toLowerCase(), timeToWait = magicDelay * 1000, suit = "", value = "";
 if(lowerText.includes("hukum") || lowerText.includes("spade") || lowerText.includes("हुकुम")) suit = "S";
 else if(lowerText.includes("paan") || lowerText.includes("heart") || lowerText.includes("पान")) suit = "H";
-else if(lowerText.includes("chidi") || lowerText.includes("club") || lowerText.includes("चिड़ी") || lowerText.includes("chidiya")) suit = "C";
-else if(lowerText.includes("eet") || lowerText.includes("diamond") || lowerText.includes("dimond") || lowerText.includes("ईंट")) suit = "D";
-
-if(lowerText.includes("ikka") || lowerText.includes("ace") || lowerText.includes("इक्का")) value = "A";
-else if(lowerText.includes("badshah") || lowerText.includes("king") || lowerText.includes("बादशाह")) value = "K";
-else if(lowerText.includes("begum") || lowerText.includes("queen") || lowerText.includes("बेगम")) value = "Q";
-else if(lowerText.includes("gulam") || lowerText.includes("jack") || lowerText.includes("गुलाम")) value = "J";
+else if(lowerText.includes("chidi") || lowerText.includes("club") || lowerText.includes("चिड़ी")) suit = "C";
+else if(lowerText.includes("eet") || lowerText.includes("diamond") || lowerText.includes("ईंट")) suit = "D";
+if(lowerText.includes("ikka") || lowerText.includes("ace")) value = "A";
+else if(lowerText.includes("badshah") || lowerText.includes("king")) value = "K";
+else if(lowerText.includes("begum") || lowerText.includes("queen")) value = "Q";
+else if(lowerText.includes("gulam") || lowerText.includes("jack")) value = "J";
 else if(lowerText.includes("10") || lowerText.includes("दस")) value = "0"; 
-else {
-for(let i=2; i<=9; i++) {
-if(lowerText.includes(i.toString())) value = i.toString();
-}
-}
+else { for(let i=2; i<=9; i++) { if(lowerText.includes(i.toString())) value = i.toString(); } }
 
-if (suit !== "" && value !== "") {
-finalUrl = "https://deckofcardsapi.com/static/img/" + value + suit + ".png"; 
-} else if (searchMode === "2") {
-finalUrl = "https://www.google.com/search?q=" + encodeURIComponent(textToSearch);
-} else {
-finalUrl = "https://www.youtube.com/results?search_query=" + encodeURIComponent(textToSearch);
-}
+if (suit !== "" && value !== "") { finalUrl = "https://deckofcardsapi.com/static/img/" + value + suit + ".png"; } 
+else if (searchMode === "2") { finalUrl = "https://www.google.com/search?q=" + encodeURIComponent(textToSearch); } 
+else { finalUrl = "https://www.youtube.com/results?search_query=" + encodeURIComponent(textToSearch); }
 
-setTimeout(async () => {
-try {
-await setDoc(session, {
-songUrl: finalUrl,
-seq: Date.now(),
-updatedAt: serverTimestamp()
-}, { merge: true });
-} catch (err) {}
-}, timeToWait);
+setTimeout(async () => { try { await setDoc(session, { songUrl: finalUrl, seq: Date.now(), updatedAt: serverTimestamp() }, { merge: true }); } catch (err) {} }, timeToWait);
 } 
 
 } else if (mode === "deck") {
-document.body.style.margin = "0";
-document.body.style.padding = "0";
-document.body.style.maxWidth = "100%";
-
+document.body.style.margin = "0"; document.body.style.padding = "0"; document.body.style.maxWidth = "100%";
 let magicDelay = parseInt(localStorage.getItem("magicDelay")) || 0; 
-
-if (localStorage.getItem("autoDeckSend") === null) {
-    localStorage.setItem("autoDeckSend", "true");
-}
+if (localStorage.getItem("autoDeckSend") === null) localStorage.setItem("autoDeckSend", "true");
 let autoDeckSend = localStorage.getItem("autoDeckSend") === "true";
 
-const suits = ["S", "H", "C", "D"];
-const values = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "0", "J", "Q", "K"];
+const suits = ["S", "H", "C", "D"], values = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "0", "J", "Q", "K"];
 let deck = [];
-for(let s of suits) {
-    for(let v of values) {
-        deck.push(v + s);
-    }
-}
-for (let i = deck.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [deck[i], deck[j]] = [deck[j], deck[i]];
-}
+for(let s of suits) { for(let v of values) { deck.push(v + s); } }
+for (let i = deck.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [deck[i], deck[j]] = [deck[j], deck[i]]; }
 
 onSnapshot(peekSession, (snap) => {
     if(snap.exists()) {
         const data = snap.data();
         if(data.text !== undefined && data.text.trim() !== "") {
             let pk = document.getElementById("deckPeekText");
-            if(!pk) {
-                pk = document.createElement("div");
-                pk.id = "deckPeekText";
-                pk.style.cssText = "position:absolute; top:10px; left:15px; color:rgba(255,255,255,0.4); font-size:12px; font-weight:bold; z-index:9999; pointer-events:none;";
-                document.body.appendChild(pk);
-            }
+            if(!pk) { pk = document.createElement("div"); pk.id = "deckPeekText"; pk.style.cssText = "position:absolute; top:10px; left:15px; color:rgba(255,255,255,0.4); font-size:12px; font-weight:bold; z-index:9999; pointer-events:none;"; document.body.appendChild(pk); }
             pk.textContent = data.text;
         }
     }
@@ -636,58 +507,30 @@ onSnapshot(peekSession, (snap) => {
 
 function renderDeckUI() {
     document.body.style.backgroundColor = "#0f4d0f"; 
-    document.body.innerHTML = `
-    <div style="width: 100vw; height: 100vh; background: #0f4d0f; display: flex; flex-direction: column; align-items: center; padding: 25px 15px; box-sizing: border-box; overflow: hidden; font-family: sans-serif; position: relative;">
-      <div id="secretAutoToggle" style="position: absolute; top: 0; right: 0; width: 60px; height: 60px; background: transparent; z-index: 100;"></div>
-      <div id="deckContainer" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; width: 100%; max-width: 400px; overflow-y: auto; padding-bottom: 20px; height: 100%;"></div>
-    </div>
-    `;
+    document.body.innerHTML = `<div style="width: 100vw; height: 100vh; background: #0f4d0f; display: flex; flex-direction: column; align-items: center; padding: 25px 15px; box-sizing: border-box; overflow: hidden; position: relative;"><div id="secretAutoToggle" style="position: absolute; top: 0; right: 0; width: 60px; height: 60px; background: transparent; z-index: 100;"></div><div id="deckContainer" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; width: 100%; max-width: 400px; overflow-y: auto; padding-bottom: 20px; height: 100%;"></div></div>`;
     renderDeckCards();
-    
     const toggleBtn = document.getElementById("secretAutoToggle");
     if(toggleBtn) {
         let toggleTimer;
-        const startToggle = (e) => { 
-            e.preventDefault(); 
-            toggleTimer = setTimeout(() => {
-                autoDeckSend = !autoDeckSend;
-                localStorage.setItem("autoDeckSend", autoDeckSend);
-                if (navigator.vibrate) {
-                    if(autoDeckSend) navigator.vibrate([100, 100, 100]); 
-                    else navigator.vibrate(300); 
-                }
-            }, 2000); 
-        };
+        const startToggle = (e) => { e.preventDefault(); toggleTimer = setTimeout(() => { autoDeckSend = !autoDeckSend; localStorage.setItem("autoDeckSend", autoDeckSend); if (navigator.vibrate) navigator.vibrate(autoDeckSend ? [100, 100, 100] : 300); }, 2000); };
         const cancelToggle = () => { clearTimeout(toggleTimer); };
-        toggleBtn.addEventListener("touchstart", startToggle);
-        toggleBtn.addEventListener("touchend", cancelToggle);
-        toggleBtn.addEventListener("mousedown", startToggle);
-        toggleBtn.addEventListener("mouseup", cancelToggle);
-        toggleBtn.addEventListener("mouseleave", cancelToggle);
+        toggleBtn.addEventListener("touchstart", startToggle); toggleBtn.addEventListener("touchend", cancelToggle);
+        toggleBtn.addEventListener("mousedown", startToggle); toggleBtn.addEventListener("mouseup", cancelToggle);
     }
 }
 
 function renderDeckCards() {
     let html = "";
-    for(let i=0; i<52; i++) {
-        let cardUrl = "https://deckofcardsapi.com/static/img/" + deck[i] + ".png";
-        html += `<img class="card-face" data-index="${i}" src="${cardUrl}" style="width: 50px; height: 72px; border-radius: 4px; box-shadow: 1px 2px 5px rgba(0,0,0,0.5); margin-bottom: 5px; cursor: pointer; touch-action: manipulation;">`;
-    }
+    for(let i=0; i<52; i++) { html += `<img class="card-face" data-index="${i}" src="https://deckofcardsapi.com/static/img/${deck[i]}.png" style="width: 50px; height: 72px; border-radius: 4px; box-shadow: 1px 2px 5px rgba(0,0,0,0.5); margin-bottom: 5px; cursor: pointer; touch-action: manipulation;">`; }
     const deckContainer = document.getElementById("deckContainer");
     if(deckContainer) {
         deckContainer.innerHTML = html;
-        const cards = document.querySelectorAll(".card-face");
-        cards.forEach(card => {
+        document.querySelectorAll(".card-face").forEach(card => {
             let lastTap = 0;
             card.addEventListener("click", function(e) {
-                let currentTime = new Date().getTime();
-                let tapLength = currentTime - lastTap;
-                if (tapLength < 400 && tapLength > 0) {
-                    const idx = this.getAttribute("data-index");
-                    selectCard(deck[idx]);
-                    e.preventDefault();
-                }
-                lastTap = currentTime;
+                let tapLength = new Date().getTime() - lastTap;
+                if (tapLength < 400 && tapLength > 0) { selectCard(deck[this.getAttribute("data-index")]); e.preventDefault(); }
+                lastTap = new Date().getTime();
             });
         });
     }
@@ -696,59 +539,22 @@ function renderDeckCards() {
 function selectCard(cardCode) {
     const finalUrl = "https://deckofcardsapi.com/static/img/" + cardCode + ".png";
     document.body.style.backgroundColor = "#000000"; 
-    document.body.innerHTML = `
-    <div style="width: 100vw; height: 100vh; background: #000000; display: flex; align-items: center; justify-content: center; position: relative;">
-        <button id="backToDeck" style="position: absolute; top: 20px; left: 20px; background: rgba(255,255,255,0.2); border: none; color: white; padding: 10px 15px; border-radius: 8px; font-size: 16px; cursor: pointer; z-index: 10;">← Back</button>
-        <img src="${finalUrl}" style="width: 100vw; height: 100vh; object-fit: contain;">
-        <div id="secretBottomRight" style="position: absolute; bottom: 0; right: 0; width: 80px; height: 80px; background: transparent; z-index: 10;"></div>
-    </div>
-    `;
-    
-    const backToDeck = document.getElementById("backToDeck");
-    if(backToDeck) {
-        backToDeck.addEventListener("click", () => {
-            renderDeckUI();
-        });
-    }
-
-    const sendCardToAudience = () => {
-        let timeToWait = magicDelay * 1000;
-        setTimeout(async () => {
-            try {
-                await setDoc(session, {
-                    songUrl: finalUrl,
-                    seq: Date.now(),
-                    updatedAt: serverTimestamp()
-                }, { merge: true });
-            } catch (err) {}
-        }, timeToWait);
-    };
-
+    document.body.innerHTML = `<div style="width: 100vw; height: 100vh; background: #000000; display: flex; align-items: center; justify-content: center; position: relative;"><button id="backToDeck" style="position: absolute; top: 20px; left: 20px; background: rgba(255,255,255,0.2); border: none; color: white; padding: 10px 15px; border-radius: 8px; font-size: 16px; z-index: 10;">← Back</button><img src="${finalUrl}" style="width: 100vw; height: 100vh; object-fit: contain;"><div id="secretBottomRight" style="position: absolute; bottom: 0; right: 0; width: 80px; height: 80px; z-index: 10;"></div></div>`;
+    document.getElementById("backToDeck").addEventListener("click", () => renderDeckUI());
+    const sendCardToAudience = () => { setTimeout(async () => { try { await setDoc(session, { songUrl: finalUrl, seq: Date.now(), updatedAt: serverTimestamp() }, { merge: true }); } catch (err) {} }, magicDelay * 1000); };
     if (autoDeckSend) sendCardToAudience();
-
     const secretTrigger = document.getElementById("secretBottomRight");
     if(secretTrigger) {
         let pressTimer;
-        const startPress = (e) => { 
-            e.preventDefault(); 
-            pressTimer = setTimeout(() => {
-                if (navigator.vibrate) navigator.vibrate(100);
-                sendCardToAudience();
-            }, 2000); 
-        };
-        const cancelPress = () => { clearTimeout(pressTimer); };
-        secretTrigger.addEventListener("touchstart", startPress);
-        secretTrigger.addEventListener("touchend", cancelPress);
-        secretTrigger.addEventListener("mousedown", startPress);
-        secretTrigger.addEventListener("mouseup", cancelPress);
-        secretTrigger.addEventListener("mouseleave", cancelPress);
+        const startPress = (e) => { e.preventDefault(); pressTimer = setTimeout(() => { if (navigator.vibrate) navigator.vibrate(100); sendCardToAudience(); }, 2000); };
+        secretTrigger.addEventListener("touchstart", startPress); secretTrigger.addEventListener("touchend", () => clearTimeout(pressTimer));
+        secretTrigger.addEventListener("mousedown", startPress); secretTrigger.addEventListener("mouseup", () => clearTimeout(pressTimer));
     }
 }
-
 renderDeckUI();
 
 } else {
-status.innerHTML = 'Choose a mode: <a href="?mode=magician">Magician</a> | <a href="?mode=audience">Audience</a> | <a href="?mode=notepad">Notepad</a> | <a href="?mode=deck">Digital Deck</a>';
+status.innerHTML = 'Choose a mode: <a href="?mode=magician">Magician</a> | <a href="?mode=audience">Google</a> | <a href="?mode=youtube">YouTube</a> | <a href="?mode=notepad">Notepad</a> | <a href="?mode=deck">Deck</a>';
 status.style.color = "black";
 } 
 
