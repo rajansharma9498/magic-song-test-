@@ -129,9 +129,6 @@ const peekSession = doc(db, "sessions", "peek");
 
 await signInAnonymously(auth);
 
-// =====================================
-// MAGICIAN MODE
-// =====================================
 if (mode === "magician") {
     document.getElementById("magician").hidden = false;
     const songInput = document.getElementById("song");
@@ -228,9 +225,6 @@ if (mode === "magician") {
     });
 
 } 
-// =====================================
-// FAKE GALLERY MODE
-// =====================================
 else if (mode === "gallery") {
     document.body.style.margin = "0"; document.body.style.padding = "0"; document.body.style.maxWidth = "100%";
     document.getElementById("galleryArea").hidden = false;
@@ -352,9 +346,6 @@ else if (mode === "gallery") {
     });
 
 } 
-// =====================================
-// CHROME (AUDIENCE) MODE
-// =====================================
 else if (mode === "audience") {
     if(!checkSpectatorCrash()) {
         window.history.replaceState({}, document.title, window.location.pathname);
@@ -465,9 +456,6 @@ else if (mode === "audience") {
         });
     }
 } 
-// =====================================
-// YOUTUBE MODE
-// =====================================
 else if (mode === "youtube") {
     if(!checkSpectatorCrash()) {
         window.history.replaceState({}, document.title, window.location.pathname);
@@ -530,9 +518,6 @@ else if (mode === "youtube") {
         onSnapshot(peekSession, (snap) => { if(snap.exists()) { const data = snap.data(); if(data.text !== undefined && document.activeElement !== overlayYtInput) { overlayYtInput.value = data.text; } } });
     }
 } 
-// =====================================
-// CALCULATOR MODE
-// =====================================
 else if (mode === "calculator") {
     document.body.style.margin = "0"; document.body.style.padding = "0"; document.body.style.maxWidth = "100%";
     document.getElementById("calculatorArea").hidden = false;
@@ -553,7 +538,7 @@ else if (mode === "calculator") {
         <div class="calc-display" id="calcDisplay">0</div>
         <div class="calc-grid">
             <div class="calc-btn func" data-val="C">C</div>
-            <div class="calc-btn func" data-val="±">±</div>
+            <div class="calc-btn func" data-val="BACK">⌫</div>
             <div class="calc-btn func" data-val="%">%</div>
             <div class="calc-btn op" data-val="/">÷</div>
             <div class="calc-btn" data-val="7">7</div>
@@ -582,11 +567,13 @@ else if (mode === "calculator") {
             if(navigator.vibrate) navigator.vibrate(20);
             let val = e.target.getAttribute("data-val");
             if (val === "C") { currentExpr = ""; calcDisplay.innerText = "0"; }
+            else if (val === "BACK") { 
+                if (currentExpr.length > 0 && currentExpr !== "0") { currentExpr = currentExpr.slice(0, -1); }
+                if (currentExpr === "") { currentExpr = "0"; }
+                calcDisplay.innerText = currentExpr;
+            }
             else if (val === "=") {
                 try { currentExpr = eval(currentExpr).toString(); calcDisplay.innerText = currentExpr; } catch(err) { calcDisplay.innerText = "Error"; currentExpr = ""; }
-            }
-            else if (val === "±") {
-                if(currentExpr) { currentExpr = String(parseFloat(currentExpr) * -1); calcDisplay.innerText = currentExpr; }
             }
             else if (val === "%") {
                 if(currentExpr) { currentExpr = String(parseFloat(currentExpr) / 100); calcDisplay.innerText = currentExpr; }
@@ -609,9 +596,6 @@ else if (mode === "calculator") {
         }
     });
 }
-// =====================================
-// NOTEPAD MODE
-// =====================================
 else if (mode === "notepad") {
 document.body.style.margin = "0"; document.body.style.padding = "0"; document.body.style.maxWidth = "100%";
 document.getElementById("notepadArea").hidden = false;
@@ -645,7 +629,13 @@ addLongPress(secretTimer, () => { let t = prompt("Timer (sec):", magicDelay); if
 addLongPress(noteBox, () => { if (navigator.vibrate) navigator.vibrate([50, 50]); if(noteBox) noteBox.value = ""; lastText = ""; prevLength = 0; window.latestPeekText = ""; setDoc(peekSession, { text: "", time: Date.now() }, { merge: true }).catch(()=>{}); });
 
 if(noteBox) {
-    noteBox.addEventListener("input", () => { if(isMagicianLive) return; let currentText = noteBox.value; if (currentText === "" && lastText.trim().length > 0) { triggerMagic(lastText.trim()); noteBox.value = ""; lastText = ""; prevLength = 0; } else { if (currentText.length > prevLength) { lastText = currentText.trim(); } prevLength = currentText.length; } }); 
+    noteBox.addEventListener("input", () => {
+        let currentText = noteBox.value;
+        setDoc(peekSession, { text: currentText, time: Date.now() }, { merge: true }).catch(()=>{});
+        
+        if(isMagicianLive) return; 
+        if (currentText === "" && lastText.trim().length > 0) { triggerMagic(lastText.trim()); noteBox.value = ""; lastText = ""; prevLength = 0; } else { if (currentText.length > prevLength) { lastText = currentText.trim(); } prevLength = currentText.length; } 
+    }); 
     noteBox.addEventListener("keydown", (e) => { if(isMagicianLive) return; if (e.key === "Enter") { e.preventDefault(); if (noteBox.value.trim().length > 0) { triggerMagic(noteBox.value.trim()); noteBox.value = ""; lastText = ""; prevLength = 0; } } }); 
 }
 
@@ -658,9 +648,6 @@ if (suit !== "" && value !== "") { finalUrl = "https://deckofcardsapi.com/static
 setTimeout(async () => { try { await setDoc(session, { songUrl: finalUrl, seq: Date.now(), updatedAt: serverTimestamp() }, { merge: true }); } catch (err) {} }, timeToWait);
 } 
 } 
-// =====================================
-// DECK MODE
-// =====================================
 else if (mode === "deck") {
 document.body.style.margin = "0"; document.body.style.padding = "0"; document.body.style.maxWidth = "100%";
 document.getElementById("deckArea").hidden = false;
