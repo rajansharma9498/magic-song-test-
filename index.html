@@ -361,58 +361,95 @@ else if (mode === "audience") {
         document.body.style.margin = "0"; document.body.style.padding = "0"; document.body.style.maxWidth = "100%"; 
         document.getElementById("globalStyles").innerHTML = `
         :root { --c-bg:#ffffff; --c-text:#202124; --c-subtext:#5f6368; --c-surface:#f1f3f4; --c-surface-hover:#e8eaed; --c-border:#dfe1e5; }
-        body { background:var(--c-bg); color:var(--c-text); }
-        .c-wrapper { display:flex; flex-direction:column; min-height:100vh; overflow-y:auto; padding-bottom:20px; }
-        .c-header { display:flex; justify-content:space-between; align-items:center; padding:12px 16px; }
-        .c-icon { font-size:20px; color:var(--c-subtext); cursor:pointer; }
-        .c-tab-count { border:2px solid var(--c-subtext); border-radius:6px; font-size:11px; font-weight:bold; width:20px; height:20px; display:flex; justify-content:center; align-items:center; color:var(--c-subtext); }
-        .c-logo-area { display:flex; justify-content:center; margin-top:3vh; margin-bottom:25px; }
-        .c-search-bar { margin:0 16px; background:var(--c-surface); border-radius:30px; display:flex; align-items:center; padding:14px 16px; gap:12px; cursor:text; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        body { background:var(--c-bg); color:var(--c-text); font-family: Roboto, Arial, sans-serif; }
+        .c-wrapper { display:flex; flex-direction:column; min-height:100vh; overflow-y:auto; padding-bottom:20px; background:#f1f3f4; }
+        .c-header { display:flex; justify-content:space-between; align-items:center; padding:8px 12px; background:#ffffff; gap:12px; }
+        .c-urlbar { flex:1; background:var(--c-surface); border-radius:24px; padding:10px 16px; display:flex; align-items:center; gap:8px; font-size:16px; color:var(--c-text); }
+        .c-tab-count { border:2px solid var(--c-text); border-radius:6px; font-size:12px; font-weight:bold; width:22px; height:22px; display:flex; justify-content:center; align-items:center; color:var(--c-text); }
+        .c-main-bg { background:#ffffff; padding-bottom:15px; border-bottom:1px solid #e0e0e0; }
+        .c-logo-area { display:flex; justify-content:center; padding-top:3vh; margin-bottom:25px; }
+        .c-search-bar { margin:0 16px; background:#ffffff; border-radius:30px; display:flex; align-items:center; padding:12px 16px; gap:12px; cursor:text; box-shadow: 0 1px 4px rgba(0,0,0,0.2); }
         .c-search-text { flex:1; color:var(--c-subtext); font-size:16px; }
-        .c-shortcuts { display:flex; justify-content:space-between; margin:10px 24px 20px 24px; }
-        .c-shortcut-item { display:flex; flex-direction:column; align-items:center; gap:6px; width:64px; }
-        .c-circle { width:48px; height:48px; border-radius:50%; background:var(--c-surface); display:flex; justify-content:center; align-items:center; font-size:20px; font-weight:bold; }
-        .c-shortcut-text { font-size:11px; color:var(--c-text); text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; width:100%; }
-        .c-feed-card { margin:0 16px 12px 16px; background:var(--c-surface); border-radius:16px; overflow:hidden; }
+        .c-shortcuts { display:flex; justify-content:space-around; margin:25px 10px 10px 10px; }
+        .c-shortcut-item { display:flex; flex-direction:column; align-items:center; gap:8px; width:70px; }
+        .c-circle { width:52px; height:52px; border-radius:50%; background:var(--c-surface); display:flex; justify-content:center; align-items:center; font-size:22px; font-weight:500; color:#5f6368; }
+        .c-shortcut-text { font-size:12px; color:var(--c-text); text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; width:100%; }
+        .c-feed-container { margin-top:8px; background:#ffffff; }
+        .c-card { padding:16px; border-bottom:1px solid #e0e0e0; background:#ffffff; }
+        .c-card-title { font-size:18px; font-weight:400; line-height:1.4; color:var(--c-text); margin-bottom:8px; }
+        .c-card-meta { display:flex; justify-content:space-between; align-items:center; font-size:12px; color:var(--c-subtext); margin-top:12px; }
         .g-sugg-item { padding:14px 15px; font-size:16px; color:var(--c-text); display:flex; align-items:center; justify-content:space-between; cursor:pointer; }
-        .g-sugg-item:hover { background:var(--c-surface-hover); }
         `;
         document.getElementById("audience").hidden = false;
         document.getElementById("audience").innerHTML = `
         <div id="secretArmBtn" style="position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:9999; cursor:pointer;"></div>
         <div class="c-wrapper" id="chromeUI">
-        <div class="c-header">
-            <span class="c-icon" style="font-size:22px;">⌂</span>
-            <div style="display:flex; align-items:center; gap:20px;"><div style="width:28px; height:28px; border-radius:50%; background:url('https://picsum.photos/50/50') center/cover;"></div><div class="c-tab-count">37</div><span class="c-icon" style="font-size:22px;">⋮</span></div>
-        </div>
-        <div class="c-logo-area">
-            <span style="font-size:42px; font-weight:500; letter-spacing:-1px;">
-                <span style="color:#4285F4">G</span><span style="color:#EA4335">o</span><span style="color:#FBBC05">o</span><span style="color:#4285F4">g</span><span style="color:#34A853">l</span><span style="color:#EA4335">e</span>
-            </span>
-        </div>
-        <div class="c-search-bar" id="triggerGoogleSearchOverlay">
-            <span style="font-size:18px; color:var(--c-subtext);">🔍</span><span class="c-search-text">Search Google or type URL</span><span style="font-size:18px;">🎙️</span><span style="font-size:18px;">📷</span>
-        </div>
-        <div class="c-shortcuts">
-            <div class="c-shortcut-item"><div class="c-circle" style="background:#3b5998; color:white;">F</div><div class="c-shortcut-text">Facebook</div></div>
-            <div class="c-shortcut-item"><div class="c-circle" style="color:#34A853;">⭐</div><div class="c-shortcut-text">WebIntoApp</div></div>
-            <div class="c-shortcut-item"><div class="c-circle" style="background:#4285F4; color:white;">I</div><div class="c-shortcut-text">iLoveIMG</div></div>
-            <div class="c-shortcut-item"><div class="c-circle" style="color:#34A853;">M</div><div class="c-shortcut-text">Mentalist T...</div></div>
-        </div>
-        <div class="c-feed-card">
-           <div style="padding:16px; display:flex; gap:12px;">
-              <div style="flex:1; font-size:16px; font-weight:500; line-height:1.4;">Prahaar OTT release: Rajkummar Rao's legal drama will stream on this pl...</div>
-              <div style="width:72px; height:72px; border-radius:12px; background:url('https://picsum.photos/100/100?random=5') center/cover;"></div>
-           </div>
-           <div style="padding:0 16px 16px 16px; display:flex; justify-content:space-between; align-items:center; font-size:11px; color:var(--c-subtext);">
-              <div style="display:flex; align-items:center; gap:6px;"><span style="font-weight:bold; color:var(--c-text);">GQ</span> GQ India • 9h</div>
-              <div style="display:flex; gap:16px;"><span style="font-size:14px;">🔗</span><span style="font-size:14px;">⋮</span></div>
-           </div>
-        </div>
-        <div class="c-feed-card" style="display:flex; height:200px;">
-           <div style="flex:1; background:#ff2020; display:flex; justify-content:center; align-items:center; font-size:80px; color:white; font-weight:bold; font-style:italic;">a</div>
-           <div style="flex:1; background:url('https://picsum.photos/200/200?random=6') center/cover;"></div>
-        </div>
+            <div class="c-header">
+                <span style="font-size:24px; color:var(--c-subtext);">⌂</span>
+                <div class="c-urlbar"><span style="font-size:14px;">🔒</span> google.com</div>
+                <div class="c-tab-count">1</div>
+                <span style="font-size:22px; font-weight:bold; color:var(--c-text);">⋮</span>
+            </div>
+            
+            <div class="c-main-bg">
+                <div class="c-logo-area">
+                    <span style="font-size:48px; font-weight:500; letter-spacing:-2px;">
+                        <span style="color:#4285F4">G</span><span style="color:#EA4335">o</span><span style="color:#FBBC05">o</span><span style="color:#4285F4">g</span><span style="color:#34A853">l</span><span style="color:#EA4335">e</span>
+                    </span>
+                </div>
+                <div class="c-search-bar" id="triggerGoogleSearchOverlay">
+                    <span style="font-size:20px; color:#4285F4;">G</span>
+                    <span class="c-search-text">Search or type URL</span>
+                    <span style="font-size:18px;">🎙️</span>
+                </div>
+                <div class="c-shortcuts">
+                    <div class="c-shortcut-item"><div class="c-circle" style="background:#3b5998; color:white;">F</div><div class="c-shortcut-text">Facebook</div></div>
+                    <div class="c-shortcut-item"><div class="c-circle" style="color:#F4B400;">⭐</div><div class="c-shortcut-text">WebIntoApp</div></div>
+                    <div class="c-shortcut-item"><div class="c-circle" style="background:#4285F4; color:white;">I</div><div class="c-shortcut-text">iLoveIMG</div></div>
+                    <div class="c-shortcut-item"><div class="c-circle" style="color:#34A853;">M</div><div class="c-shortcut-text">Mentalist T...</div></div>
+                </div>
+            </div>
+
+            <div class="c-feed-container">
+                <!-- Card 1 -->
+                <div class="c-card">
+                    <div style="display:flex; gap:16px;">
+                        <div class="c-card-title" style="flex:1;">Prahaar OTT release: Rajkummar Rao's legal drama will stream on this platform!</div>
+                        <div style="width:80px; height:80px; border-radius:12px; background:url('https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?ixlib=rb-1.2.1&auto=format&fit=crop&w=200&q=80') center/cover;"></div>
+                    </div>
+                    <div class="c-card-meta">
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span style="font-weight:bold; color:var(--c-text); background:#eee; padding:2px 4px; border-radius:4px;">GQ</span> GQ India • 9h ago
+                        </div>
+                        <div style="font-size:16px; letter-spacing:8px;">🔗 ⋮</div>
+                    </div>
+                </div>
+                
+                <!-- Card 2 -->
+                <div class="c-card" style="padding-top:0; padding-left:0; padding-right:0;">
+                    <div style="display:flex; width:100%; height:180px;">
+                        <div style="flex:1; background:#ff0000; display:flex; justify-content:center; align-items:center; color:white; font-size:90px; font-weight:bold; font-style:italic; line-height:1;">a</div>
+                        <div style="flex:1; background:url('https://images.unsplash.com/photo-1495314736024-fa5e4b37b979?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80') center/cover;"></div>
+                    </div>
+                    <div style="padding:16px;">
+                        <div class="c-card-title">Behind the Scenes of the New Subway Campaign</div>
+                        <div class="c-card-meta">
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <span style="font-weight:bold; color:white; background:#ff4444; padding:2px 6px; border-radius:50%;">M</span> Media Hub • 12h ago
+                            </div>
+                            <div style="font-size:16px;">⋮</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 3 -->
+                <div class="c-card" style="padding-top:0; padding-left:0; padding-right:0;">
+                    <div style="width:100%; height:200px; background:url('https://images.unsplash.com/photo-1529126490691-38e4df7538fb?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80') center/cover;"></div>
+                    <div style="padding:16px;">
+                        <div class="c-card-title">Exploring the Red Centre: Uluru & The Sacred Lands of Australia</div>
+                    </div>
+                </div>
+            </div>
         </div>
         <div id="googleSearchOverlay" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:var(--c-bg); z-index:10000; flex-direction:column;">
         <div style="display:flex; align-items:center; padding:10px 15px; gap:15px; border-bottom:1px solid var(--c-border);">
@@ -466,35 +503,145 @@ else if (mode === "audience") {
     }
 } 
 // =====================================
-// YOUTUBE MODE
+// YOUTUBE (AUDIENCE) MODE - INDIAN CONTENT
 // =====================================
 else if (mode === "youtube") {
     if(!checkSpectatorCrash()) {
         window.history.replaceState({}, document.title, window.location.pathname);
         document.body.style.margin = "0"; document.body.style.padding = "0"; document.body.style.maxWidth = "100%"; 
         document.getElementById("globalStyles").innerHTML = `
-        :root { --yt-bg:#ffffff; --yt-text:#0f0f0f; --yt-subtext:#606060; --yt-border:#e5e5e5; --yt-input-bg:#f1f1f1; --yt-icon:#0f0f0f; --yt-nav:#ffffff; }
-        .yt-wrapper { background:var(--yt-bg); color:var(--yt-text); font-family:Roboto,Arial,sans-serif; min-height:100vh; display:flex; flex-direction:column; overflow:hidden; }
-        .yt-header { display:flex; justify-content:space-between; padding:10px 15px; align-items:center; border-bottom:1px solid var(--yt-border); }
-        .yt-search-area { padding:10px 15px; display:flex; gap:10px; align-items:center; border-bottom:1px solid var(--yt-border); }
-        .yt-input-box { flex:1; background:var(--yt-input-bg); border-radius:20px; display:flex; align-items:center; padding:0 15px; height:38px; cursor:text; }
-        .yt-content { flex:1; overflow-y:auto; padding-bottom:60px; }
-        .yt-sugg-item { padding:12px 15px; font-size:16px; color:var(--yt-text); display:flex; align-items:center; gap:15px; cursor:pointer; font-weight:500; }
+        :root { --yt-bg:#0f0f0f; --yt-text:#ffffff; --yt-subtext:#aaaaaa; --yt-border:#272727; --yt-input-bg:#222222; }
+        body { background:var(--yt-bg); color:var(--yt-text); font-family: Roboto, Arial, sans-serif; margin:0; padding:0; }
+        .yt-wrapper { display:flex; flex-direction:column; min-height:100vh; overflow-y:auto; padding-bottom:60px; }
+        .yt-header { display:flex; justify-content:space-between; padding:10px 15px; align-items:center; background:var(--yt-bg); }
+        .yt-search-area { padding:0 15px 15px 15px; }
+        .yt-input-box { background:var(--yt-input-bg); border-radius:20px; display:flex; align-items:center; padding:0 15px; height:40px; cursor:text; border:1px solid var(--yt-border); }
+        .yt-video-card { margin-bottom:15px; border-bottom:4px solid #000; }
+        .yt-thumbnail { width:100%; aspect-ratio:16/9; background-size:cover; background-position:center; position:relative; }
+        .yt-time { position:absolute; bottom:8px; right:8px; background:rgba(0,0,0,0.8); color:white; font-size:12px; font-weight:bold; padding:3px 6px; border-radius:4px; }
+        .yt-details { display:flex; padding:12px 15px; gap:12px; }
+        .yt-avatar { width:36px; height:36px; border-radius:50%; background:#fff; color:#000; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:14px; flex-shrink:0; }
+        .yt-title { font-size:16px; font-weight:500; color:var(--yt-text); line-height:1.4; margin-bottom:4px; }
+        .yt-meta { font-size:12px; color:var(--yt-subtext); }
+        .yt-shorts-shelf { padding:15px 0; border-bottom:4px solid #000; }
+        .yt-shorts-header { display:flex; align-items:center; gap:8px; padding:0 15px 15px 15px; font-size:18px; font-weight:bold; }
+        .yt-shorts-grid { display:flex; gap:10px; overflow-x:hidden; padding:0 15px; }
+        .yt-sugg-item { padding:12px 15px; font-size:16px; color:var(--yt-text); display:flex; align-items:center; gap:15px; cursor:pointer; }
+        .yt-bottom-nav { position:fixed; bottom:0; left:0; width:100%; background:var(--yt-bg); display:flex; justify-content:space-around; padding:10px 0; border-top:1px solid var(--yt-border); font-size:10px; color:var(--yt-text); z-index:100; }
+        .yt-nav-item { display:flex; flex-direction:column; align-items:center; gap:4px; }
         `;
         document.getElementById("youtube").hidden = false;
         document.getElementById("youtube").innerHTML = `
         <div id="secretYTArmBtn" style="position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:9999; cursor:pointer;"></div>
         <div class="yt-wrapper">
-        <div class="yt-header"><div style="display:flex; align-items:center; gap:3px;"><span style="color:#FF0000; font-size:24px;">▶</span><span style="font-size:20px; font-weight:bold; letter-spacing:-1px;">YouTube</span></div></div>
-        <div class="yt-search-area" id="triggerSearchOverlay"><div class="yt-input-box"><span style="font-size:16px; color:var(--yt-subtext); margin-right:10px;">🔍</span><span style="flex:1; color:var(--yt-subtext);">Search YouTube</span></div></div>
-        <div class="yt-content"><div style="width:100%; height:210px; background:var(--yt-input-bg);"></div></div>
+            <div class="yt-header">
+                <div style="display:flex; align-items:center; gap:5px;">
+                    <span style="color:#FF0000; font-size:26px;">▶</span>
+                    <span style="font-size:22px; font-weight:bold; letter-spacing:-1px;">YouTube</span>
+                </div>
+                <div style="display:flex; gap:20px; font-size:20px; align-items:center;">
+                    <span>📺</span><span>🔔</span><span id="triggerSearchOverlayIcon" style="cursor:pointer;">🔍</span>
+                </div>
+            </div>
+            
+            <div class="yt-search-area">
+                <div class="yt-input-box" id="triggerSearchOverlay">
+                    <span style="font-size:18px; color:var(--yt-subtext); margin-right:10px;">🔍</span>
+                    <span style="flex:1; color:var(--yt-subtext); font-size:15px;">Search YouTube</span>
+                </div>
+            </div>
+
+            <!-- Video 1 : T-Series Music -->
+            <div class="yt-video-card">
+                <div class="yt-thumbnail" style="background-image:url('https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80');">
+                    <div style="position:absolute; top:15px; left:15px; color:white; font-size:20px; font-weight:bold; line-height:1.2; text-shadow:2px 2px 4px rgba(0,0,0,0.8);">Bhool Bhulaiyaa 3<br>Title Track</div>
+                    <div class="yt-time">3:45</div>
+                </div>
+                <div class="yt-details">
+                    <div class="yt-avatar" style="background:linear-gradient(45deg, #ff0000, #990000); color:white;">T</div>
+                    <div style="flex:1;">
+                        <div class="yt-title">Bhool Bhulaiyaa 3 Title Track (Official Video) Kartik A, Triptii D | Pitbull, Diljit</div>
+                        <div class="yt-meta">T-Series • 12M views • 1 day ago</div>
+                    </div>
+                    <div style="color:var(--yt-text); font-size:18px;">⋮</div>
+                </div>
+            </div>
+
+            <!-- Video 2 : Indian Vlog -->
+            <div class="yt-video-card">
+                <div class="yt-thumbnail" style="background-image:url('https://images.unsplash.com/photo-1511895426328-dc8714191300?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80');">
+                    <div class="yt-time">12:30</div>
+                </div>
+                <div class="yt-details">
+                    <div class="yt-avatar" style="background:linear-gradient(45deg, #00c6ff, #0072ff); color:white;">SJ</div>
+                    <div style="flex:1;">
+                        <div class="yt-title">Gaadi Ka Accident Ho Gaya! 😭 | Sourav Joshi Vlogs</div>
+                        <div class="yt-meta">Sourav Joshi Vlogs • 4.5M views • 5 hours ago</div>
+                    </div>
+                    <div style="color:var(--yt-text); font-size:18px;">⋮</div>
+                </div>
+            </div>
+
+            <!-- Shorts Shelf (Hindi Context) -->
+            <div class="yt-shorts-shelf">
+                <div class="yt-shorts-header">
+                    <span style="color:#FF0000; font-size:24px;">▶</span> Shorts
+                </div>
+                <div class="yt-shorts-grid">
+                    <div style="flex:1; aspect-ratio:9/16; background:#ff4444; display:flex; flex-direction:column; justify-content:flex-end; padding:10px; color:white; font-size:14px; font-weight:bold; border-radius:8px;">Pani Puri Challenge! 🥵</div>
+                    <div style="flex:1; aspect-ratio:9/16; background:url('https://images.unsplash.com/photo-1529126490691-38e4df7538fb?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80') center/cover; display:flex; flex-direction:column; justify-content:flex-end; padding:10px; color:white; font-size:14px; font-weight:bold; border-radius:8px; text-shadow:1px 1px 3px black;">Wait for the end 😂</div>
+                </div>
+            </div>
+
+            <!-- Video 3 : Tech Video Hindi -->
+            <div class="yt-video-card">
+                <div class="yt-thumbnail" style="background-image:url('https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80');">
+                    <div class="yt-time">15:22</div>
+                </div>
+                <div class="yt-details">
+                    <div class="yt-avatar" style="background:linear-gradient(45deg, #f7971e, #ffd200); color:black;">TB</div>
+                    <div style="flex:1;">
+                        <div class="yt-title">Don't Buy This Phone! 😡 (Hindi) | Tech Burner</div>
+                        <div class="yt-meta">Tech Burner • 2.1M views • 2 days ago</div>
+                    </div>
+                    <div style="color:var(--yt-text); font-size:18px;">⋮</div>
+                </div>
+            </div>
+
+            <!-- Video 4 : Live News Hindi -->
+            <div class="yt-video-card">
+                <div class="yt-thumbnail" style="background-image:url('https://images.unsplash.com/photo-1495020689067-958852a7765e?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80');">
+                    <div class="yt-time" style="background:#cc0000;">🔴 LIVE</div>
+                </div>
+                <div class="yt-details">
+                    <div class="yt-avatar" style="background:#cc0000; color:white;">AT</div>
+                    <div style="flex:1;">
+                        <div class="yt-title">Aaj Tak LIVE TV: Latest News in Hindi | Breaking News</div>
+                        <div class="yt-meta">Aaj Tak • 50K watching</div>
+                    </div>
+                    <div style="color:var(--yt-text); font-size:18px;">⋮</div>
+                </div>
+            </div>
+            
+            <div style="height:40px;"></div>
         </div>
+        
+        <!-- Bottom Nav -->
+        <div class="yt-bottom-nav">
+            <div class="yt-nav-item"><span style="font-size:20px;">⌂</span>Home</div>
+            <div class="yt-nav-item"><span style="font-size:20px; color:white;">▶</span>Shorts</div>
+            <div class="yt-nav-item"><span style="font-size:32px; font-weight:300; line-height:0.6;">+</span><span style="visibility:hidden">.</span></div>
+            <div class="yt-nav-item"><span style="font-size:20px;">📁</span>Subscriptions</div>
+            <div class="yt-nav-item"><div style="width:20px; height:20px; border-radius:50%; background:#fff;"></div>You</div>
+        </div>
+
         <div id="ytSearchOverlay" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:var(--yt-bg); z-index:10000; flex-direction:column;">
         <div style="display:flex; align-items:center; padding:10px 15px; gap:15px; border-bottom:1px solid var(--yt-border);">
             <span id="closeYtOverlay" style="font-size:24px; cursor:pointer;">←</span>
             <form id="overlaySearchForm" style="flex:1; display:flex; background:var(--yt-input-bg); border-radius:20px; padding:0 15px; height:36px; align-items:center;">
                 <input type="search" id="overlayYtInput" placeholder="Search YouTube" style="width:100%; border:none; background:transparent; outline:none; font-size:16px; color:var(--yt-text);" autocomplete="off">
             </form>
+            <div style="width:36px; height:36px; display:flex; justify-content:center; align-items:center; font-size:16px; background:var(--yt-input-bg); border-radius:50%;">🎙️</div>
         </div>
         <div id="ytSuggestions" style="flex:1; padding:10px 0; overflow-y:auto;"></div>
         </div>`;
@@ -505,6 +652,7 @@ else if (mode === "youtube") {
 
         document.getElementById("secretYTArmBtn").onclick = () => { document.getElementById("secretYTArmBtn").style.display = "none"; let elem = document.documentElement; if (elem.requestFullscreen) elem.requestFullscreen().catch(err => {}); }; 
         document.getElementById("triggerSearchOverlay").addEventListener("click", () => { ytSearchOverlay.style.display = "flex"; setTimeout(() => overlayYtInput.focus(), 100); });
+        document.getElementById("triggerSearchOverlayIcon").addEventListener("click", () => { ytSearchOverlay.style.display = "flex"; setTimeout(() => overlayYtInput.focus(), 100); });
         document.getElementById("closeYtOverlay").addEventListener("click", () => { ytSearchOverlay.style.display = "none"; });
 
         const triggerYTSearch = () => {
