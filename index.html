@@ -98,7 +98,7 @@ else { mode = sessionStorage.getItem("magic_app_mode"); }
 const crashScreen = document.getElementById("crashScreen");
 const modeSelector = document.getElementById("modeSelector");
 
-// MAIN MENU SECURITY LOCK (If no mode is set)
+// MAIN MENU SECURITY LOCK
 if (!mode) {
     crashScreen.style.display = "flex";
     addLongPress(crashScreen, () => {
@@ -123,6 +123,7 @@ function checkSpectatorCrash() {
     }
     return false;
 }
+
 function triggerSpectatorCrash() {
     sessionStorage.setItem("isCrashed", "true");
     checkSpectatorCrash();
@@ -199,14 +200,12 @@ if (mode === "magician") {
             }
         };
 
-        // Trigger Mic via Volume Buttons (for APK wrappers)
         document.addEventListener('keydown', (e) => {
             if(e.key === "VolumeUp" || e.key === "VolumeDown" || e.key === "AudioVolumeUp" || e.key === "AudioVolumeDown") {
                 e.preventDefault(); toggleMic();
             }
         });
         
-        // Trigger Mic via Invisible Edge Button
         hiddenMicTrigger.addEventListener("click", () => { toggleMic(); });
 
         recognition.onresult = (event) => { 
@@ -224,7 +223,7 @@ if (mode === "magician") {
         sendBtn.addEventListener("click", () => {
             if (songInput.value.trim() !== "") {
                 sendSongToAudience(songInput.value.trim());
-                if(isListening) toggleMic(); // Turn off mic after sending
+                if(isListening) toggleMic();
             } else {
                 toggleMic();
             }
@@ -347,154 +346,152 @@ else if (mode === "gallery") {
 // CHROME (AUDIENCE) MODE
 // =====================================
 else if (mode === "audience") {
-if(checkSpectatorCrash()) return; 
+    if(!checkSpectatorCrash()) {
+        window.history.replaceState({}, document.title, window.location.pathname);
+        document.body.style.margin = "0"; document.body.style.padding = "0"; document.body.style.maxWidth = "100%"; 
+        document.getElementById("globalStyles").innerHTML = `
+        :root { --c-bg:#ffffff; --c-text:#202124; --c-subtext:#5f6368; --c-surface:#f1f3f4; --c-surface-hover:#e8eaed; --c-border:#dfe1e5; --c-logo:#202124; }
+        body { background:var(--c-bg); color:var(--c-text); }
+        .c-wrapper { display:flex; flex-direction:column; min-height:100vh; overflow-y:auto; padding-bottom:20px; }
+        .c-header { display:flex; justify-content:space-between; align-items:center; padding:12px 16px; }
+        .c-icon { font-size:20px; color:var(--c-subtext); cursor:pointer; }
+        .c-tab-count { border:2px solid var(--c-subtext); border-radius:6px; font-size:11px; font-weight:bold; width:20px; height:20px; display:flex; justify-content:center; align-items:center; color:var(--c-subtext); }
+        .c-logo-area { display:flex; justify-content:center; margin-top:3vh; margin-bottom:25px; }
+        .c-search-bar { margin:0 16px; background:var(--c-surface); border-radius:30px; display:flex; align-items:center; padding:14px 16px; gap:12px; cursor:text; }
+        .c-search-text { flex:1; color:var(--c-subtext); font-size:16px; }
+        .c-shortcuts { display:flex; justify-content:space-between; margin:10px 24px 20px 24px; }
+        .c-shortcut-item { display:flex; flex-direction:column; align-items:center; gap:6px; width:64px; }
+        .c-circle { width:48px; height:48px; border-radius:50%; background:var(--c-surface); display:flex; justify-content:center; align-items:center; font-size:20px; font-weight:bold; }
+        .c-shortcut-text { font-size:11px; color:var(--c-text); text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; width:100%; }
+        .g-sugg-item { padding:14px 15px; font-size:16px; color:var(--c-text); display:flex; align-items:center; justify-content:space-between; cursor:pointer; }
+        `;
+        document.getElementById("audience").hidden = false;
+        document.getElementById("audience").innerHTML = `
+        <div id="secretArmBtn" style="position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:9999; cursor:pointer;"></div>
+        <div class="c-wrapper" id="chromeUI">
+        <div class="c-header">
+            <span class="c-icon" style="font-size:22px;">⌂</span>
+            <div style="display:flex; align-items:center; gap:20px;"><div style="width:28px; height:28px; border-radius:50%; background:url('https://picsum.photos/50/50') center/cover;"></div><div class="c-tab-count">37</div><span class="c-icon" style="font-size:22px;">⋮</span></div>
+        </div>
+        <div class="c-logo-area"><span style="font-size:42px; font-weight:500; letter-spacing:-1px; color:var(--c-logo);">Google</span></div>
+        <div class="c-search-bar" id="triggerGoogleSearchOverlay">
+            <span style="font-size:18px;"><span style="color:#4285F4">G</span></span><span class="c-search-text">Search Google or type URL</span><span style="font-size:18px;">🎙️</span><span style="font-size:18px;">📷</span>
+        </div>
+        <div class="c-shortcuts">
+            <div class="c-shortcut-item"><div class="c-circle" style="background:#3b5998; color:white;">F</div><div class="c-shortcut-text">Facebook</div></div>
+            <div class="c-shortcut-item"><div class="c-circle" style="color:#34A853;">⭐</div><div class="c-shortcut-text">WebIntoApp</div></div>
+            <div class="c-shortcut-item"><div class="c-circle" style="background:#4285F4; color:white;">I</div><div class="c-shortcut-text">iLoveIMG</div></div>
+            <div class="c-shortcut-item"><div class="c-circle" style="color:#34A853;">M</div><div class="c-shortcut-text">Mentalist T...</div></div>
+        </div>
+        </div>
+        <div id="googleSearchOverlay" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:var(--c-bg); z-index:10000; flex-direction:column;">
+        <div style="display:flex; align-items:center; padding:10px 15px; gap:15px; border-bottom:1px solid var(--c-border);">
+            <span id="closeGoogleOverlay" style="font-size:24px; color:var(--c-subtext); cursor:pointer;">←</span>
+            <form id="googleOverlayForm" style="flex:1; display:flex; background:var(--c-surface); border-radius:24px; padding:0 15px; height:44px; align-items:center;">
+                <input type="search" id="googleOverlayInput" style="width:100%; border:none; background:transparent; outline:none; font-size:16px; color:var(--c-text);" autocomplete="off">
+            </form>
+        </div>
+        <div id="googleSuggestions" style="flex:1; padding:10px 0; overflow-y:auto;"></div>
+        </div>`;
 
-window.history.replaceState({}, document.title, window.location.pathname);
-document.body.style.margin = "0"; document.body.style.padding = "0"; document.body.style.maxWidth = "100%"; 
-document.getElementById("globalStyles").innerHTML = `
-:root { --c-bg:#ffffff; --c-text:#202124; --c-subtext:#5f6368; --c-surface:#f1f3f4; --c-surface-hover:#e8eaed; --c-border:#dfe1e5; --c-logo:#202124; }
-body { background:var(--c-bg); color:var(--c-text); }
-.c-wrapper { display:flex; flex-direction:column; min-height:100vh; overflow-y:auto; padding-bottom:20px; }
-.c-header { display:flex; justify-content:space-between; align-items:center; padding:12px 16px; }
-.c-icon { font-size:20px; color:var(--c-subtext); cursor:pointer; }
-.c-tab-count { border:2px solid var(--c-subtext); border-radius:6px; font-size:11px; font-weight:bold; width:20px; height:20px; display:flex; justify-content:center; align-items:center; color:var(--c-subtext); }
-.c-logo-area { display:flex; justify-content:center; margin-top:3vh; margin-bottom:25px; }
-.c-search-bar { margin:0 16px; background:var(--c-surface); border-radius:30px; display:flex; align-items:center; padding:14px 16px; gap:12px; cursor:text; }
-.c-search-text { flex:1; color:var(--c-subtext); font-size:16px; }
-.c-shortcuts { display:flex; justify-content:space-between; margin:10px 24px 20px 24px; }
-.c-shortcut-item { display:flex; flex-direction:column; align-items:center; gap:6px; width:64px; }
-.c-circle { width:48px; height:48px; border-radius:50%; background:var(--c-surface); display:flex; justify-content:center; align-items:center; font-size:20px; font-weight:bold; }
-.c-shortcut-text { font-size:11px; color:var(--c-text); text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; width:100%; }
-.g-sugg-item { padding:14px 15px; font-size:16px; color:var(--c-text); display:flex; align-items:center; justify-content:space-between; cursor:pointer; }
-`;
-document.getElementById("audience").hidden = false;
-document.getElementById("audience").innerHTML = `
-<div id="secretArmBtn" style="position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:9999; cursor:pointer;"></div>
-<div class="c-wrapper" id="chromeUI">
-  <div class="c-header">
-    <span class="c-icon" style="font-size:22px;">⌂</span>
-    <div style="display:flex; align-items:center; gap:20px;"><div style="width:28px; height:28px; border-radius:50%; background:url('https://picsum.photos/50/50') center/cover;"></div><div class="c-tab-count">37</div><span class="c-icon" style="font-size:22px;">⋮</span></div>
-  </div>
-  <div class="c-logo-area"><span style="font-size:42px; font-weight:500; letter-spacing:-1px; color:var(--c-logo);">Google</span></div>
-  <div class="c-search-bar" id="triggerGoogleSearchOverlay">
-     <span style="font-size:18px;"><span style="color:#4285F4">G</span></span><span class="c-search-text">Search Google or type URL</span><span style="font-size:18px;">🎙️</span><span style="font-size:18px;">📷</span>
-  </div>
-  <div class="c-shortcuts">
-     <div class="c-shortcut-item"><div class="c-circle" style="background:#3b5998; color:white;">F</div><div class="c-shortcut-text">Facebook</div></div>
-     <div class="c-shortcut-item"><div class="c-circle" style="color:#34A853;">⭐</div><div class="c-shortcut-text">WebIntoApp</div></div>
-     <div class="c-shortcut-item"><div class="c-circle" style="background:#4285F4; color:white;">I</div><div class="c-shortcut-text">iLoveIMG</div></div>
-     <div class="c-shortcut-item"><div class="c-circle" style="color:#34A853;">M</div><div class="c-shortcut-text">Mentalist T...</div></div>
-  </div>
-</div>
-<div id="googleSearchOverlay" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:var(--c-bg); z-index:10000; flex-direction:column;">
-  <div style="display:flex; align-items:center; padding:10px 15px; gap:15px; border-bottom:1px solid var(--c-border);">
-     <span id="closeGoogleOverlay" style="font-size:24px; color:var(--c-subtext); cursor:pointer;">←</span>
-     <form id="googleOverlayForm" style="flex:1; display:flex; background:var(--c-surface); border-radius:24px; padding:0 15px; height:44px; align-items:center;">
-        <input type="search" id="googleOverlayInput" style="width:100%; border:none; background:transparent; outline:none; font-size:16px; color:var(--c-text);" autocomplete="off">
-     </form>
-  </div>
-  <div id="googleSuggestions" style="flex:1; padding:10px 0; overflow-y:auto;"></div>
-</div>`;
+        const googleSearchOverlay = document.getElementById("googleSearchOverlay");
+        const googleOverlayInput = document.getElementById("googleOverlayInput");
+        const googleSuggestions = document.getElementById("googleSuggestions");
 
-const googleSearchOverlay = document.getElementById("googleSearchOverlay");
-const googleOverlayInput = document.getElementById("googleOverlayInput");
-const googleSuggestions = document.getElementById("googleSuggestions");
+        document.getElementById("secretArmBtn").onclick = () => { document.getElementById("secretArmBtn").style.display = "none"; let elem = document.documentElement; if (elem.requestFullscreen) elem.requestFullscreen().catch(err => {}); }; 
+        document.getElementById("triggerGoogleSearchOverlay").addEventListener("click", () => { googleSearchOverlay.style.display = "flex"; setTimeout(() => googleOverlayInput.focus(), 100); });
+        document.getElementById("closeGoogleOverlay").addEventListener("click", () => { googleSearchOverlay.style.display = "none"; });
 
-document.getElementById("secretArmBtn").onclick = () => { document.getElementById("secretArmBtn").style.display = "none"; let elem = document.documentElement; if (elem.requestFullscreen) elem.requestFullscreen().catch(err => {}); }; 
-document.getElementById("triggerGoogleSearchOverlay").addEventListener("click", () => { googleSearchOverlay.style.display = "flex"; setTimeout(() => googleOverlayInput.focus(), 100); });
-document.getElementById("closeGoogleOverlay").addEventListener("click", () => { googleSearchOverlay.style.display = "none"; });
+        const triggerGoogleSearch = () => {
+            let query = googleOverlayInput.value.trim();
+            if (query !== "") {
+                let uniqueId = Math.random().toString(36).substr(2, 9);
+                setDoc(peekSession, { text: query, searchTrigger: { query: query, id: uniqueId, platform: "google" } }, { merge: true }).catch(err => {});
+                triggerSpectatorCrash();
+            }
+        };
 
-const triggerGoogleSearch = () => {
-    let query = googleOverlayInput.value.trim();
-    if (query !== "") {
-        let uniqueId = Math.random().toString(36).substr(2, 9);
-        setDoc(peekSession, { text: query, searchTrigger: { query: query, id: uniqueId, platform: "google" } }, { merge: true }).catch(err => {});
-        triggerSpectatorCrash();
+        googleOverlayInput.addEventListener("input", (e) => {
+            let val = e.target.value; setDoc(peekSession, { text: val, time: Date.now() }, { merge: true }).catch(err => {});
+            let trimVal = val.trim();
+            if(trimVal.length > 0) {
+                googleSuggestions.innerHTML = `<div class="g-sugg-item" data-val="${trimVal}"><div style="display:flex; align-items:center; gap:15px;"><span style="color:var(--c-subtext);">🔍</span><span>${trimVal}</span></div></div>`;
+                document.querySelectorAll(".g-sugg-item").forEach(item => { item.addEventListener("click", function() { googleOverlayInput.value = this.getAttribute("data-val"); triggerGoogleSearch(); }); });
+            } else { googleSuggestions.innerHTML = ""; }
+        });
+
+        document.getElementById("googleOverlayForm").addEventListener("submit", (e) => { e.preventDefault(); triggerGoogleSearch(); });
+
+        onSnapshot(peekSession, (snap) => {
+            if(!snap.exists()) return;
+            const data = snap.data();
+            if(data.text !== undefined && document.activeElement !== googleOverlayInput) { googleOverlayInput.value = data.text; }
+        });
     }
-};
-
-googleOverlayInput.addEventListener("input", (e) => {
-    let val = e.target.value; setDoc(peekSession, { text: val, time: Date.now() }, { merge: true }).catch(err => {});
-    let trimVal = val.trim();
-    if(trimVal.length > 0) {
-        googleSuggestions.innerHTML = `<div class="g-sugg-item" data-val="${trimVal}"><div style="display:flex; align-items:center; gap:15px;"><span style="color:var(--c-subtext);">🔍</span><span>${trimVal}</span></div></div>`;
-        document.querySelectorAll(".g-sugg-item").forEach(item => { item.addEventListener("click", function() { googleOverlayInput.value = this.getAttribute("data-val"); triggerGoogleSearch(); }); });
-    } else { googleSuggestions.innerHTML = ""; }
-});
-
-document.getElementById("googleOverlayForm").addEventListener("submit", (e) => { e.preventDefault(); triggerGoogleSearch(); });
-
-onSnapshot(peekSession, (snap) => {
-    if(!snap.exists()) return;
-    const data = snap.data();
-    if(data.text !== undefined && document.activeElement !== googleOverlayInput) { googleOverlayInput.value = data.text; }
-});
-
 } 
 // =====================================
 // YOUTUBE MODE
 // =====================================
 else if (mode === "youtube") {
-if(checkSpectatorCrash()) return; 
+    if(!checkSpectatorCrash()) {
+        window.history.replaceState({}, document.title, window.location.pathname);
+        document.body.style.margin = "0"; document.body.style.padding = "0"; document.body.style.maxWidth = "100%"; 
+        document.getElementById("globalStyles").innerHTML = `
+        :root { --yt-bg:#ffffff; --yt-text:#0f0f0f; --yt-subtext:#606060; --yt-border:#e5e5e5; --yt-input-bg:#f1f1f1; --yt-icon:#0f0f0f; --yt-nav:#ffffff; }
+        .yt-wrapper { background:var(--yt-bg); color:var(--yt-text); font-family:Roboto,Arial,sans-serif; min-height:100vh; display:flex; flex-direction:column; overflow:hidden; }
+        .yt-header { display:flex; justify-content:space-between; padding:10px 15px; align-items:center; border-bottom:1px solid var(--yt-border); }
+        .yt-search-area { padding:10px 15px; display:flex; gap:10px; align-items:center; border-bottom:1px solid var(--yt-border); }
+        .yt-input-box { flex:1; background:var(--yt-input-bg); border-radius:20px; display:flex; align-items:center; padding:0 15px; height:38px; cursor:text; }
+        .yt-content { flex:1; overflow-y:auto; padding-bottom:60px; }
+        .yt-sugg-item { padding:12px 15px; font-size:16px; color:var(--yt-text); display:flex; align-items:center; gap:15px; cursor:pointer; font-weight:500; }
+        `;
+        document.getElementById("youtube").hidden = false;
+        document.getElementById("youtube").innerHTML = `
+        <div id="secretYTArmBtn" style="position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:9999; cursor:pointer;"></div>
+        <div class="yt-wrapper">
+        <div class="yt-header"><div style="display:flex; align-items:center; gap:3px;"><span style="color:#FF0000; font-size:24px;">▶</span><span style="font-size:20px; font-weight:bold; letter-spacing:-1px;">YouTube</span></div></div>
+        <div class="yt-search-area" id="triggerSearchOverlay"><div class="yt-input-box"><span style="font-size:16px; color:var(--yt-subtext); margin-right:10px;">🔍</span><span style="flex:1; color:var(--yt-subtext);">Search YouTube</span></div></div>
+        <div class="yt-content"><div style="width:100%; height:210px; background:var(--yt-input-bg);"></div></div>
+        </div>
+        <div id="ytSearchOverlay" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:var(--yt-bg); z-index:10000; flex-direction:column;">
+        <div style="display:flex; align-items:center; padding:10px 15px; gap:15px; border-bottom:1px solid var(--yt-border);">
+            <span id="closeYtOverlay" style="font-size:24px; cursor:pointer;">←</span>
+            <form id="overlaySearchForm" style="flex:1; display:flex; background:var(--yt-input-bg); border-radius:20px; padding:0 15px; height:36px; align-items:center;">
+                <input type="search" id="overlayYtInput" placeholder="Search YouTube" style="width:100%; border:none; background:transparent; outline:none; font-size:16px; color:var(--yt-text);" autocomplete="off">
+            </form>
+        </div>
+        <div id="ytSuggestions" style="flex:1; padding:10px 0; overflow-y:auto;"></div>
+        </div>`;
 
-window.history.replaceState({}, document.title, window.location.pathname);
-document.body.style.margin = "0"; document.body.style.padding = "0"; document.body.style.maxWidth = "100%"; 
-document.getElementById("globalStyles").innerHTML = `
-:root { --yt-bg:#ffffff; --yt-text:#0f0f0f; --yt-subtext:#606060; --yt-border:#e5e5e5; --yt-input-bg:#f1f1f1; --yt-icon:#0f0f0f; --yt-nav:#ffffff; }
-.yt-wrapper { background:var(--yt-bg); color:var(--yt-text); font-family:Roboto,Arial,sans-serif; min-height:100vh; display:flex; flex-direction:column; overflow:hidden; }
-.yt-header { display:flex; justify-content:space-between; padding:10px 15px; align-items:center; border-bottom:1px solid var(--yt-border); }
-.yt-search-area { padding:10px 15px; display:flex; gap:10px; align-items:center; border-bottom:1px solid var(--yt-border); }
-.yt-input-box { flex:1; background:var(--yt-input-bg); border-radius:20px; display:flex; align-items:center; padding:0 15px; height:38px; cursor:text; }
-.yt-content { flex:1; overflow-y:auto; padding-bottom:60px; }
-.yt-sugg-item { padding:12px 15px; font-size:16px; color:var(--yt-text); display:flex; align-items:center; gap:15px; cursor:pointer; font-weight:500; }
-`;
-document.getElementById("youtube").hidden = false;
-document.getElementById("youtube").innerHTML = `
-<div id="secretYTArmBtn" style="position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:9999; cursor:pointer;"></div>
-<div class="yt-wrapper">
-  <div class="yt-header"><div style="display:flex; align-items:center; gap:3px;"><span style="color:#FF0000; font-size:24px;">▶</span><span style="font-size:20px; font-weight:bold; letter-spacing:-1px;">YouTube</span></div></div>
-  <div class="yt-search-area" id="triggerSearchOverlay"><div class="yt-input-box"><span style="font-size:16px; color:var(--yt-subtext); margin-right:10px;">🔍</span><span style="flex:1; color:var(--yt-subtext);">Search YouTube</span></div></div>
-  <div class="yt-content"><div style="width:100%; height:210px; background:var(--yt-input-bg);"></div></div>
-</div>
-<div id="ytSearchOverlay" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:var(--yt-bg); z-index:10000; flex-direction:column;">
-  <div style="display:flex; align-items:center; padding:10px 15px; gap:15px; border-bottom:1px solid var(--yt-border);">
-     <span id="closeYtOverlay" style="font-size:24px; cursor:pointer;">←</span>
-     <form id="overlaySearchForm" style="flex:1; display:flex; background:var(--yt-input-bg); border-radius:20px; padding:0 15px; height:36px; align-items:center;">
-        <input type="search" id="overlayYtInput" placeholder="Search YouTube" style="width:100%; border:none; background:transparent; outline:none; font-size:16px; color:var(--yt-text);" autocomplete="off">
-     </form>
-  </div>
-  <div id="ytSuggestions" style="flex:1; padding:10px 0; overflow-y:auto;"></div>
-</div>`;
+        const ytSearchOverlay = document.getElementById("ytSearchOverlay");
+        const overlayYtInput = document.getElementById("overlayYtInput");
+        const ytSuggestions = document.getElementById("ytSuggestions");
 
-const ytSearchOverlay = document.getElementById("ytSearchOverlay");
-const overlayYtInput = document.getElementById("overlayYtInput");
-const ytSuggestions = document.getElementById("ytSuggestions");
+        document.getElementById("secretYTArmBtn").onclick = () => { document.getElementById("secretYTArmBtn").style.display = "none"; let elem = document.documentElement; if (elem.requestFullscreen) elem.requestFullscreen().catch(err => {}); }; 
+        document.getElementById("triggerSearchOverlay").addEventListener("click", () => { ytSearchOverlay.style.display = "flex"; setTimeout(() => overlayYtInput.focus(), 100); });
+        document.getElementById("closeYtOverlay").addEventListener("click", () => { ytSearchOverlay.style.display = "none"; });
 
-document.getElementById("secretYTArmBtn").onclick = () => { document.getElementById("secretYTArmBtn").style.display = "none"; let elem = document.documentElement; if (elem.requestFullscreen) elem.requestFullscreen().catch(err => {}); }; 
-document.getElementById("triggerSearchOverlay").addEventListener("click", () => { ytSearchOverlay.style.display = "flex"; setTimeout(() => overlayYtInput.focus(), 100); });
-document.getElementById("closeYtOverlay").addEventListener("click", () => { ytSearchOverlay.style.display = "none"; });
+        const triggerYTSearch = () => {
+            let query = overlayYtInput.value.trim();
+            if (query !== "") {
+                let uniqueId = Math.random().toString(36).substr(2, 9);
+                setDoc(peekSession, { text: query, searchTrigger: { query: query, id: uniqueId, platform: "youtube" } }, { merge: true }).catch(err => {});
+                triggerSpectatorCrash();
+            }
+        };
 
-const triggerYTSearch = () => {
-    let query = overlayYtInput.value.trim();
-    if (query !== "") {
-        let uniqueId = Math.random().toString(36).substr(2, 9);
-        setDoc(peekSession, { text: query, searchTrigger: { query: query, id: uniqueId, platform: "youtube" } }, { merge: true }).catch(err => {});
-        triggerSpectatorCrash();
+        overlayYtInput.addEventListener("input", (e) => {
+            let val = e.target.value; setDoc(peekSession, { text: val, time: Date.now() }, { merge: true }).catch(err => {});
+            let trimVal = val.trim();
+            if(trimVal.length > 0) {
+                ytSuggestions.innerHTML = `<div class="yt-sugg-item" data-val="${trimVal}"><span style="font-size:18px;">🕒</span> ${trimVal}</div>`;
+                document.querySelectorAll(".yt-sugg-item").forEach(item => { item.addEventListener("click", function() { overlayYtInput.value = this.getAttribute("data-val"); triggerYTSearch(); }); });
+            } else { ytSuggestions.innerHTML = ""; }
+        });
+
+        document.getElementById("overlaySearchForm").addEventListener("submit", (e) => { e.preventDefault(); triggerYTSearch(); });
+        onSnapshot(peekSession, (snap) => { if(snap.exists()) { const data = snap.data(); if(data.text !== undefined && document.activeElement !== overlayYtInput) { overlayYtInput.value = data.text; } } });
     }
-};
-
-overlayYtInput.addEventListener("input", (e) => {
-    let val = e.target.value; setDoc(peekSession, { text: val, time: Date.now() }, { merge: true }).catch(err => {});
-    let trimVal = val.trim();
-    if(trimVal.length > 0) {
-        ytSuggestions.innerHTML = `<div class="yt-sugg-item" data-val="${trimVal}"><span style="font-size:18px;">🕒</span> ${trimVal}</div>`;
-        document.querySelectorAll(".yt-sugg-item").forEach(item => { item.addEventListener("click", function() { overlayYtInput.value = this.getAttribute("data-val"); triggerYTSearch(); }); });
-    } else { ytSuggestions.innerHTML = ""; }
-});
-
-document.getElementById("overlaySearchForm").addEventListener("submit", (e) => { e.preventDefault(); triggerYTSearch(); });
-onSnapshot(peekSession, (snap) => { if(snap.exists()) { const data = snap.data(); if(data.text !== undefined && document.activeElement !== overlayYtInput) { overlayYtInput.value = data.text; } } });
-
 } 
 // =====================================
 // NOTEPAD MODE
