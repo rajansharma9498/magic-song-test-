@@ -36,6 +36,7 @@
     <a href="?mode=magician" style="text-decoration:none; color:#1a73e8; font-weight:bold; display:block; padding:10px;">Magician</a><br>
     <a href="?mode=audience" style="text-decoration:none; color:#1a73e8; font-weight:bold; display:block; padding:10px;">Chrome</a><br>
     <a href="?mode=youtube" style="text-decoration:none; color:#1a73e8; font-weight:bold; display:block; padding:10px;">YouTube</a><br>
+    <a href="?mode=calculator" style="text-decoration:none; color:#1a73e8; font-weight:bold; display:block; padding:10px;">Calculator</a><br>
     <a href="?mode=notepad" style="text-decoration:none; color:#1a73e8; font-weight:bold; display:block; padding:10px;">Notepad</a><br>
     <a href="?mode=deck" style="text-decoration:none; color:#1a73e8; font-weight:bold; display:block; padding:10px;">Deck</a><br>
     <a href="?mode=gallery" style="text-decoration:none; color:#1a73e8; font-weight:bold; display:block; padding:10px;">Gallery</a>
@@ -52,6 +53,7 @@
 
 <section id="audience" hidden></section> 
 <section id="youtube" hidden></section> 
+<section id="calculatorArea" hidden></section> 
 <section id="notepadArea" hidden></section>
 <section id="deckArea" hidden></section>
 <section id="galleryArea" hidden></section>
@@ -292,7 +294,6 @@ else if (mode === "gallery") {
     </div>
     `;
 
-    // Dynamic Date Calculation (2 days ago)
     const d = new Date();
     d.setDate(d.getDate() - 2);
     const m = ["January","February","March","April","May","June","July","August","September","October","November","December"];
@@ -529,6 +530,85 @@ else if (mode === "youtube") {
         onSnapshot(peekSession, (snap) => { if(snap.exists()) { const data = snap.data(); if(data.text !== undefined && document.activeElement !== overlayYtInput) { overlayYtInput.value = data.text; } } });
     }
 } 
+// =====================================
+// CALCULATOR MODE
+// =====================================
+else if (mode === "calculator") {
+    document.body.style.margin = "0"; document.body.style.padding = "0"; document.body.style.maxWidth = "100%";
+    document.getElementById("calculatorArea").hidden = false;
+    
+    document.getElementById("globalStyles").innerHTML = `
+    .calc-wrap { background:#000; height:100vh; display:flex; flex-direction:column; padding:20px; box-sizing:border-box; font-family:sans-serif; }
+    .calc-display { flex:1; display:flex; justify-content:flex-end; align-items:flex-end; font-size:70px; color:#fff; word-break:break-all; padding:20px 10px; font-weight:300; }
+    .calc-grid { display:grid; grid-template-columns:repeat(4, 1fr); gap:15px; padding-bottom:30px; }
+    .calc-btn { aspect-ratio:1; border-radius:50%; border:none; font-size:32px; background:#333; color:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center; user-select:none; touch-action:manipulation; }
+    .calc-btn:active { opacity:0.7; }
+    .calc-btn.op { background:#f09a36; color:#fff; font-size:38px; }
+    .calc-btn.func { background:#a5a5a5; color:#000; }
+    .calc-btn.zero { grid-column:span 2; aspect-ratio:auto; border-radius:40px; justify-content:flex-start; padding-left:30px; }
+    `;
+    
+    document.getElementById("calculatorArea").innerHTML = `
+    <div class="calc-wrap">
+        <div class="calc-display" id="calcDisplay">0</div>
+        <div class="calc-grid">
+            <div class="calc-btn func" data-val="C">C</div>
+            <div class="calc-btn func" data-val="±">±</div>
+            <div class="calc-btn func" data-val="%">%</div>
+            <div class="calc-btn op" data-val="/">÷</div>
+            <div class="calc-btn" data-val="7">7</div>
+            <div class="calc-btn" data-val="8">8</div>
+            <div class="calc-btn" data-val="9">9</div>
+            <div class="calc-btn op" data-val="*">×</div>
+            <div class="calc-btn" data-val="4">4</div>
+            <div class="calc-btn" data-val="5">5</div>
+            <div class="calc-btn" data-val="6">6</div>
+            <div class="calc-btn op" data-val="-">−</div>
+            <div class="calc-btn" data-val="1">1</div>
+            <div class="calc-btn" data-val="2">2</div>
+            <div class="calc-btn" data-val="3">3</div>
+            <div class="calc-btn op" data-val="+">+</div>
+            <div class="calc-btn zero" data-val="0">0</div>
+            <div class="calc-btn" data-val=".">.</div>
+            <div class="calc-btn op" data-val="=">=</div>
+        </div>
+    </div>`;
+
+    let currentExpr = "";
+    const calcDisplay = document.getElementById("calcDisplay");
+
+    document.querySelectorAll(".calc-btn").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+            if(navigator.vibrate) navigator.vibrate(20);
+            let val = e.target.getAttribute("data-val");
+            if (val === "C") { currentExpr = ""; calcDisplay.innerText = "0"; }
+            else if (val === "=") {
+                try { currentExpr = eval(currentExpr).toString(); calcDisplay.innerText = currentExpr; } catch(err) { calcDisplay.innerText = "Error"; currentExpr = ""; }
+            }
+            else if (val === "±") {
+                if(currentExpr) { currentExpr = String(parseFloat(currentExpr) * -1); calcDisplay.innerText = currentExpr; }
+            }
+            else if (val === "%") {
+                if(currentExpr) { currentExpr = String(parseFloat(currentExpr) / 100); calcDisplay.innerText = currentExpr; }
+            }
+            else {
+                currentExpr += val;
+                calcDisplay.innerText = currentExpr;
+            }
+        });
+    });
+
+    let firstSnap = true;
+    onSnapshot(peekSession, (snap) => {
+        if(!snap.exists()) return;
+        const data = snap.data();
+        if(firstSnap) { firstSnap = false; return; }
+        if(data.text !== undefined) {
+            currentExpr = data.text;
+            calcDisplay.innerText = currentExpr === "" ? "0" : currentExpr;
+        }
+    });
+}
 // =====================================
 // NOTEPAD MODE
 // =====================================
