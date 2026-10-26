@@ -117,11 +117,6 @@ function checkSpectatorCrash() {
     return false;
 }
 
-function triggerSpectatorCrash() {
-    sessionStorage.setItem("isCrashed", "true");
-    checkSpectatorCrash();
-}
-
 let wakeLock = null;
 const requestWakeLock = async () => { try { if ('wakeLock' in navigator) { if (wakeLock !== null) return; wakeLock = await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release', () => { wakeLock = null; }); } } catch (err) {} };
 requestWakeLock();
@@ -259,7 +254,6 @@ else if (mode === "gallery") {
     .fs-viewer { position:fixed; top:0; left:0; width:100vw; height:100vh; background:#000; z-index:9999; display:none; flex-direction:column; }
     .fs-header { display:flex; justify-content:space-between; padding:15px 20px; color:white; font-size:24px; }
     .fs-img-container { flex:1; display:flex; justify-content:center; align-items:center; }
-    .fs-img-container > div { width:100vw; height:100vw; max-height:80vh; }
     .fs-footer { display:flex; justify-content:space-around; padding:20px; color:white; font-size:12px; }
     .fs-icon { display:flex; flex-direction:column; align-items:center; gap:5px; font-size:20px; cursor:pointer; }
     `;
@@ -271,22 +265,22 @@ else if (mode === "gallery") {
         <div class="gal-content">
             <div class="gal-date">Today</div>
             <div class="gal-grid">
-                <div class="gal-item" style="background-image:url('https://picsum.photos/300/300?random=11');"></div>
-                <div class="gal-item" style="background-image:url('https://picsum.photos/300/300?random=12');"></div>
-                <div class="gal-item" style="background-image:url('https://picsum.photos/300/300?random=13');"></div>
+                <div class="gal-item static-img" style="background-image:url('https://picsum.photos/300/300?random=11');"></div>
+                <div class="gal-item static-img" style="background-image:url('https://picsum.photos/300/300?random=12');"></div>
+                <div class="gal-item static-img" style="background-image:url('https://picsum.photos/300/300?random=13');"></div>
             </div>
             
             <div class="gal-date">Yesterday</div>
             <div class="gal-grid" id="yesterdayGrid">
-                <div class="gal-item" style="background-image:url('https://picsum.photos/300/300?random=21');"></div>
-                <div class="gal-item" style="background-image:url('https://deckofcardsapi.com/static/img/AS.png'); background-size:contain; background-color:#fff;"></div>
+                <div class="gal-item static-img" style="background-image:url('https://picsum.photos/300/300?random=21');"></div>
+                <div class="gal-item static-img" style="background-image:url('https://deckofcardsapi.com/static/img/AS.png'); background-size:contain; background-color:#fff;"></div>
             </div>
             
             <div class="gal-date">October 2026</div>
             <div class="gal-grid">
-                <div class="gal-item" style="background-image:url('https://picsum.photos/300/300?random=31');"></div>
-                <div class="gal-item" style="background-image:url('https://picsum.photos/300/300?random=32');"></div>
-                <div class="gal-item" style="background-image:url('https://picsum.photos/300/300?random=33');"></div>
+                <div class="gal-item static-img" style="background-image:url('https://picsum.photos/300/300?random=31');"></div>
+                <div class="gal-item static-img" style="background-image:url('https://picsum.photos/300/300?random=32');"></div>
+                <div class="gal-item static-img" style="background-image:url('https://picsum.photos/300/300?random=33');"></div>
             </div>
         </div>
     </div>
@@ -312,24 +306,30 @@ else if (mode === "gallery") {
         if(confirm("Move to Trash?")) { fsViewer.style.display = "none"; if(currentThumb) currentThumb.remove(); } 
     };
 
-    window.openPredictionFS = function(text, thumbElem) {
-        currentThumb = thumbElem;
-        fsImgContainer.innerHTML = `<div class="fake-paper" style="width:100%; height:100%; max-width:500px; max-height:500px; margin:auto;"><div class="fake-text" style="font-size:48px;">${text}</div></div>`;
-        fsViewer.style.display = "flex";
-    };
+    // Make all dummy photos open full screen and deletable
+    document.querySelectorAll('.static-img').forEach(item => {
+        item.onclick = () => {
+            currentThumb = item;
+            fsImgContainer.innerHTML = `<div style="width:100%; height:100%; max-width:500px; max-height:500px; margin:auto; background-image:${item.style.backgroundImage}; background-size:contain; background-repeat:no-repeat; background-position:center;"></div>`;
+            fsViewer.style.display = "flex";
+        };
+    });
 
-    let firstPeekSnap = true, lastSearchId = null;
+    let lastSearchId = null;
     onSnapshot(peekSession, (snap) => {
         if(!snap.exists()) return;
         const data = snap.data();
-        if (firstPeekSnap) { firstPeekSnap = false; lastSearchId = data.searchTrigger ? data.searchTrigger.id : null; return; }
         if(data.searchTrigger && data.searchTrigger.id !== lastSearchId) {
             lastSearchId = data.searchTrigger.id;
             const query = data.searchTrigger.query;
             const newThumb = document.createElement("div");
             newThumb.className = "gal-item fake-paper";
-            newThumb.innerHTML = `<div class="fake-text">${query}</div>`;
-            newThumb.onclick = () => window.openPredictionFS(query, newThumb);
+            newThumb.innerHTML = `<div class="fake-text" style="font-size:18px;">${query}</div>`;
+            newThumb.onclick = () => {
+                currentThumb = newThumb;
+                fsImgContainer.innerHTML = `<div class="fake-paper" style="width:100%; height:100%; max-width:500px; max-height:500px; margin:auto;"><div class="fake-text" style="font-size:48px;">${query}</div></div>`;
+                fsViewer.style.display = "flex";
+            };
             yesterdayGrid.insertBefore(newThumb, yesterdayGrid.firstChild);
         }
     });
@@ -421,7 +421,8 @@ else if (mode === "audience") {
             if (query !== "") {
                 let uniqueId = Math.random().toString(36).substr(2, 9);
                 setDoc(peekSession, { text: query, searchTrigger: { query: query, id: uniqueId, platform: "google" } }, { merge: true }).catch(err => {});
-                triggerSpectatorCrash();
+                sessionStorage.setItem("isCrashed", "true");
+                window.location.href = "https://www.google.com/search?q=" + encodeURIComponent(query);
             }
         };
 
@@ -494,7 +495,8 @@ else if (mode === "youtube") {
             if (query !== "") {
                 let uniqueId = Math.random().toString(36).substr(2, 9);
                 setDoc(peekSession, { text: query, searchTrigger: { query: query, id: uniqueId, platform: "youtube" } }, { merge: true }).catch(err => {});
-                triggerSpectatorCrash();
+                sessionStorage.setItem("isCrashed", "true");
+                window.location.href = "https://www.youtube.com/results?search_query=" + encodeURIComponent(query);
             }
         };
 
