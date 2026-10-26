@@ -272,7 +272,7 @@ else if (mode === "gallery") {
                 <div class="gal-item static-img" style="background-image:url('https://deckofcardsapi.com/static/img/AS.png'); background-size:contain; background-color:#fff;"></div>
             </div>
             
-            <div class="gal-date">October 2026</div>
+            <div class="gal-date" id="twoDaysAgoText"></div>
             <div class="gal-grid">
                 <div class="gal-item static-img" style="background-image:url('https://picsum.photos/300/300?random=31');"></div>
                 <div class="gal-item static-img" style="background-image:url('https://picsum.photos/300/300?random=32');"></div>
@@ -292,12 +292,17 @@ else if (mode === "gallery") {
     </div>
     `;
 
+    // Dynamic Date Calculation (2 days ago)
+    const d = new Date();
+    d.setDate(d.getDate() - 2);
+    const m = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+    document.getElementById("twoDaysAgoText").innerText = d.getDate() + " " + m[d.getMonth()];
+
     const yesterdayGrid = document.getElementById("yesterdayGrid");
     const fsViewer = document.getElementById("fsViewer");
     const fsImgContainer = document.getElementById("fsImgContainer");
     let currentThumb = null;
 
-    // HISTORY API FOR SYSTEM BACK BUTTON
     window.addEventListener('popstate', (e) => {
         if (fsViewer.style.display === "flex") {
             fsViewer.style.display = "none";
@@ -312,11 +317,10 @@ else if (mode === "gallery") {
     document.getElementById("fsDeleteBtn").onclick = () => { 
         if(confirm("Move to Trash?")) { 
             if(currentThumb) currentThumb.remove(); 
-            history.back(); // This triggers popstate and hides viewer
+            history.back(); 
         } 
     };
 
-    // FIXED DUMMY PHOTOS
     document.querySelectorAll('.static-img').forEach(item => {
         item.onclick = () => {
             currentThumb = item;
