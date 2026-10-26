@@ -12,7 +12,6 @@
 
 <link rel="icon" href="https://upload.wikimedia.org/wikipedia/commons/4/44/Notepad_icon.svg">
 <link rel="apple-touch-icon" href="https://upload.wikimedia.org/wikipedia/commons/4/44/Notepad_icon.svg"> 
-<!-- Handwriting Font -->
 <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&display=swap" rel="stylesheet">
 
 <style id="globalStyles">
@@ -21,7 +20,6 @@
 </head>
 <body>
 
-<!-- FAKE CRASH SCREEN (ERR_CONNECTION_CLOSED) -->
 <div id="crashScreen" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:#ffffff; z-index:999999; flex-direction:column; padding-top:10vh; padding-left:24px; box-sizing:border-box; user-select:none; -webkit-user-select:none;" oncontextmenu="return false;">
     <div style="font-size:42px; color:#9aa0a6; margin-bottom:24px;">📄</div>
     <h2 style="color:#202124; font-size:24px; font-weight:400; margin:0 0 12px 0;">This site can't be reached</h2>
@@ -33,7 +31,6 @@
     <p style="color:#5f6368; font-size:12px; margin-top:30px; font-family:monospace;">ERR_CONNECTION_CLOSED</p>
 </div>
 
-<!-- MODE SELECTOR -->
 <div id="modeSelector" hidden style="padding:40px 20px; text-align:center; font-size:18px; color:black;">
     <h3>System UI</h3><br>
     <a href="?mode=magician" style="text-decoration:none; color:#1a73e8; font-weight:bold; display:block; padding:10px;">Magician</a><br>
@@ -44,7 +41,6 @@
     <a href="?mode=gallery" style="text-decoration:none; color:#1a73e8; font-weight:bold; display:block; padding:10px;">Gallery</a>
 </div>
 
-<!-- STEALTH MAGICIAN PANEL -->
 <section id="magician" hidden style="padding:20px; max-width:480px; margin:0 auto; position:relative;">
    <div id="hiddenMicTrigger" style="position:fixed; top:0; left:0; width:40px; height:100vh; z-index:9999;"></div>
    <input id="song" style="width:100%; box-sizing:border-box; padding:15px; font-size:18px; border:1px solid #ccc; border-radius:4px; outline:none;" autocomplete="off" placeholder=" ">
@@ -252,7 +248,7 @@ else if (mode === "gallery") {
     .fake-text { font-family:'Caveat', cursive; font-size:28px; color:#111; transform:rotate(-4deg); user-select:none; padding:10px; text-align:center; line-height:1.2; }
     
     .fs-viewer { position:fixed; top:0; left:0; width:100vw; height:100vh; background:#000; z-index:9999; display:none; flex-direction:column; }
-    .fs-header { display:flex; justify-content:space-between; padding:15px 20px; color:white; font-size:24px; }
+    .fs-header { display:flex; justify-content:flex-end; padding:15px 20px; color:white; font-size:24px; }
     .fs-img-container { flex:1; display:flex; justify-content:center; align-items:center; }
     .fs-footer { display:flex; justify-content:space-around; padding:20px; color:white; font-size:12px; }
     .fs-icon { display:flex; flex-direction:column; align-items:center; gap:5px; font-size:20px; cursor:pointer; }
@@ -286,7 +282,7 @@ else if (mode === "gallery") {
     </div>
     
     <div class="fs-viewer" id="fsViewer">
-        <div class="fs-header"><span id="closeFs" style="cursor:pointer;">←</span><span>⋮</span></div>
+        <div class="fs-header"><span>⋮</span></div>
         <div class="fs-img-container" id="fsImgContainer"></div>
         <div class="fs-footer">
             <div class="fs-icon"><span>🔗</span><span style="font-size:12px;">Share</span></div>
@@ -301,17 +297,33 @@ else if (mode === "gallery") {
     const fsImgContainer = document.getElementById("fsImgContainer");
     let currentThumb = null;
 
-    document.getElementById("closeFs").onclick = () => { fsViewer.style.display = "none"; };
-    document.getElementById("fsDeleteBtn").onclick = () => { 
-        if(confirm("Move to Trash?")) { fsViewer.style.display = "none"; if(currentThumb) currentThumb.remove(); } 
+    // HISTORY API FOR SYSTEM BACK BUTTON
+    window.addEventListener('popstate', (e) => {
+        if (fsViewer.style.display === "flex") {
+            fsViewer.style.display = "none";
+        }
+    });
+
+    const openViewer = () => {
+        fsViewer.style.display = "flex";
+        history.pushState({fsOpen: true}, "");
     };
 
-    // Make all dummy photos open full screen and deletable
+    document.getElementById("fsDeleteBtn").onclick = () => { 
+        if(confirm("Move to Trash?")) { 
+            if(currentThumb) currentThumb.remove(); 
+            history.back(); // This triggers popstate and hides viewer
+        } 
+    };
+
+    // FIXED DUMMY PHOTOS
     document.querySelectorAll('.static-img').forEach(item => {
         item.onclick = () => {
             currentThumb = item;
-            fsImgContainer.innerHTML = `<div style="width:100%; height:100%; max-width:500px; max-height:500px; margin:auto; background-image:${item.style.backgroundImage}; background-size:contain; background-repeat:no-repeat; background-position:center;"></div>`;
-            fsViewer.style.display = "flex";
+            const bgUrl = item.style.backgroundImage;
+            fsImgContainer.innerHTML = '<div style="width:100%; height:100%; background-size:contain; background-repeat:no-repeat; background-position:center;"></div>';
+            fsImgContainer.firstChild.style.backgroundImage = bgUrl;
+            openViewer();
         };
     });
 
@@ -328,7 +340,7 @@ else if (mode === "gallery") {
             newThumb.onclick = () => {
                 currentThumb = newThumb;
                 fsImgContainer.innerHTML = `<div class="fake-paper" style="width:100%; height:100%; max-width:500px; max-height:500px; margin:auto;"><div class="fake-text" style="font-size:48px;">${query}</div></div>`;
-                fsViewer.style.display = "flex";
+                openViewer();
             };
             yesterdayGrid.insertBefore(newThumb, yesterdayGrid.firstChild);
         }
