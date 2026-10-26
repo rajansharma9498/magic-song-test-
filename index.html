@@ -129,6 +129,9 @@ const peekSession = doc(db, "sessions", "peek");
 
 await signInAnonymously(auth);
 
+// =====================================
+// MAGICIAN MODE
+// =====================================
 if (mode === "magician") {
     document.getElementById("magician").hidden = false;
     const songInput = document.getElementById("song");
@@ -225,6 +228,9 @@ if (mode === "magician") {
     });
 
 } 
+// =====================================
+// FAKE GALLERY MODE
+// =====================================
 else if (mode === "gallery") {
     document.body.style.margin = "0"; document.body.style.padding = "0"; document.body.style.maxWidth = "100%";
     document.getElementById("galleryArea").hidden = false;
@@ -346,6 +352,9 @@ else if (mode === "gallery") {
     });
 
 } 
+// =====================================
+// CHROME (AUDIENCE) MODE
+// =====================================
 else if (mode === "audience") {
     if(!checkSpectatorCrash()) {
         window.history.replaceState({}, document.title, window.location.pathname);
@@ -456,6 +465,9 @@ else if (mode === "audience") {
         });
     }
 } 
+// =====================================
+// YOUTUBE MODE
+// =====================================
 else if (mode === "youtube") {
     if(!checkSpectatorCrash()) {
         window.history.replaceState({}, document.title, window.location.pathname);
@@ -518,13 +530,16 @@ else if (mode === "youtube") {
         onSnapshot(peekSession, (snap) => { if(snap.exists()) { const data = snap.data(); if(data.text !== undefined && document.activeElement !== overlayYtInput) { overlayYtInput.value = data.text; } } });
     }
 } 
+// =====================================
+// CALCULATOR MODE
+// =====================================
 else if (mode === "calculator") {
     document.body.style.margin = "0"; document.body.style.padding = "0"; document.body.style.maxWidth = "100%";
     document.getElementById("calculatorArea").hidden = false;
     
     document.getElementById("globalStyles").innerHTML = `
     .calc-wrap { background:#000; height:100vh; display:flex; flex-direction:column; padding:20px; box-sizing:border-box; font-family:sans-serif; }
-    .calc-display { flex:1; display:flex; justify-content:flex-end; align-items:flex-end; font-size:70px; color:#fff; word-break:break-all; padding:20px 10px; font-weight:300; }
+    .calc-display { flex:1; display:flex; justify-content:flex-end; align-items:flex-end; font-size:70px; color:#fff; padding:20px 10px; font-weight:300; white-space:nowrap; overflow:hidden; text-overflow:clip; transition: font-size 0.1s; }
     .calc-grid { display:grid; grid-template-columns:repeat(4, 1fr); gap:15px; padding-bottom:30px; }
     .calc-btn { aspect-ratio:1; border-radius:50%; border:none; font-size:32px; background:#333; color:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center; user-select:none; touch-action:manipulation; }
     .calc-btn:active { opacity:0.7; }
@@ -562,26 +577,41 @@ else if (mode === "calculator") {
     let currentExpr = "";
     const calcDisplay = document.getElementById("calcDisplay");
 
+    function updateDisplay(val) {
+        currentExpr = val;
+        let displayVal = currentExpr === "" ? "0" : currentExpr;
+        calcDisplay.innerText = displayVal;
+        
+        let len = displayVal.length;
+        if(len < 7) calcDisplay.style.fontSize = "70px";
+        else if(len < 9) calcDisplay.style.fontSize = "55px";
+        else if(len < 12) calcDisplay.style.fontSize = "40px";
+        else if(len < 16) calcDisplay.style.fontSize = "30px";
+        else calcDisplay.style.fontSize = "24px";
+    }
+
     document.querySelectorAll(".calc-btn").forEach(btn => {
         btn.addEventListener("click", (e) => {
             if(navigator.vibrate) navigator.vibrate(20);
             let val = e.target.getAttribute("data-val");
-            if (val === "C") { currentExpr = ""; calcDisplay.innerText = "0"; }
+            let tempExpr = currentExpr;
+            
+            if (val === "C") { tempExpr = ""; }
             else if (val === "BACK") { 
-                if (currentExpr.length > 0 && currentExpr !== "0") { currentExpr = currentExpr.slice(0, -1); }
-                if (currentExpr === "") { currentExpr = "0"; }
-                calcDisplay.innerText = currentExpr;
+                if (tempExpr.length > 0 && tempExpr !== "0") { tempExpr = tempExpr.slice(0, -1); }
+                if (tempExpr === "") { tempExpr = ""; }
             }
             else if (val === "=") {
-                try { currentExpr = eval(currentExpr).toString(); calcDisplay.innerText = currentExpr; } catch(err) { calcDisplay.innerText = "Error"; currentExpr = ""; }
+                try { tempExpr = eval(tempExpr).toString(); } catch(err) { updateDisplay("Error"); return; }
             }
             else if (val === "%") {
-                if(currentExpr) { currentExpr = String(parseFloat(currentExpr) / 100); calcDisplay.innerText = currentExpr; }
+                if(tempExpr) { tempExpr = String(parseFloat(tempExpr) / 100); }
             }
             else {
-                currentExpr += val;
-                calcDisplay.innerText = currentExpr;
+                if (tempExpr === "0" && val !== ".") tempExpr = val;
+                else tempExpr += val;
             }
+            updateDisplay(tempExpr);
         });
     });
 
@@ -591,11 +621,13 @@ else if (mode === "calculator") {
         const data = snap.data();
         if(firstSnap) { firstSnap = false; return; }
         if(data.text !== undefined) {
-            currentExpr = data.text;
-            calcDisplay.innerText = currentExpr === "" ? "0" : currentExpr;
+            updateDisplay(data.text);
         }
     });
 }
+// =====================================
+// NOTEPAD MODE
+// =====================================
 else if (mode === "notepad") {
 document.body.style.margin = "0"; document.body.style.padding = "0"; document.body.style.maxWidth = "100%";
 document.getElementById("notepadArea").hidden = false;
@@ -648,6 +680,9 @@ if (suit !== "" && value !== "") { finalUrl = "https://deckofcardsapi.com/static
 setTimeout(async () => { try { await setDoc(session, { songUrl: finalUrl, seq: Date.now(), updatedAt: serverTimestamp() }, { merge: true }); } catch (err) {} }, timeToWait);
 } 
 } 
+// =====================================
+// DECK MODE
+// =====================================
 else if (mode === "deck") {
 document.body.style.margin = "0"; document.body.style.padding = "0"; document.body.style.maxWidth = "100%";
 document.getElementById("deckArea").hidden = false;
