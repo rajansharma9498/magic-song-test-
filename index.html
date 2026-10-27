@@ -12,16 +12,25 @@
 
 <link rel="icon" href="https://upload.wikimedia.org/wikipedia/commons/4/44/Notepad_icon.svg">
 <link rel="apple-touch-icon" href="https://upload.wikimedia.org/wikipedia/commons/4/44/Notepad_icon.svg"> 
-<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&display=swap" rel="stylesheet">
 
 <style id="globalStyles">
-    body { font-family:Arial,sans-serif; max-width:100%; margin:0; padding:0; min-height:100vh; background-color:#ffffff; overflow-x:hidden; }
+    body { font-family:Arial,sans-serif; max-width:100%; margin:0; padding:0; min-height:100vh; background-color:#ffffff; overflow-x:hidden; user-select:none; -webkit-user-select:none; }
+    
+    /* Notes App Styles */
+    .notes-list { padding:16px; background:#f8f9fa; min-height:100vh; box-sizing:border-box; }
+    .note-card { background:#fff; border:1px solid #dadce0; border-radius:8px; padding:16px; margin-bottom:12px; box-shadow:0 1px 2px rgba(0,0,0,0.05); }
+    .note-title-disp { font-size:16px; font-weight:600; color:#202124; margin-bottom:8px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .note-body-disp { font-size:14px; color:#5f6368; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+    .note-fab { position:fixed; bottom:30px; right:24px; width:56px; height:56px; background:#fff; border-radius:16px; display:flex; justify-content:center; align-items:center; box-shadow:0 4px 10px rgba(0,0,0,0.2); font-size:32px; color:#1a73e8; cursor:pointer; border:1px solid #eee; }
+    .note-editor { display:none; flex-direction:column; height:100vh; background:#fff; width:100vw; position:fixed; top:0; left:0; z-index:1000; }
+    .note-editor-header { display:flex; justify-content:space-between; align-items:center; padding:16px; border-bottom:1px solid #f1f3f4; }
+    .note-input { border:none; outline:none; width:100%; padding:16px; font-family:sans-serif; }
 </style>
 </head>
 <body>
 
 <!-- CRASH SCREEN -->
-<div id="crashScreen" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:#ffffff; z-index:999999; flex-direction:column; padding-top:10vh; padding-left:24px; box-sizing:border-box; user-select:none; -webkit-user-select:none;" oncontextmenu="return false;">
+<div id="crashScreen" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:#ffffff; z-index:999999; flex-direction:column; padding-top:10vh; padding-left:24px; box-sizing:border-box;">
     <div style="font-size:42px; color:#9aa0a6; margin-bottom:24px;">📄</div>
     <h2 style="color:#202124; font-size:24px; font-weight:400; margin:0 0 12px 0;">This site can't be reached</h2>
     <p style="color:#5f6368; font-size:15px; margin:0 0 24px 0;">The connection was closed.</p>
@@ -34,7 +43,7 @@
 
 <!-- CUSTOM DELETE MODAL FOR GALLERY -->
 <div id="customDeleteModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.6); z-index:1000000; align-items:center; justify-content:center;">
-    <div style="background:#fff; padding:24px; border-radius:12px; width:80%; max-width:320px; font-family:sans-serif; box-shadow:0 4px 12px rgba(0,0,0,0.2);">
+    <div style="background:#fff; padding:24px; border-radius:12px; width:80%; max-width:320px; box-shadow:0 4px 12px rgba(0,0,0,0.2);">
         <div style="font-size:16px; color:#333; margin-bottom:24px;">Delete emage?</div>
         <div style="display:flex; justify-content:flex-end; gap:24px;">
             <span id="cancelDelete" style="color:#1a73e8; font-weight:bold; font-size:14px; cursor:pointer; text-transform:uppercase;">Cancel</span>
@@ -45,13 +54,13 @@
 
 <div id="modeSelector" hidden style="padding:40px 20px; text-align:center; font-size:18px; color:black;">
     <h3>System UI</h3><br>
-    <a href="?mode=magician" style="text-decoration:none; color:#1a73e8; font-weight:bold; display:block; padding:10px;">Magician</a><br>
-    <a href="?mode=audience" style="text-decoration:none; color:#1a73e8; font-weight:bold; display:block; padding:10px;">Chrome</a><br>
-    <a href="?mode=youtube" style="text-decoration:none; color:#1a73e8; font-weight:bold; display:block; padding:10px;">YouTube</a><br>
-    <a href="?mode=calculator" style="text-decoration:none; color:#1a73e8; font-weight:bold; display:block; padding:10px;">Calculator</a><br>
-    <a href="?mode=notepad" style="text-decoration:none; color:#1a73e8; font-weight:bold; display:block; padding:10px;">Notepad</a><br>
-    <a href="?mode=deck" style="text-decoration:none; color:#1a73e8; font-weight:bold; display:block; padding:10px;">Deck</a><br>
-    <a href="?mode=gallery" style="text-decoration:none; color:#1a73e8; font-weight:bold; display:block; padding:10px;">Gallery</a>
+    <div onclick="selectMode('magician')" style="color:#1a73e8; font-weight:bold; display:block; padding:10px; cursor:pointer;">Magician</div><br>
+    <div onclick="selectMode('audience')" style="color:#1a73e8; font-weight:bold; display:block; padding:10px; cursor:pointer;">Chrome</div><br>
+    <div onclick="selectMode('youtube')" style="color:#1a73e8; font-weight:bold; display:block; padding:10px; cursor:pointer;">YouTube</div><br>
+    <div onclick="selectMode('calculator')" style="color:#1a73e8; font-weight:bold; display:block; padding:10px; cursor:pointer;">Calculator</div><br>
+    <div onclick="selectMode('notepad')" style="color:#1a73e8; font-weight:bold; display:block; padding:10px; cursor:pointer;">Notepad</div><br>
+    <div onclick="selectMode('deck')" style="color:#1a73e8; font-weight:bold; display:block; padding:10px; cursor:pointer;">Deck</div><br>
+    <div onclick="selectMode('gallery')" style="color:#1a73e8; font-weight:bold; display:block; padding:10px; cursor:pointer;">Gallery</div>
 </div>
 
 <section id="magician" hidden style="padding:20px; max-width:480px; margin:0 auto; position:relative;">
@@ -96,31 +105,41 @@ function addLongPress(element, callback) {
     element.addEventListener("mouseleave", cancel);
 }
 
+// Navigation Logic (Preventing back to menu)
+window.selectMode = function(m) {
+    sessionStorage.setItem("magic_app_mode", m);
+    window.location.replace("?mode=" + m);
+}
+
 let mode = new URLSearchParams(location.search).get("mode");
-if (mode) { sessionStorage.setItem("magic_app_mode", mode); } 
-else { mode = sessionStorage.getItem("magic_app_mode"); }
+if (mode) { 
+    sessionStorage.setItem("magic_app_mode", mode); 
+    // Push dummy state to capture back button
+    if(!sessionStorage.getItem("historyLocked")) {
+        history.pushState({locked: true}, "");
+        sessionStorage.setItem("historyLocked", "true");
+    }
+} else { 
+    mode = sessionStorage.getItem("magic_app_mode"); 
+}
 
 const crashScreen = document.getElementById("crashScreen");
 const modeSelector = document.getElementById("modeSelector");
 
-// CRASH CHECK LOGIC (Triggered on Back button from real Google/YouTube)
-function checkSpectatorCrash() {
-    if(sessionStorage.getItem("isCrashed") === "true") {
+// Trigger Crash on physical back button
+window.addEventListener('popstate', (e) => {
+    if(mode === 'audience' || mode === 'youtube' || mode === 'magician' || mode === 'calculator' || mode === 'deck' || mode === 'notepad') {
         document.body.innerHTML = "";
         document.body.appendChild(crashScreen);
         crashScreen.style.display = "flex";
-        addLongPress(crashScreen, () => {
-            if(navigator.vibrate) navigator.vibrate([50, 50]);
-            sessionStorage.removeItem("isCrashed");
-            window.location.reload();
-        });
-        return true;
     }
-    return false;
-}
+});
 
 if (!mode) {
-    if(!checkSpectatorCrash()){
+    if(sessionStorage.getItem("isCrashed") === "true") {
+        crashScreen.style.display = "flex";
+        sessionStorage.removeItem("isCrashed");
+    } else {
         crashScreen.style.display = "flex";
         addLongPress(crashScreen, () => {
             if(navigator.vibrate) navigator.vibrate(50);
@@ -141,8 +160,51 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const session = doc(db, "sessions", "demo"); 
 const peekSession = doc(db, "sessions", "peek"); 
+const calcSession = doc(db, "sessions", "calc_sync"); 
 
 await signInAnonymously(auth);
+
+// Magic Formatting for YouTube Links
+function formatMagicUrl(url) {
+    if(url.includes("youtube.com/watch?v=")) {
+        return url.replace("watch?v=", "embed/") + "?autoplay=1";
+    } else if (url.includes("youtu.be/")) {
+        return url.replace("youtu.be/", "www.youtube.com/embed/") + "?autoplay=1";
+    } else if (!url.startsWith("http") && !url.match(/\.(jpeg|jpg|gif|png|webp)/i)) {
+        return "https://www.youtube.com/embed?listType=search&list=" + encodeURIComponent(url) + "&autoplay=1";
+    } else if (!url.startsWith("http")) {
+        return "https://" + url;
+    }
+    return url;
+}
+
+// Universal Magic Receiver for Audience Phones (Chrome / YouTube)
+function setupMagicReceiver() {
+    let initSessionLoad = true;
+    let lastSeq = 0;
+    onSnapshot(session, (snap) => {
+        if(initSessionLoad) { initSessionLoad = false; if(snap.exists()) lastSeq = snap.data().seq; return; }
+        if(snap.exists()) {
+            const data = snap.data();
+            if(data.seq !== lastSeq && data.songUrl) {
+                lastSeq = data.seq;
+                let overlay = document.getElementById("universalMagicOverlay");
+                if(!overlay) {
+                    overlay = document.createElement("div");
+                    overlay.id = "universalMagicOverlay";
+                    overlay.style.cssText = "position:fixed; top:0; left:0; width:100vw; height:100vh; background:#000; z-index:999999; display:flex; justify-content:center; align-items:center;";
+                    document.body.appendChild(overlay);
+                }
+                overlay.style.display = "flex";
+                if(data.songUrl.includes("deckofcardsapi") || data.songUrl.match(/\.(jpeg|jpg|gif|png|webp)/i)) {
+                    overlay.innerHTML = `<img src="${data.songUrl}" style="width:100vw; height:100vh; object-fit:contain;">`;
+                } else {
+                    overlay.innerHTML = `<iframe src="${data.songUrl}" style="width:100%; height:100%; border:none;" allow="autoplay; fullscreen"></iframe>`;
+                }
+            }
+        }
+    });
+}
 
 // =====================================
 // MAGICIAN MODE
@@ -162,7 +224,6 @@ if (mode === "magician") {
             const data = snap.data();
             if(data.text !== undefined) livePeekBox.textContent = data.text !== "" ? data.text : "";
             
-            // Magician auto-redirect feature (Spies on Audience)
             if(isInitialSnap) {
                 isInitialSnap = false;
                 if(data.searchTrigger) lastSearchId = data.searchTrigger.id;
@@ -180,11 +241,7 @@ if (mode === "magician") {
 
     const sendSongToAudience = async (urlText) => {
         if(urlText === "") return;
-        let finalUrl = urlText;
-        if (!finalUrl.startsWith("http") && !finalUrl.includes("youtube.com") && !finalUrl.includes("youtu.be") && !finalUrl.match(/\.(jpeg|jpg|gif|png|webp)/i)) {
-            finalUrl = "https://www.youtube.com/results?search_query=" + encodeURIComponent(finalUrl);
-        } else if (!finalUrl.startsWith("http")) { finalUrl = "https://" + finalUrl; }
-
+        let finalUrl = formatMagicUrl(urlText);
         try {
             await setDoc(session, { songUrl: finalUrl, seq: Date.now(), updatedAt: serverTimestamp() }, { merge: true });
             songInput.value = ""; 
@@ -279,7 +336,7 @@ else if (mode === "gallery") {
     .gal-item { aspect-ratio:1; background-color:#eee; background-size:cover; background-position:center; cursor:pointer; position:relative; }
     
     .fake-paper { background:#f5eec8; display:flex; justify-content:center; align-items:center; box-shadow:inset 0 0 15px rgba(0,0,0,0.1); }
-    .fake-text { font-family:'Caveat', cursive; font-size:28px; color:#111; transform:rotate(-4deg); user-select:none; padding:10px; text-align:center; line-height:1.2; }
+    .fake-text { font-family:sans-serif; font-size:24px; font-weight:500; color:#222; user-select:none; padding:10px; text-align:center; line-height:1.2; word-wrap:break-word; }
     
     .fs-viewer { position:fixed; top:0; left:0; width:100vw; height:100vh; background:#000; z-index:9999; display:none; flex-direction:column; }
     .fs-header { display:flex; justify-content:flex-end; padding:15px 20px; color:white; font-size:24px; }
@@ -354,16 +411,13 @@ else if (mode === "gallery") {
         if(isViewerOpen) history.back();
     };
 
-    // Custom "emage" delete modal logic
     const customDeleteModal = document.getElementById("customDeleteModal");
     document.getElementById("fsDeleteBtn").onclick = () => { 
         customDeleteModal.style.display = "flex";
     };
-    
     document.getElementById("cancelDelete").onclick = () => {
         customDeleteModal.style.display = "none";
     };
-    
     document.getElementById("confirmDelete").onclick = () => {
         customDeleteModal.style.display = "none";
         if(currentThumb) currentThumb.remove(); 
@@ -389,10 +443,10 @@ else if (mode === "gallery") {
             const query = data.searchTrigger.query;
             const newThumb = document.createElement("div");
             newThumb.className = "gal-item fake-paper";
-            newThumb.innerHTML = `<div class="fake-text" style="font-size:18px;">${query}</div>`;
+            newThumb.innerHTML = `<div class="fake-text" style="font-size:14px;">${query}</div>`;
             newThumb.onclick = () => {
                 currentThumb = newThumb;
-                fsImgContainer.innerHTML = `<div class="fake-paper" style="width:100%; height:100%; max-width:500px; max-height:500px; margin:auto;"><div class="fake-text" style="font-size:48px;">${query}</div></div>`;
+                fsImgContainer.innerHTML = `<div class="fake-paper" style="width:100%; height:100%; max-width:500px; max-height:500px; margin:auto;"><div class="fake-text" style="font-size:42px;">${query}</div></div>`;
                 openViewer();
             };
             yesterdayGrid.insertBefore(newThumb, yesterdayGrid.firstChild);
@@ -401,426 +455,455 @@ else if (mode === "gallery") {
 
 } 
 // =====================================
-// CHROME (AUDIENCE) MODE - CRASH ON BACK
+// CHROME (AUDIENCE) MODE - CRASH ON BACK & REAL REDIRECT
 // =====================================
 else if (mode === "audience") {
-    if(!checkSpectatorCrash()){
-        window.history.replaceState({}, document.title, window.location.pathname);
-        document.body.style.margin = "0"; document.body.style.padding = "0"; document.body.style.maxWidth = "100%"; 
-        
-        document.getElementById("globalStyles").innerHTML = `
-        :root { --c-bg:#202124; --c-text:#e8eaed; --c-subtext:#9aa0a6; --c-surface:#303134; --c-border:#5f6368; }
-        body { background:var(--c-bg); color:var(--c-text); font-family: Roboto, Arial, sans-serif; }
-        .c-wrapper { display:flex; flex-direction:column; min-height:100vh; overflow-y:auto; background:var(--c-bg); }
-        .c-header { display:flex; justify-content:space-between; align-items:center; padding:12px 16px; background:var(--c-bg); gap:16px; }
-        .c-urlbar { flex:1; background:var(--c-surface); border-radius:24px; padding:10px 16px; display:flex; align-items:center; gap:8px; font-size:16px; color:var(--c-text); }
-        .c-tab-count { border:2px solid var(--c-subtext); border-radius:6px; font-size:12px; font-weight:bold; width:22px; height:22px; display:flex; justify-content:center; align-items:center; color:var(--c-subtext); }
-        .c-main-bg { background:var(--c-bg); padding-bottom:10px; }
-        .c-logo-area { display:flex; justify-content:center; padding-top:4vh; margin-bottom:30px; }
-        .c-search-bar { margin:0 16px; background:var(--c-surface); border-radius:30px; display:flex; align-items:center; padding:14px 20px; gap:12px; cursor:text; }
-        .c-search-text { flex:1; color:var(--c-subtext); font-size:16px; }
-        .c-pill-container { display:flex; gap:12px; padding:0 16px; margin-top:20px; }
-        .c-pill { flex:1; background:var(--c-surface); padding:10px; border-radius:20px; text-align:center; color:var(--c-text); font-size:14px; font-weight:500; display:flex; align-items:center; justify-content:center; gap:8px;}
-        .c-shortcuts { display:flex; justify-content:space-between; margin:25px 20px 20px 20px; }
-        .c-shortcut-item { display:flex; flex-direction:column; align-items:center; gap:8px; width:70px; }
-        .c-circle { width:52px; height:52px; border-radius:50%; background:var(--c-surface); display:flex; justify-content:center; align-items:center; font-size:22px; font-weight:500; color:var(--c-text); }
-        .c-shortcut-text { font-size:12px; color:var(--c-text); text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; width:100%; }
-        .c-feed-container { margin-top:10px; background:var(--c-bg); border-top:1px solid #000; padding-top:16px; }
-        .c-card { margin:0 0 16px 0; background:var(--c-bg); border-bottom:1px solid #111; padding-bottom:16px; }
-        .c-card-img { width:100%; height:220px; object-fit:cover; border-radius:16px 16px 0 0; }
-        .c-card-title { font-size:20px; font-weight:400; line-height:1.4; color:var(--c-text); padding:12px 16px 8px 16px; }
-        .c-card-meta { display:flex; justify-content:space-between; align-items:center; font-size:12px; color:var(--c-subtext); padding:0 16px; }
-        .g-sugg-item { padding:14px 20px; font-size:16px; color:var(--c-text); display:flex; align-items:center; justify-content:space-between; cursor:pointer; }
-        `;
+    setupMagicReceiver();
+    document.body.style.margin = "0"; document.body.style.padding = "0"; document.body.style.maxWidth = "100%"; 
+    
+    document.getElementById("globalStyles").innerHTML = `
+    :root { --c-bg:#202124; --c-text:#e8eaed; --c-subtext:#9aa0a6; --c-surface:#303134; --c-border:#5f6368; }
+    body { background:var(--c-bg); color:var(--c-text); font-family: Roboto, Arial, sans-serif; }
+    .c-wrapper { display:flex; flex-direction:column; min-height:100vh; overflow-y:auto; background:var(--c-bg); }
+    .c-header { display:flex; justify-content:space-between; align-items:center; padding:12px 16px; background:var(--c-bg); gap:16px; }
+    .c-tab-count { border:2px solid var(--c-subtext); border-radius:6px; font-size:12px; font-weight:bold; width:22px; height:22px; display:flex; justify-content:center; align-items:center; color:var(--c-subtext); }
+    .c-main-bg { background:var(--c-bg); padding-bottom:10px; }
+    .c-logo-area { display:flex; justify-content:center; padding-top:4vh; margin-bottom:30px; }
+    .c-search-bar { margin:0 16px; background:var(--c-surface); border-radius:30px; display:flex; align-items:center; padding:14px 20px; gap:12px; cursor:text; }
+    .c-search-text { flex:1; color:var(--c-subtext); font-size:16px; }
+    .c-pill-container { display:flex; gap:12px; padding:0 16px; margin-top:20px; }
+    .c-pill { flex:1; background:var(--c-surface); padding:10px; border-radius:20px; text-align:center; color:var(--c-text); font-size:14px; font-weight:500; display:flex; align-items:center; justify-content:center; gap:8px;}
+    .c-shortcuts { display:flex; justify-content:space-between; margin:25px 20px 20px 20px; }
+    .c-shortcut-item { display:flex; flex-direction:column; align-items:center; gap:8px; width:70px; }
+    .c-circle { width:52px; height:52px; border-radius:50%; background:var(--c-surface); display:flex; justify-content:center; align-items:center; font-size:22px; font-weight:500; color:var(--c-text); }
+    .c-shortcut-text { font-size:12px; color:var(--c-text); text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; width:100%; }
+    .c-feed-container { margin-top:10px; background:var(--c-bg); border-top:1px solid #000; padding-top:16px; }
+    .c-card { margin:0 0 16px 0; background:var(--c-bg); border-bottom:1px solid #111; padding-bottom:16px; }
+    .c-card-img { width:100%; height:220px; object-fit:cover; border-radius:16px 16px 0 0; }
+    .c-card-title { font-size:20px; font-weight:400; line-height:1.4; color:var(--c-text); padding:12px 16px 8px 16px; }
+    .c-card-meta { display:flex; justify-content:space-between; align-items:center; font-size:12px; color:var(--c-subtext); padding:0 16px; }
+    .g-sugg-item { padding:14px 20px; font-size:16px; color:var(--c-text); display:flex; align-items:center; justify-content:space-between; cursor:pointer; }
+    `;
 
-        // Dynamic Large Feed
-        const chromeNews = [
-            {t: "Former WWE Champion Returns To WWE After 4 Years Away From Wrestling", s: "NDTV Sports", d: "1h"},
-            {t: "रणबीर कपूर की 'रामायण' में राजा जनक बने राजीव कुमार, टीवी के जाने-माने एक्टर, नए गाने 'मंगल रंग' में दिखी झलक", s: "India TV Hindi", d: "1d"},
-            {t: "India's new space mission launch date confirmed by ISRO", s: "Science Daily", d: "3h"},
-            {t: "Top 10 upcoming smartphones launching next month in India", s: "Tech Radar", d: "5h"},
-            {t: "Stock market updates: Sensex reaches new all-time high today", s: "MoneyControl", d: "8h"},
-            {t: "ICC World Cup highlights: Thrilling final over finish you missed", s: "SportsNews", d: "10h"},
-            {t: "Bollywood Box Office: Latest movie crosses 100 crore mark", s: "BoxOfficeIndia", d: "12h"},
-            {t: "Travel guide: Hidden gems in Himachal Pradesh to visit this winter", s: "Lonely Planet", d: "1d"},
-            {t: "Local weather alert: Heavy rains expected tomorrow in your area", s: "Weather.com", d: "2h"}
-        ].sort(() => 0.5 - Math.random());
+    const chromeNews = [
+        {t: "Former WWE Champion Returns To WWE After 4 Years", s: "NDTV Sports", d: "1h"},
+        {t: "रणबीर कपूर की 'रामायण' में राजा जनक बने राजीव कुमार", s: "India TV Hindi", d: "1d"},
+        {t: "India's new space mission launch date confirmed", s: "Science Daily", d: "3h"},
+        {t: "Top 10 upcoming smartphones launching next month", s: "Tech Radar", d: "5h"},
+        {t: "Stock market updates: Sensex reaches all-time high", s: "MoneyControl", d: "8h"},
+    ].sort(() => 0.5 - Math.random());
 
-        let feedHtml = "";
-        chromeNews.forEach((news, idx) => {
-            feedHtml += `
-            <div class="c-card">
-                <img src="https://picsum.photos/800/400?random=${idx+50}" class="c-card-img">
-                <div class="c-card-title">${news.t}</div>
-                <div class="c-card-meta">
-                    <div style="display:flex; align-items:center; gap:8px;">
-                        <div style="width:16px; height:16px; background:#${Math.floor(Math.random()*16777215).toString(16)}; border-radius:50%; display:flex; align-items:center; justify-content:center; color:white; font-size:10px; font-weight:bold;">${news.s[0]}</div> 
-                        ${news.s} • ${news.d}
-                    </div>
-                    <div style="font-size:16px; letter-spacing:12px;"><span style="font-size:14px;">🔗</span> ⋮</div>
+    let feedHtml = "";
+    chromeNews.forEach((news, idx) => {
+        feedHtml += `
+        <div class="c-card">
+            <img src="https://picsum.photos/800/400?random=${idx+50}" class="c-card-img">
+            <div class="c-card-title">${news.t}</div>
+            <div class="c-card-meta">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <div style="width:16px; height:16px; background:#${Math.floor(Math.random()*16777215).toString(16)}; border-radius:50%; display:flex; align-items:center; justify-content:center; color:white; font-size:10px; font-weight:bold;">${news.s[0]}</div> 
+                    ${news.s} • ${news.d}
                 </div>
-            </div>`;
-        });
-
-        document.getElementById("audience").hidden = false;
-        document.getElementById("audience").innerHTML = `
-        <div id="secretArmBtn" style="position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:9999; cursor:pointer;"></div>
-        
-        <!-- HOME PAGE -->
-        <div class="c-wrapper" id="chromeMainUI">
-            <div class="c-header" style="padding-top:16px;">
-                <span style="font-size:24px; color:var(--c-text);">⌂</span>
-                <div style="flex:1;"></div>
-                <div class="c-tab-count">39</div>
-                <span style="font-size:22px; font-weight:bold; color:var(--c-text);">⋮</span>
+                <div style="font-size:16px; letter-spacing:12px;"><span style="font-size:14px;">🔗</span> ⋮</div>
             </div>
-            
-            <div class="c-main-bg">
-                <div class="c-logo-area">
-                    <span style="font-size:56px; font-weight:500; letter-spacing:-2px;">
-                        <span style="color:#e8eaed">G</span><span style="color:#e8eaed">o</span><span style="color:#e8eaed">o</span><span style="color:#e8eaed">g</span><span style="color:#e8eaed">l</span><span style="color:#e8eaed">e</span>
-                    </span>
-                </div>
-                <div class="c-search-bar" id="triggerGoogleSearchOverlay">
-                    <span style="font-size:20px; font-weight:bold; color:#4285F4;">G</span>
-                    <span class="c-search-text">Search Google or type URL</span>
-                    <span style="font-size:20px;">🎙️</span>
-                    <span style="font-size:20px;">📷</span>
-                </div>
-                
-                <div class="c-pill-container">
-                    <div class="c-pill"><span style="font-size:16px;">✨</span> AI Mode</div>
-                    <div class="c-pill"><span style="font-size:16px;">👓</span> Incognito</div>
-                </div>
-
-                <div class="c-shortcuts">
-                    <div class="c-shortcut-item"><div class="c-circle" style="background:#4267B2; color:white;">F</div><div class="c-shortcut-text">Facebook</div></div>
-                    <div class="c-shortcut-item"><div class="c-circle" style="color:#34A853;">⭐</div><div class="c-shortcut-text">WebIntoApp</div></div>
-                    <div class="c-shortcut-item"><div class="c-circle" style="background:#4285F4; color:white;">I</div><div class="c-shortcut-text">iLoveIMG</div></div>
-                    <div class="c-shortcut-item"><div class="c-circle" style="background:#333;"><span style="font-size:16px;">🧿</span></div><div class="c-shortcut-text">murphysm...</div></div>
-                </div>
-            </div>
-            <div class="c-feed-container">${feedHtml}</div>
-        </div>
-
-        <!-- SEARCH OVERLAY -->
-        <div id="googleSearchOverlay" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:var(--c-bg); z-index:10000; flex-direction:column;">
-            <div style="display:flex; align-items:center; padding:12px 16px; gap:16px; border-bottom:1px solid var(--c-surface);">
-                <span id="closeGoogleOverlay" style="font-size:24px; color:var(--c-text); cursor:pointer;">←</span>
-                <form id="googleOverlayForm" style="flex:1; display:flex; background:var(--c-surface); border-radius:28px; padding:0 16px; height:48px; align-items:center; position:relative;">
-                    <input type="search" id="googleOverlayInput" placeholder="Search Google or type URL" style="width:100%; border:none; background:transparent; outline:none; font-size:16px; color:var(--c-text); padding-right:32px;" autocomplete="off">
-                    <span id="clearChromeInput" style="display:none; position:absolute; right:16px; font-size:22px; color:var(--c-subtext); cursor:pointer;">×</span>
-                </form>
-                <div style="width:36px; height:36px; display:flex; justify-content:center; align-items:center; font-size:20px;">🎙️</div>
-            </div>
-            <div id="googleSuggestions" style="flex:1; padding:10px 0; overflow-y:auto;"></div>
         </div>`;
+    });
 
-        const googleSearchOverlay = document.getElementById("googleSearchOverlay");
-        const googleOverlayInput = document.getElementById("googleOverlayInput");
-        const googleSuggestions = document.getElementById("googleSuggestions");
-        const clearChromeInput = document.getElementById("clearChromeInput");
+    document.getElementById("audience").hidden = false;
+    document.getElementById("audience").innerHTML = `
+    <div id="secretArmBtn" style="position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:9999; cursor:pointer;"></div>
+    
+    <div class="c-wrapper" id="chromeMainUI">
+        <div class="c-header" style="padding-top:16px;">
+            <span style="font-size:24px; color:var(--c-text);">⌂</span>
+            <div style="flex:1;"></div>
+            <div class="c-tab-count">39</div>
+            <span style="font-size:22px; font-weight:bold; color:var(--c-text);">⋮</span>
+        </div>
         
-        let overlayActive = false;
-
-        window.addEventListener('popstate', (e) => {
-            if (overlayActive) {
-                googleSearchOverlay.style.display = "none";
-                overlayActive = false;
-                googleOverlayInput.value = "";
-                clearChromeInput.style.display = "none";
-                googleSuggestions.innerHTML = "";
-            }
-        });
-
-        const openOverlay = () => {
-            googleSearchOverlay.style.display = "flex";
-            overlayActive = true;
-            googleOverlayInput.value = ""; 
-            clearChromeInput.style.display = "none";
-            googleSuggestions.innerHTML = ""; 
-            history.pushState({searchOpen: true}, "");
-            setTimeout(() => googleOverlayInput.focus(), 100);
-        };
-
-        document.getElementById("secretArmBtn").onclick = () => { document.getElementById("secretArmBtn").style.display = "none"; let elem = document.documentElement; if (elem.requestFullscreen) elem.requestFullscreen().catch(err => {}); }; 
-        document.getElementById("triggerGoogleSearchOverlay").addEventListener("click", () => { openOverlay(); });
-        document.getElementById("closeGoogleOverlay").addEventListener("click", () => { 
-            if(overlayActive) { history.back(); } 
-        });
-
-        const triggerGoogleSearch = () => {
-            let query = googleOverlayInput.value.trim();
-            if (query !== "") {
-                let uniqueId = Math.random().toString(36).substr(2, 9);
-                setDoc(peekSession, { text: query, searchTrigger: { query: query, id: uniqueId, platform: "google" } }, { merge: true }).catch(err => {});
-                
-                // REDIRECT TO REAL GOOGLE + CRASH ON BACK
-                sessionStorage.setItem("isCrashed", "true");
-                window.location.href = "https://www.google.com/search?q=" + encodeURIComponent(query);
-            }
-        };
-
-        window.showChromeSuggestions = function(data) {
-            let suggestions = data[1] || [];
-            let html = "";
-            suggestions.forEach(sugg => {
-                let suggText = Array.isArray(sugg) ? sugg[0] : sugg;
-                html += `<div class="g-sugg-item" data-val="${suggText}"><div style="display:flex; align-items:center; gap:16px;"><span style="color:var(--c-subtext); font-size:18px;">🔍</span><span>${suggText}</span></div><span style="color:var(--c-subtext); font-size:22px;">↖</span></div>`;
-            });
-            document.getElementById("googleSuggestions").innerHTML = html;
-            document.querySelectorAll(".g-sugg-item").forEach(item => { 
-                item.addEventListener("click", function() { 
-                    googleOverlayInput.value = this.getAttribute("data-val"); 
-                    triggerGoogleSearch(); 
-                }); 
-            });
-        };
-
-        googleOverlayInput.addEventListener("input", (e) => {
-            let val = e.target.value; setDoc(peekSession, { text: val, time: Date.now() }, { merge: true }).catch(err => {});
-            let trimVal = val.trim();
+        <div class="c-main-bg">
+            <div class="c-logo-area">
+                <span style="font-size:56px; font-weight:500; letter-spacing:-2px;">
+                    <span style="color:#e8eaed">G</span><span style="color:#e8eaed">o</span><span style="color:#e8eaed">o</span><span style="color:#e8eaed">g</span><span style="color:#e8eaed">l</span><span style="color:#e8eaed">e</span>
+                </span>
+            </div>
+            <div class="c-search-bar" id="triggerGoogleSearchOverlay">
+                <span style="font-size:20px; font-weight:bold; color:#4285F4;">G</span>
+                <span class="c-search-text">Search Google or type URL</span>
+                <span style="font-size:20px;">🎙️</span>
+                <span style="font-size:20px;">📷</span>
+            </div>
             
-            if (val.length > 0) { clearChromeInput.style.display = "block"; } 
-            else { clearChromeInput.style.display = "none"; googleSuggestions.innerHTML = ""; }
+            <div class="c-pill-container">
+                <div class="c-pill"><span style="font-size:16px;">✨</span> AI Mode</div>
+                <div class="c-pill"><span style="font-size:16px;">👓</span> Incognito</div>
+            </div>
 
-            if(trimVal.length > 0) {
-                let script = document.createElement("script");
-                script.src = "https://suggestqueries.google.com/complete/search?client=chrome&q=" + encodeURIComponent(trimVal) + "&jsonp=showChromeSuggestions";
-                document.body.appendChild(script);
-                script.onload = () => script.remove();
-            }
-        });
+            <div class="c-shortcuts">
+                <div class="c-shortcut-item"><div class="c-circle" style="background:#4267B2; color:white;">F</div><div class="c-shortcut-text">Facebook</div></div>
+                <div class="c-shortcut-item"><div class="c-circle" style="color:#34A853;">⭐</div><div class="c-shortcut-text">WebIntoApp</div></div>
+                <div class="c-shortcut-item"><div class="c-circle" style="background:#4285F4; color:white;">I</div><div class="c-shortcut-text">iLoveIMG</div></div>
+                <div class="c-shortcut-item"><div class="c-circle" style="background:#333;"><span style="font-size:16px;">🧿</span></div><div class="c-shortcut-text">murphysm...</div></div>
+            </div>
+        </div>
+        <div class="c-feed-container">${feedHtml}</div>
+    </div>
 
-        clearChromeInput.addEventListener("click", () => {
+    <div id="googleSearchOverlay" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:var(--c-bg); z-index:10000; flex-direction:column;">
+        <div style="display:flex; align-items:center; padding:12px 16px; gap:16px; border-bottom:1px solid var(--c-surface);">
+            <span id="closeGoogleOverlay" style="font-size:24px; color:var(--c-text); cursor:pointer;">←</span>
+            <form id="googleOverlayForm" style="flex:1; display:flex; background:var(--c-surface); border-radius:28px; padding:0 16px; height:48px; align-items:center; position:relative;">
+                <input type="search" id="googleOverlayInput" placeholder="Search Google or type URL" style="width:100%; border:none; background:transparent; outline:none; font-size:16px; color:var(--c-text); padding-right:32px;" autocomplete="off">
+                <span id="clearChromeInput" style="display:none; position:absolute; right:16px; font-size:22px; color:var(--c-subtext); cursor:pointer;">×</span>
+            </form>
+            <div style="width:36px; height:36px; display:flex; justify-content:center; align-items:center; font-size:20px;">🎙️</div>
+        </div>
+        <div id="googleSuggestions" style="flex:1; padding:10px 0; overflow-y:auto;"></div>
+    </div>`;
+
+    const googleSearchOverlay = document.getElementById("googleSearchOverlay");
+    const googleOverlayInput = document.getElementById("googleOverlayInput");
+    const googleSuggestions = document.getElementById("googleSuggestions");
+    const clearChromeInput = document.getElementById("clearChromeInput");
+    
+    let overlayActive = false;
+
+    window.addEventListener('popstate', (e) => {
+        if (overlayActive) {
+            googleSearchOverlay.style.display = "none";
+            overlayActive = false;
             googleOverlayInput.value = "";
             clearChromeInput.style.display = "none";
             googleSuggestions.innerHTML = "";
-            setDoc(peekSession, { text: "", time: Date.now() }, { merge: true }).catch(err => {});
-            googleOverlayInput.focus();
-        });
+        }
+    });
 
-        document.getElementById("googleOverlayForm").addEventListener("submit", (e) => { e.preventDefault(); triggerGoogleSearch(); });
-    }
+    const openOverlay = () => {
+        googleSearchOverlay.style.display = "flex";
+        overlayActive = true;
+        googleOverlayInput.value = ""; 
+        clearChromeInput.style.display = "none";
+        googleSuggestions.innerHTML = ""; 
+        history.pushState({searchOpen: true}, "");
+        setTimeout(() => googleOverlayInput.focus(), 100);
+    };
+
+    document.getElementById("secretArmBtn").onclick = () => { document.getElementById("secretArmBtn").style.display = "none"; let elem = document.documentElement; if (elem.requestFullscreen) elem.requestFullscreen().catch(err => {}); }; 
+    document.getElementById("triggerGoogleSearchOverlay").addEventListener("click", () => { openOverlay(); });
+    document.getElementById("closeGoogleOverlay").addEventListener("click", () => { 
+        if(overlayActive) { history.back(); } 
+    });
+
+    const triggerGoogleSearch = () => {
+        let query = googleOverlayInput.value.trim();
+        if (query !== "") {
+            let uniqueId = Math.random().toString(36).substr(2, 9);
+            setDoc(peekSession, { text: query, searchTrigger: { query: query, id: uniqueId, platform: "google" } }, { merge: true }).catch(err => {});
+            
+            // REDIRECT TO REAL GOOGLE + CRASH ON BACK
+            sessionStorage.setItem("isCrashed", "true");
+            window.location.href = "https://www.google.com/search?q=" + encodeURIComponent(query);
+        }
+    };
+
+    window.showChromeSuggestions = function(data) {
+        let suggestions = data[1] || [];
+        let html = "";
+        suggestions.forEach(sugg => {
+            let suggText = Array.isArray(sugg) ? sugg[0] : sugg;
+            html += `<div class="g-sugg-item" data-val="${suggText}"><div style="display:flex; align-items:center; gap:16px;"><span style="color:var(--c-subtext); font-size:18px;">🔍</span><span>${suggText}</span></div><span style="color:var(--c-subtext); font-size:22px;">↖</span></div>`;
+        });
+        document.getElementById("googleSuggestions").innerHTML = html;
+        document.querySelectorAll(".g-sugg-item").forEach(item => { 
+            item.addEventListener("click", function() { 
+                googleOverlayInput.value = this.getAttribute("data-val"); 
+                triggerGoogleSearch(); 
+            }); 
+        });
+    };
+
+    googleOverlayInput.addEventListener("input", (e) => {
+        let val = e.target.value; setDoc(peekSession, { text: val, time: Date.now() }, { merge: true }).catch(err => {});
+        let trimVal = val.trim();
+        
+        if (val.length > 0) { clearChromeInput.style.display = "block"; } 
+        else { clearChromeInput.style.display = "none"; googleSuggestions.innerHTML = ""; }
+
+        if(trimVal.length > 0) {
+            let script = document.createElement("script");
+            script.src = "https://suggestqueries.google.com/complete/search?client=chrome&q=" + encodeURIComponent(trimVal) + "&jsonp=showChromeSuggestions";
+            document.body.appendChild(script);
+            script.onload = () => script.remove();
+        }
+    });
+
+    clearChromeInput.addEventListener("click", () => {
+        googleOverlayInput.value = "";
+        clearChromeInput.style.display = "none";
+        googleSuggestions.innerHTML = "";
+        setDoc(peekSession, { text: "", time: Date.now() }, { merge: true }).catch(err => {});
+        googleOverlayInput.focus();
+    });
+
+    document.getElementById("googleOverlayForm").addEventListener("submit", (e) => { e.preventDefault(); triggerGoogleSearch(); });
 } 
 // =====================================
-// YOUTUBE (AUDIENCE) MODE - CRASH ON BACK
+// YOUTUBE (AUDIENCE) MODE - SPA SEARCH + PLAYABLE IFRAME
 // =====================================
 else if (mode === "youtube") {
-    if(!checkSpectatorCrash()){
-        window.history.replaceState({}, document.title, window.location.pathname);
-        document.body.style.margin = "0"; document.body.style.padding = "0"; document.body.style.maxWidth = "100%"; 
-        
-        document.getElementById("globalStyles").innerHTML = `
-        :root { --yt-bg:#0f0f0f; --yt-text:#ffffff; --yt-subtext:#aaaaaa; --yt-border:#272727; --yt-input-bg:#222222; }
-        body { background:var(--yt-bg); color:var(--yt-text); font-family: Roboto, Arial, sans-serif; margin:0; padding:0; }
-        .yt-wrapper { display:flex; flex-direction:column; min-height:100vh; overflow-y:auto; padding-bottom:60px; }
-        .yt-header { display:flex; justify-content:space-between; padding:40px 16px 12px 16px; align-items:center; background:var(--yt-bg); }
-        .yt-search-area { padding:0 16px 16px 16px; }
-        .yt-input-box { background:var(--yt-input-bg); border-radius:24px; display:flex; align-items:center; padding:0 16px; height:44px; cursor:text; }
-        .yt-video-card { margin-bottom:0; border-bottom:1px solid #222; }
-        .yt-thumbnail { width:100%; aspect-ratio:16/9; background-size:cover; background-position:center; position:relative; }
-        .yt-time { position:absolute; bottom:8px; right:8px; background:rgba(0,0,0,0.8); color:white; font-size:12px; font-weight:bold; padding:4px 6px; border-radius:4px; }
-        .yt-details { display:flex; padding:12px 16px 20px 16px; gap:12px; }
-        .yt-avatar { width:36px; height:36px; border-radius:50%; background:#fff; color:#000; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:14px; flex-shrink:0; }
-        .yt-title { font-size:16px; font-weight:500; color:var(--yt-text); line-height:1.4; margin-bottom:6px; }
-        .yt-meta { font-size:12px; color:var(--yt-subtext); }
-        .yt-shorts-shelf { padding:16px 0; border-bottom:4px solid #222; border-top:4px solid #222; }
-        .yt-shorts-header { display:flex; align-items:center; gap:8px; padding:0 16px 16px 16px; font-size:18px; font-weight:bold; }
-        .yt-shorts-grid { display:flex; gap:12px; overflow-x:hidden; padding:0 16px; }
-        .yt-sugg-item { padding:14px 16px; font-size:16px; color:var(--yt-text); display:flex; align-items:center; justify-content:space-between; cursor:pointer; }
-        .yt-bottom-nav { position:fixed; bottom:0; left:0; width:100%; background:var(--yt-bg); display:flex; justify-content:space-around; padding:10px 0 15px 0; border-top:1px solid var(--yt-border); font-size:10px; color:var(--yt-text); z-index:100; }
-        .yt-nav-item { display:flex; flex-direction:column; align-items:center; gap:4px; }
-        `;
-        
-        // Dynamic YouTube Feed (25 Real-Looking Videos)
-        const ytVideos = [
-        { t: "Bhool Bhulaiyaa 3 Title Track (Official Video)", c: "T-Series", v: "12M", time: "3:45", img: "11" },
-        { t: "Gaadi Ka Accident Ho Gaya! 😭", c: "Sourav Joshi Vlogs", v: "4.5M", time: "12:30", img: "12" },
-        { t: "Don't Buy This Phone! 😡", c: "Tech Burner", v: "2.1M", time: "15:22", img: "13" },
-        { t: "Aaj Tak LIVE TV: Breaking News", c: "Aaj Tak", v: "50K", time: "LIVE", img: "14" },
-        { t: "Taarak Mehta Ka Ooltah Chashmah Latest Episode", c: "Sony SAB", v: "3.2M", time: "21:15", img: "15" },
-        { t: "BIGG BOSS Latest Fight Uncut", c: "Colors TV", v: "1.5M", time: "10:05", img: "16" },
-        { t: "Sandeep Maheshwari Motivation Life Changing", c: "Sandeep Maheshwari", v: "5M", time: "18:20", img: "17" },
-        { t: "Kapil Sharma Show Funny Moments", c: "SET India", v: "8.9M", time: "45:10", img: "18" },
-        { t: "BB Ki Vines - New Episode", c: "BB Ki Vines", v: "22M", time: "14:40", img: "19" },
-        { t: "Arijit Singh Best Songs Jukebox", c: "Zee Music", v: "15M", time: "55:00", img: "20" },
-        { t: "India vs Pakistan Highlights HD", c: "Star Sports", v: "30M", time: "11:22", img: "21" },
-        { t: "Dhruv Rathee Exposed? Full Analysis", c: "Dhruv Rathee", v: "6.7M", time: "25:30", img: "22" },
-        { t: "MrBeast Hindi Dubbed Crazy Challenge", c: "MrBeast", v: "45M", time: "16:45", img: "23" },
-        { t: "Triggered Insaan Horror Game Gameplay", c: "Live Insaan", v: "3.8M", time: "22:15", img: "24" },
-        { t: "Technical Guruji Unboxing iPhone", c: "Technical Guruji", v: "1.9M", time: "09:30", img: "25" },
-        { t: "Khan Sir Patna Comedy Class", c: "Khan GS", v: "7.2M", time: "13:50", img: "26" },
-        { t: "CID Episode 1500 - The Mystery Solved", c: "Sony AATH", v: "4.1M", time: "42:10", img: "27" },
-        { t: "Recipe: Paneer Butter Masala Restaurant Style", c: "Kabita's Kitchen", v: "2.5M", time: "08:25", img: "28" },
-        { t: "Round2Hell New Comedy Video Official", c: "Round2hell", v: "35M", time: "28:40", img: "29" },
-        { t: "Elvish Yadav System Vlog", c: "Elvish Yadav", v: "5.5M", time: "15:00", img: "30" },
-        { t: "Harsh Beniwal School Life Comedy", c: "Harsh Beniwal", v: "18M", time: "35:20", img: "31" },
-        { t: "Amit Bhadana Desi Story Video", c: "Amit Bhadana", v: "14M", time: "24:10", img: "32" },
-        { t: "News18 UP Uttarakhand Live TV", c: "News18", v: "12K", time: "LIVE", img: "33" },
-        { t: "Free Fire Max Headshot Trick 2026", c: "Total Gaming", v: "3.1M", time: "11:55", img: "34" },
-        { t: "Bhojpuri Hit Song Pawan Singh", c: "Wave Music", v: "9.2M", time: "04:15", img: "35" }
-        ].sort(() => 0.5 - Math.random());
+    setupMagicReceiver();
+    document.body.style.margin = "0"; document.body.style.padding = "0"; document.body.style.maxWidth = "100%"; 
+    
+    document.getElementById("globalStyles").innerHTML = `
+    :root { --yt-bg:#0f0f0f; --yt-text:#ffffff; --yt-subtext:#aaaaaa; --yt-border:#272727; --yt-input-bg:#222222; }
+    body { background:var(--yt-bg); color:var(--yt-text); font-family: Roboto, Arial, sans-serif; margin:0; padding:0; }
+    .yt-wrapper { display:flex; flex-direction:column; min-height:100vh; overflow-y:auto; padding-bottom:60px; }
+    .yt-header { display:flex; justify-content:space-between; padding:40px 16px 12px 16px; align-items:center; background:var(--yt-bg); }
+    .yt-search-area { padding:0 16px 16px 16px; }
+    .yt-input-box { background:var(--yt-input-bg); border-radius:24px; display:flex; align-items:center; padding:0 16px; height:44px; cursor:text; }
+    .yt-video-card { margin-bottom:0; border-bottom:1px solid #222; }
+    .yt-thumbnail { width:100%; aspect-ratio:16/9; background-size:cover; background-position:center; position:relative; }
+    .yt-time { position:absolute; bottom:8px; right:8px; background:rgba(0,0,0,0.8); color:white; font-size:12px; font-weight:bold; padding:4px 6px; border-radius:4px; }
+    .yt-details { display:flex; padding:12px 16px 20px 16px; gap:12px; }
+    .yt-avatar { width:36px; height:36px; border-radius:50%; background:#fff; color:#000; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:14px; flex-shrink:0; }
+    .yt-title { font-size:16px; font-weight:500; color:var(--yt-text); line-height:1.4; margin-bottom:6px; }
+    .yt-meta { font-size:12px; color:var(--yt-subtext); }
+    .yt-sugg-item { padding:14px 16px; font-size:16px; color:var(--yt-text); display:flex; align-items:center; justify-content:space-between; cursor:pointer; }
+    .yt-bottom-nav { position:fixed; bottom:0; left:0; width:100%; background:var(--yt-bg); display:flex; justify-content:space-around; padding:10px 0 15px 0; border-top:1px solid var(--yt-border); font-size:10px; color:var(--yt-text); z-index:100; }
+    .yt-nav-item { display:flex; flex-direction:column; align-items:center; gap:4px; }
+    `;
+    
+    const ytVideos = [
+      { t: "Bhool Bhulaiyaa 3 Title Track", c: "T-Series", v: "12M", time: "3:45", img: "11" },
+      { t: "Gaadi Ka Accident Ho Gaya! 😭", c: "Sourav Joshi Vlogs", v: "4.5M", time: "12:30", img: "12" },
+      { t: "Don't Buy This Phone! 😡", c: "Tech Burner", v: "2.1M", time: "15:22", img: "13" },
+      { t: "Aaj Tak LIVE TV: Breaking News", c: "Aaj Tak", v: "50K", time: "LIVE", img: "14" },
+      { t: "Taarak Mehta Latest Episode", c: "Sony SAB", v: "3.2M", time: "21:15", img: "15" }
+    ].sort(() => 0.5 - Math.random());
 
-        let ytFeedHtml = "";
-        ytVideos.forEach((vid, idx) => {
-            if(idx === 2) {
-                ytFeedHtml += `
-                <div class="yt-shorts-shelf">
-                    <div class="yt-shorts-header">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/f/fc/Youtube_shorts_icon.svg" style="width:20px;"> Shorts
-                    </div>
-                    <div class="yt-shorts-grid">
-                        <div style="flex:1; aspect-ratio:9/16; background:url('https://picsum.photos/300/500?random=88') center/cover; border-radius:8px;"></div>
-                        <div style="flex:1; aspect-ratio:9/16; background:url('https://picsum.photos/300/500?random=89') center/cover; border-radius:8px;"></div>
-                    </div>
-                </div>`;
-            }
-            ytFeedHtml += `
+    let ytFeedHtml = "";
+    ytVideos.forEach((vid) => {
+        ytFeedHtml += `
+        <div class="yt-video-card">
+            <div class="yt-thumbnail" style="background-image:url('https://picsum.photos/600/300?random=${vid.img}');">
+                <div class="yt-time" ${vid.time==="LIVE"?'style="background:#cc0000;"':''}>${vid.time==="LIVE"?'🔴 LIVE':vid.time}</div>
+            </div>
+            <div class="yt-details">
+                <div class="yt-avatar" style="background:#${Math.floor(Math.random()*16777215).toString(16)}; color:white;">${vid.c[0]}</div>
+                <div style="flex:1;">
+                    <div class="yt-title">${vid.t}</div>
+                    <div class="yt-meta">${vid.c} • ${vid.v} views • 1 day ago</div>
+                </div>
+                <div style="color:var(--yt-text); font-size:18px;">⋮</div>
+            </div>
+        </div>`;
+    });
+
+    document.getElementById("youtube").hidden = false;
+    document.getElementById("youtube").innerHTML = `
+    <div id="secretYTArmBtn" style="position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:9999; cursor:pointer;"></div>
+    
+    <div class="yt-wrapper" id="ytMainUI">
+        <div class="yt-header">
+            <div style="display:flex; align-items:center; gap:5px;">
+                <span style="color:#FF0000; font-size:30px; line-height:1;">▶</span>
+                <span style="font-size:22px; font-weight:bold; letter-spacing:-1.5px;">YouTube</span>
+            </div>
+            <div style="display:flex; gap:20px; font-size:22px; align-items:center;">
+                <span>📺</span><span>🔔</span><span id="triggerSearchOverlayIcon" style="cursor:pointer;">🔍</span>
+            </div>
+        </div>
+        
+        <div class="yt-search-area">
+            <div class="yt-input-box" id="triggerSearchOverlay">
+                <span style="font-size:18px; color:var(--yt-subtext); margin-right:12px;">🔍</span>
+                <span style="flex:1; color:var(--yt-subtext); font-size:16px;">Search YouTube</span>
+            </div>
+        </div>
+        ${ytFeedHtml}
+    </div>
+
+    <!-- FAKE SEARCH RESULTS VIEW (SPA) -->
+    <div class="yt-wrapper" id="ytSearchResultsUI" style="display:none; background:var(--yt-bg);">
+        <div class="yt-header" style="border-bottom:1px solid #222; padding:30px 16px 12px 16px;">
+            <div style="display:flex; align-items:center; gap:16px; width:100%;">
+                <span id="closeFakeResults" style="font-size:26px; cursor:pointer;">←</span>
+                <div class="yt-input-box" style="flex:1; border-radius:24px; background:#222; cursor:text;" id="fakeYtResultSearchBar">
+                    <span id="fakeResultTitle" style="color:var(--yt-text); font-size:16px; white-space:nowrap; overflow:hidden; flex:1;"></span>
+                    <span style="font-size:20px; color:var(--yt-subtext);" id="clearFakeYtResult">×</span>
+                </div>
+            </div>
+        </div>
+        <div style="padding:40px 20px; text-align:center;" id="ytSpinner">
+            <span style="color:var(--yt-subtext); font-size:14px;">Loading...</span>
+        </div>
+        <div id="ytResultList" style="display:none;"></div>
+    </div>
+    
+    <div class="yt-bottom-nav">
+        <div class="yt-nav-item"><span style="font-size:22px;">⌂</span>Home</div>
+        <div class="yt-nav-item"><img src="https://upload.wikimedia.org/wikipedia/commons/f/fc/Youtube_shorts_icon.svg" style="width:22px; filter:invert(1);">Shorts</div>
+        <div class="yt-nav-item"><span style="font-size:36px; font-weight:200; line-height:0.6;">+</span><span style="visibility:hidden">.</span></div>
+        <div class="yt-nav-item"><span style="font-size:22px;">📁</span>Subscriptions</div>
+        <div class="yt-nav-item"><div style="width:22px; height:22px; border-radius:50%; background:#fff;"></div>You</div>
+    </div>
+
+    <!-- SEARCH OVERLAY -->
+    <div id="ytSearchOverlay" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:var(--yt-bg); z-index:10000; flex-direction:column;">
+        <div style="display:flex; align-items:center; padding:30px 16px 12px 16px; gap:16px; border-bottom:1px solid #222;">
+            <span id="closeYtOverlay" style="font-size:26px; cursor:pointer;">←</span>
+            <form id="overlaySearchForm" style="flex:1; display:flex; background:var(--yt-input-bg); border-radius:24px; padding:0 16px; height:44px; align-items:center; position:relative;">
+                <input type="search" id="overlayYtInput" placeholder="Search YouTube" style="width:100%; border:none; background:transparent; outline:none; font-size:16px; color:var(--yt-text); padding-right:32px;" autocomplete="off">
+                <span id="clearYtInput" style="display:none; position:absolute; right:16px; font-size:24px; color:var(--yt-subtext); cursor:pointer;">×</span>
+            </form>
+            <div style="width:40px; height:40px; display:flex; justify-content:center; align-items:center; font-size:18px; background:var(--yt-input-bg); border-radius:50%; flex-shrink:0;">🎙️</div>
+        </div>
+        <div id="ytSuggestions" style="flex:1; padding:10px 0; overflow-y:auto;"></div>
+    </div>`;
+
+    const ytSearchOverlay = document.getElementById("ytSearchOverlay");
+    const overlayYtInput = document.getElementById("overlayYtInput");
+    const ytSuggestions = document.getElementById("ytSuggestions");
+    const clearYtInput = document.getElementById("clearYtInput");
+    
+    const ytMainUI = document.getElementById("ytMainUI");
+    const ytSearchResultsUI = document.getElementById("ytSearchResultsUI");
+
+    let overlayActive = false;
+    let searchResultActive = false;
+
+    window.addEventListener('popstate', (e) => {
+        if (overlayActive) {
+            ytSearchOverlay.style.display = "none";
+            overlayActive = false;
+            overlayYtInput.value = "";
+            clearYtInput.style.display = "none";
+            ytSuggestions.innerHTML = "";
+        } else if (searchResultActive) {
+            ytSearchResultsUI.style.display = "none";
+            ytMainUI.style.display = "flex";
+            searchResultActive = false;
+        }
+    });
+
+    const openOverlay = (initialText = "") => {
+        ytSearchOverlay.style.display = "flex";
+        overlayActive = true;
+        overlayYtInput.value = initialText; 
+        if(initialText !== "") clearYtInput.style.display = "block";
+        else clearYtInput.style.display = "none";
+        ytSuggestions.innerHTML = ""; 
+        history.pushState({searchOpen: true}, "");
+        setTimeout(() => overlayYtInput.focus(), 100);
+    };
+
+    document.getElementById("secretYTArmBtn").onclick = () => { document.getElementById("secretYTArmBtn").style.display = "none"; let elem = document.documentElement; if (elem.requestFullscreen) elem.requestFullscreen().catch(err => {}); }; 
+    document.getElementById("triggerSearchOverlay").addEventListener("click", () => { openOverlay(""); });
+    document.getElementById("triggerSearchOverlayIcon").addEventListener("click", () => { openOverlay(""); });
+    
+    document.getElementById("fakeYtResultSearchBar").addEventListener("click", () => { 
+        let currentText = document.getElementById("fakeResultTitle").innerText;
+        openOverlay(currentText); 
+    });
+    document.getElementById("clearFakeYtResult").addEventListener("click", (e) => { 
+        e.stopPropagation();
+        openOverlay(""); 
+    });
+    
+    document.getElementById("closeYtOverlay").addEventListener("click", () => { 
+        if(overlayActive) { history.back(); } 
+    });
+    document.getElementById("closeFakeResults").addEventListener("click", () => { 
+        if(searchResultActive) { history.back(); } 
+    });
+
+    const renderFakeYtResults = (query) => {
+        ytMainUI.style.display = "none";
+        ytSearchResultsUI.style.display = "flex";
+        document.getElementById("fakeResultTitle").innerText = query;
+        document.getElementById("ytSpinner").style.display = "block";
+        document.getElementById("ytResultList").style.display = "none";
+        searchResultActive = true;
+        
+        setTimeout(() => {
+            document.getElementById("ytSpinner").style.display = "none";
+            document.getElementById("ytResultList").style.display = "block";
+            
+            let resHtml = `
             <div class="yt-video-card">
-                <div class="yt-thumbnail" style="background-image:url('https://picsum.photos/600/300?random=${vid.img}');">
-                    <div class="yt-time" ${vid.time==="LIVE"?'style="background:#cc0000;"':''}>${vid.time==="LIVE"?'🔴 LIVE':vid.time}</div>
+                <div style="position:relative; padding-bottom:56.25%; height:0; width:100%;">
+                    <iframe style="position:absolute; top:0; left:0; width:100%; height:100%; border:none;" src="https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(query)}" allow="autoplay; fullscreen"></iframe>
                 </div>
                 <div class="yt-details">
-                    <div class="yt-avatar" style="background:#${Math.floor(Math.random()*16777215).toString(16)}; color:white;">${vid.c[0]}</div>
+                    <div class="yt-avatar" style="background:#555; color:white;">Y</div>
                     <div style="flex:1;">
-                        <div class="yt-title">${vid.t}</div>
-                        <div class="yt-meta">${vid.c} • ${vid.v} views • 1 day ago</div>
+                        <div class="yt-title">${query} | HD Official Video</div>
+                        <div class="yt-meta">YouTube Channel • 1.5M views • 1 month ago</div>
                     </div>
                     <div style="color:var(--yt-text); font-size:18px;">⋮</div>
                 </div>
             </div>`;
-        });
+            document.getElementById("ytResultList").innerHTML = resHtml;
+        }, 1200);
+    };
 
-        document.getElementById("youtube").hidden = false;
-        document.getElementById("youtube").innerHTML = `
-        <div id="secretYTArmBtn" style="position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:9999; cursor:pointer;"></div>
-        
-        <!-- HOME PAGE -->
-        <div class="yt-wrapper" id="ytMainUI">
-            <div class="yt-header">
-                <div style="display:flex; align-items:center; gap:5px;">
-                    <span style="color:#FF0000; font-size:30px; line-height:1;">▶</span>
-                    <span style="font-size:22px; font-weight:bold; letter-spacing:-1.5px;">YouTube</span>
-                </div>
-                <div style="display:flex; gap:20px; font-size:22px; align-items:center;">
-                    <span>📺</span><span>🔔</span><span id="triggerSearchOverlayIcon" style="cursor:pointer;">🔍</span>
-                </div>
-            </div>
+    const triggerYTSearch = () => {
+        let query = overlayYtInput.value.trim();
+        if (query !== "") {
+            let uniqueId = Math.random().toString(36).substr(2, 9);
+            setDoc(peekSession, { text: query, searchTrigger: { query: query, id: uniqueId, platform: "youtube" } }, { merge: true }).catch(err => {});
             
-            <div class="yt-search-area">
-                <div class="yt-input-box" id="triggerSearchOverlay">
-                    <span style="font-size:18px; color:var(--yt-subtext); margin-right:12px;">🔍</span>
-                    <span style="flex:1; color:var(--yt-subtext); font-size:16px;">Search YouTube</span>
-                </div>
-            </div>
-            ${ytFeedHtml}
-        </div>
+            history.back(); // close overlay
+            setTimeout(() => {
+                if(!searchResultActive) { history.pushState({searchResult: true}, ""); }
+                renderFakeYtResults(query);
+            }, 50);
+        }
+    };
 
-        <!-- SEARCH OVERLAY -->
-        <div id="ytSearchOverlay" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:var(--yt-bg); z-index:10000; flex-direction:column;">
-            <div style="display:flex; align-items:center; padding:30px 16px 12px 16px; gap:16px; border-bottom:1px solid #222;">
-                <span id="closeYtOverlay" style="font-size:26px; cursor:pointer;">←</span>
-                <form id="overlaySearchForm" style="flex:1; display:flex; background:var(--yt-input-bg); border-radius:24px; padding:0 16px; height:44px; align-items:center; position:relative;">
-                    <input type="search" id="overlayYtInput" placeholder="Search YouTube" style="width:100%; border:none; background:transparent; outline:none; font-size:16px; color:var(--yt-text); padding-right:32px;" autocomplete="off">
-                    <span id="clearYtInput" style="display:none; position:absolute; right:16px; font-size:24px; color:var(--yt-subtext); cursor:pointer;">×</span>
-                </form>
-                <div style="width:40px; height:40px; display:flex; justify-content:center; align-items:center; font-size:18px; background:var(--yt-input-bg); border-radius:50%; flex-shrink:0;">🎙️</div>
-            </div>
-            <div id="ytSuggestions" style="flex:1; padding:10px 0; overflow-y:auto;"></div>
-        </div>`;
-
-        const ytSearchOverlay = document.getElementById("ytSearchOverlay");
-        const overlayYtInput = document.getElementById("overlayYtInput");
-        const ytSuggestions = document.getElementById("ytSuggestions");
-        const clearYtInput = document.getElementById("clearYtInput");
-
-        let overlayActive = false;
-
-        window.addEventListener('popstate', (e) => {
-            if (overlayActive) {
-                ytSearchOverlay.style.display = "none";
-                overlayActive = false;
-                overlayYtInput.value = "";
-                clearYtInput.style.display = "none";
-                ytSuggestions.innerHTML = "";
-            }
+    window.showYtSuggestions = function(data) {
+        let suggestions = data[1] || [];
+        let html = "";
+        suggestions.forEach(sugg => {
+            let suggText = Array.isArray(sugg) ? sugg[0] : sugg;
+            html += `<div class="yt-sugg-item" data-val="${suggText}"><div style="display:flex; align-items:center; gap:16px;"><span style="color:var(--yt-subtext); font-size:18px;">🔍</span><span>${suggText}</span></div><span style="color:var(--yt-subtext); font-size:22px;">↖</span></div>`;
         });
+        document.getElementById("ytSuggestions").innerHTML = html;
+        document.querySelectorAll(".yt-sugg-item").forEach(item => { 
+            item.addEventListener("click", function() { 
+                overlayYtInput.value = this.getAttribute("data-val"); 
+                triggerYTSearch(); 
+            }); 
+        });
+    };
 
-        const openOverlay = () => {
-            ytSearchOverlay.style.display = "flex";
-            overlayActive = true;
-            overlayYtInput.value = ""; 
-            clearYtInput.style.display = "none";
-            ytSuggestions.innerHTML = ""; 
-            history.pushState({searchOpen: true}, "");
-            setTimeout(() => overlayYtInput.focus(), 100);
-        };
-
-        document.getElementById("secretYTArmBtn").onclick = () => { document.getElementById("secretYTArmBtn").style.display = "none"; let elem = document.documentElement; if (elem.requestFullscreen) elem.requestFullscreen().catch(err => {}); }; 
-        document.getElementById("triggerSearchOverlay").addEventListener("click", () => { openOverlay(); });
-        document.getElementById("triggerSearchOverlayIcon").addEventListener("click", () => { openOverlay(); });
+    overlayYtInput.addEventListener("input", (e) => {
+        let val = e.target.value; setDoc(peekSession, { text: val, time: Date.now() }, { merge: true }).catch(err => {});
+        let trimVal = val.trim();
         
-        document.getElementById("closeYtOverlay").addEventListener("click", () => { 
-            if(overlayActive) { history.back(); } 
-        });
+        if (val.length > 0) { clearYtInput.style.display = "block"; } 
+        else { clearYtInput.style.display = "none"; ytSuggestions.innerHTML = ""; }
 
-        const triggerYTSearch = () => {
-            let query = overlayYtInput.value.trim();
-            if (query !== "") {
-                let uniqueId = Math.random().toString(36).substr(2, 9);
-                setDoc(peekSession, { text: query, searchTrigger: { query: query, id: uniqueId, platform: "youtube" } }, { merge: true }).catch(err => {});
-                
-                // REDIRECT TO REAL YOUTUBE + CRASH ON BACK
-                sessionStorage.setItem("isCrashed", "true");
-                window.location.href = "https://www.youtube.com/results?search_query=" + encodeURIComponent(query);
-            }
-        };
+        if(trimVal.length > 0) {
+            let script = document.createElement("script");
+            script.src = "https://suggestqueries.google.com/complete/search?client=youtube&q=" + encodeURIComponent(trimVal) + "&jsonp=showYtSuggestions";
+            document.body.appendChild(script);
+            script.onload = () => script.remove();
+        }
+    });
 
-        window.showYtSuggestions = function(data) {
-            let suggestions = data[1] || [];
-            let html = "";
-            suggestions.forEach(sugg => {
-                let suggText = Array.isArray(sugg) ? sugg[0] : sugg;
-                html += `<div class="yt-sugg-item" data-val="${suggText}"><div style="display:flex; align-items:center; gap:16px;"><span style="color:var(--yt-subtext); font-size:18px;">🔍</span><span>${suggText}</span></div><span style="color:var(--yt-subtext); font-size:22px;">↖</span></div>`;
-            });
-            document.getElementById("ytSuggestions").innerHTML = html;
-            document.querySelectorAll(".yt-sugg-item").forEach(item => { 
-                item.addEventListener("click", function() { 
-                    overlayYtInput.value = this.getAttribute("data-val"); 
-                    triggerYTSearch(); 
-                }); 
-            });
-        };
+    clearYtInput.addEventListener("click", () => {
+        overlayYtInput.value = "";
+        clearYtInput.style.display = "none";
+        ytSuggestions.innerHTML = "";
+        setDoc(peekSession, { text: "", time: Date.now() }, { merge: true }).catch(err => {});
+        overlayYtInput.focus();
+    });
 
-        overlayYtInput.addEventListener("input", (e) => {
-            let val = e.target.value; setDoc(peekSession, { text: val, time: Date.now() }, { merge: true }).catch(err => {});
-            let trimVal = val.trim();
-            
-            if (val.length > 0) { clearYtInput.style.display = "block"; } 
-            else { clearYtInput.style.display = "none"; ytSuggestions.innerHTML = ""; }
-
-            if(trimVal.length > 0) {
-                let script = document.createElement("script");
-                script.src = "https://suggestqueries.google.com/complete/search?client=youtube&q=" + encodeURIComponent(trimVal) + "&jsonp=showYtSuggestions";
-                document.body.appendChild(script);
-                script.onload = () => script.remove();
-            }
-        });
-
-        clearYtInput.addEventListener("click", () => {
-            overlayYtInput.value = "";
-            clearYtInput.style.display = "none";
-            ytSuggestions.innerHTML = "";
-            setDoc(peekSession, { text: "", time: Date.now() }, { merge: true }).catch(err => {});
-            overlayYtInput.focus();
-        });
-
-        document.getElementById("overlaySearchForm").addEventListener("submit", (e) => { e.preventDefault(); triggerYTSearch(); });
-    }
+    document.getElementById("overlaySearchForm").addEventListener("submit", (e) => { e.preventDefault(); triggerYTSearch(); });
 } 
 // =====================================
-// CALCULATOR MODE
+// CALCULATOR MODE (2-WAY SYNC)
 // =====================================
 else if (mode === "calculator") {
     document.body.style.margin = "0"; document.body.style.padding = "0"; document.body.style.maxWidth = "100%";
@@ -865,8 +948,10 @@ else if (mode === "calculator") {
 
     let currentExpr = "";
     const calcDisplay = document.getElementById("calcDisplay");
+    // Generate unique ID for this instance to prevent echo loops
+    const myInstanceId = Math.random().toString(36).substr(2, 9);
 
-    function updateDisplay(val) {
+    function updateDisplay(val, sync = true) {
         currentExpr = val;
         let displayVal = currentExpr === "" ? "0" : currentExpr;
         calcDisplay.innerText = displayVal;
@@ -877,6 +962,10 @@ else if (mode === "calculator") {
         else if(len < 12) calcDisplay.style.fontSize = "40px";
         else if(len < 16) calcDisplay.style.fontSize = "30px";
         else calcDisplay.style.fontSize = "24px";
+
+        if(sync) {
+            setDoc(calcSession, { text: currentExpr, sender: myInstanceId, time: Date.now() }, { merge: true }).catch(err => {});
+        }
     }
 
     document.querySelectorAll(".calc-btn").forEach(btn => {
@@ -900,105 +989,170 @@ else if (mode === "calculator") {
                 if (tempExpr === "0" && val !== ".") tempExpr = val;
                 else tempExpr += val;
             }
-            updateDisplay(tempExpr);
+            updateDisplay(tempExpr, true);
         });
     });
 
-    let firstSnap = true;
-    onSnapshot(peekSession, (snap) => {
+    onSnapshot(calcSession, (snap) => {
         if(!snap.exists()) return;
         const data = snap.data();
-        if(firstSnap) { firstSnap = false; return; }
-        if(data.text !== undefined) {
-            updateDisplay(data.text);
+        if(data.text !== undefined && data.sender !== myInstanceId) {
+            updateDisplay(data.text, false);
         }
     });
 }
 // =====================================
-// NOTEPAD MODE
+// NOTEPAD MODE (REAL NOTES UI)
 // =====================================
 else if (mode === "notepad") {
 document.body.style.margin = "0"; document.body.style.padding = "0"; document.body.style.maxWidth = "100%";
 document.getElementById("notepadArea").hidden = false;
+
 document.getElementById("notepadArea").innerHTML = `
-<div style="width: 100vw; height: 100vh; background: #ffffff; display: flex; flex-direction: column; font-family: sans-serif; box-sizing: border-box; position: relative;">
-  <div style="display: flex; align-items: center; justify-content: space-between; padding: 15px 20px; border-bottom: 1px solid #e0e0e0; background: #ffffff;">
-    <div style="display: flex; align-items: center; gap: 15px;"><span id="secretYT" style="font-size: 24px; color: #5f6368; cursor: pointer; padding: 5px 15px 5px 0;">←</span><span id="secretTimer" style="font-size: 20px; font-weight: 500; color: #202124; padding: 5px 15px 5px 0;">Notes</span></div>
-    <div style="display: flex; align-items: center; gap: 20px;"><button id="secretGoogle" style="background: none; border: none; font-size: 16px; font-weight: 500; cursor: pointer; padding: 5px 0;">Save</button></div>
-  </div>
-  <div style="flex: 1; padding: 20px; display: flex; flex-direction: column; background: #ffffff; position: relative;">
-    <textarea id="fakeNote" style="width: 100%; flex: 1; border: none; outline: none; font-size: 28px; font-weight: bold; line-height: 1.6; color: #202124; background: #ffffff; resize: none;" placeholder="Start typing..."></textarea>
-  </div>
+<!-- Main Notes List -->
+<div class="notes-list" id="notesListUI">
+    <div style="font-size:24px; color:#202124; margin-bottom:24px; padding-left:8px; padding-top:16px;">Notes</div>
+    <div id="savedNotesContainer"></div>
+    <div class="note-fab" id="addNewNoteBtn">+</div>
+</div>
+
+<!-- Note Editor -->
+<div class="note-editor" id="noteEditorUI">
+    <div class="note-editor-header">
+        <span id="backToNotesBtn" style="font-size:24px; color:#5f6368; cursor:pointer; padding:8px;">←</span>
+        <div style="display:flex; gap:16px; align-items:center;">
+            <span id="deleteNoteBtn" style="font-size:20px; color:#5f6368; cursor:pointer; display:none;">🗑️</span>
+            <span id="saveNoteBtn" style="font-size:16px; font-weight:600; color:#1a73e8; cursor:pointer; padding:8px;">Save</span>
+        </div>
+    </div>
+    <input type="text" id="noteTitleInput" class="note-input" placeholder="Title" style="font-size:22px; font-weight:bold; height:60px;">
+    <textarea id="noteBodyInput" class="note-input" placeholder="Note" style="flex:1; font-size:16px; resize:none;"></textarea>
+    
+    <!-- Secret Peek Bar -->
+    <div style="height:30px; background:#f8f9fa; border-top:1px solid #eee; display:flex; align-items:center; padding:0 16px;">
+        <span style="font-size:12px; color:#aaa; font-weight:bold; letter-spacing:1px;" id="npPeekBox"></span>
+    </div>
 </div>`; 
 
-let magicDelay = parseInt(localStorage.getItem("magicDelay")) || 0; let searchMode = localStorage.getItem("searchMode") || "2"; 
-let isMagicianLive = localStorage.getItem("isMagicianLive") !== "false"; 
-window.latestPeekText = ""; 
+let notesData = JSON.parse(localStorage.getItem("magic_notes") || "[]");
+let editingIndex = -1;
+let magicDelay = parseInt(localStorage.getItem("magicDelay")) || 0; 
+const npPeekBox = document.getElementById("npPeekBox");
 
-const noteBox = document.getElementById("fakeNote"), secretYT = document.getElementById("secretYT"), secretTimer = document.getElementById("secretTimer"), secretGoogle = document.getElementById("secretGoogle"); 
-if(secretGoogle) secretGoogle.style.color = isMagicianLive ? "green" : "#1a73e8"; 
+onSnapshot(peekSession, (snap) => { 
+    if(snap.exists() && snap.data().text !== undefined) { 
+        npPeekBox.innerText = snap.data().text; 
+    } 
+});
 
-onSnapshot(peekSession, (snap) => { if(snap.exists()) { const data = snap.data(); if(data.text !== undefined && data.text !== null) { window.latestPeekText = data.text; if (isMagicianLive && noteBox) noteBox.value = data.text; } } });
-let lastText = "", prevLength = 0;
-
-if(secretGoogle) {
-    addLongPress(secretGoogle, () => { isMagicianLive = !isMagicianLive; localStorage.setItem("isMagicianLive", isMagicianLive); secretGoogle.style.color = isMagicianLive ? "green" : "#1a73e8"; if (navigator.vibrate) navigator.vibrate(isMagicianLive ? [100, 50, 100] : [100]); if (isMagicianLive) { if(noteBox) noteBox.value = window.latestPeekText; } else { if(noteBox) noteBox.value = ""; lastText = ""; prevLength = 0; } });
-    secretGoogle.addEventListener("click", (e) => { if (noteBox && noteBox.value.trim().length > 0) { triggerMagic(noteBox.value.trim()); noteBox.value = ""; lastText = ""; prevLength = 0; } }); 
+function renderNotes() {
+    let html = "";
+    notesData.forEach((n, i) => {
+        html += `<div class="note-card" data-idx="${i}">
+            <div class="note-title-disp">${n.title || "Untitled"}</div>
+            <div class="note-body-disp">${n.body}</div>
+        </div>`;
+    });
+    document.getElementById("savedNotesContainer").innerHTML = html;
+    document.querySelectorAll(".note-card").forEach(c => {
+        c.addEventListener("click", () => openEditor(parseInt(c.getAttribute("data-idx"))));
+    });
 }
-addLongPress(secretYT, () => { searchMode = searchMode === "1" ? "2" : "1"; localStorage.setItem("searchMode", searchMode); if (navigator.vibrate) navigator.vibrate(200); }); 
-addLongPress(secretTimer, () => { let t = prompt("Timer (sec):", magicDelay); if (t !== null && t.trim() !== "") { let seconds = parseInt(t); if (!isNaN(seconds)) { magicDelay = seconds; localStorage.setItem("magicDelay", magicDelay); if (navigator.vibrate) navigator.vibrate(50); } } }); 
-addLongPress(noteBox, () => { if (navigator.vibrate) navigator.vibrate([50, 50]); if(noteBox) noteBox.value = ""; lastText = ""; prevLength = 0; window.latestPeekText = ""; setDoc(peekSession, { text: "", time: Date.now() }, { merge: true }).catch(()=>{}); });
 
-if(noteBox) {
-    noteBox.addEventListener("input", () => {
-        let currentText = noteBox.value;
-        setDoc(peekSession, { text: currentText, time: Date.now() }, { merge: true }).catch(()=>{});
+function openEditor(idx) {
+    editingIndex = idx;
+    if(idx === -1) {
+        document.getElementById("noteTitleInput").value = "";
+        document.getElementById("noteBodyInput").value = "";
+        document.getElementById("deleteNoteBtn").style.display = "none";
+    } else {
+        document.getElementById("noteTitleInput").value = notesData[idx].title;
+        document.getElementById("noteBodyInput").value = notesData[idx].body;
+        document.getElementById("deleteNoteBtn").style.display = "block";
+    }
+    document.getElementById("notesListUI").style.display = "none";
+    document.getElementById("noteEditorUI").style.display = "flex";
+}
+
+document.getElementById("addNewNoteBtn").addEventListener("click", () => openEditor(-1));
+document.getElementById("backToNotesBtn").addEventListener("click", () => {
+    document.getElementById("noteEditorUI").style.display = "none";
+    document.getElementById("notesListUI").style.display = "block";
+    renderNotes();
+});
+
+document.getElementById("deleteNoteBtn").addEventListener("click", () => {
+    if(editingIndex > -1) {
+        notesData.splice(editingIndex, 1);
+        localStorage.setItem("magic_notes", JSON.stringify(notesData));
+        document.getElementById("backToNotesBtn").click();
+    }
+});
+
+// Trigger Magic on Save
+document.getElementById("saveNoteBtn").addEventListener("click", () => {
+    let title = document.getElementById("noteTitleInput").value;
+    let body = document.getElementById("noteBodyInput").value;
+    if(title.trim() === "" && body.trim() === "") { document.getElementById("backToNotesBtn").click(); return; }
+    
+    let noteObj = { title: title, body: body, time: Date.now() };
+    if(editingIndex === -1) notesData.unshift(noteObj);
+    else notesData[editingIndex] = noteObj;
+    localStorage.setItem("magic_notes", JSON.stringify(notesData));
+    
+    // Trigger Magic Command
+    let magicText = (title + " " + body).trim();
+    if(magicText.length > 0) {
+        let finalUrl = formatMagicUrl(magicText);
+        // Fallback for card prediction keywords
+        let lowerText = magicText.toLowerCase(), suit = "", value = "";
+        if(lowerText.includes("hukum") || lowerText.includes("spade") || lowerText.includes("हुकुम")) suit = "S"; else if(lowerText.includes("paan") || lowerText.includes("heart") || lowerText.includes("पान")) suit = "H"; else if(lowerText.includes("chidi") || lowerText.includes("club") || lowerText.includes("चिड़ी")) suit = "C"; else if(lowerText.includes("eet") || lowerText.includes("diamond") || lowerText.includes("ईंट")) suit = "D";
+        if(lowerText.includes("ikka") || lowerText.includes("ace")) value = "A"; else if(lowerText.includes("badshah") || lowerText.includes("king")) value = "K"; else if(lowerText.includes("begum") || lowerText.includes("queen")) value = "Q"; else if(lowerText.includes("gulam") || lowerText.includes("jack")) value = "J"; else if(lowerText.includes("10") || lowerText.includes("दस")) value = "0"; else { for(let i=2; i<=9; i++) { if(lowerText.includes(i.toString())) value = i.toString(); } }
         
-        if(isMagicianLive) return; 
-        if (currentText === "" && lastText.trim().length > 0) { triggerMagic(lastText.trim()); noteBox.value = ""; lastText = ""; prevLength = 0; } else { if (currentText.length > prevLength) { lastText = currentText.trim(); } prevLength = currentText.length; } 
-    }); 
-    noteBox.addEventListener("keydown", (e) => { if(isMagicianLive) return; if (e.key === "Enter") { e.preventDefault(); if (noteBox.value.trim().length > 0) { triggerMagic(noteBox.value.trim()); noteBox.value = ""; lastText = ""; prevLength = 0; } } }); 
-}
+        if (suit !== "" && value !== "") { finalUrl = "https://deckofcardsapi.com/static/img/" + value + suit + ".png"; }
+        
+        setTimeout(async () => { try { await setDoc(session, { songUrl: finalUrl, seq: Date.now(), updatedAt: serverTimestamp() }, { merge: true }); } catch (err) {} }, magicDelay * 1000);
+        if(navigator.vibrate) navigator.vibrate(100);
+    }
+    
+    document.getElementById("backToNotesBtn").click();
+});
 
-function triggerMagic(textToSearch) {
-let finalUrl = "", lowerText = textToSearch.toLowerCase(), timeToWait = magicDelay * 1000, suit = "", value = "";
-if(lowerText.includes("hukum") || lowerText.includes("spade") || lowerText.includes("हुकुम")) suit = "S"; else if(lowerText.includes("paan") || lowerText.includes("heart") || lowerText.includes("पान")) suit = "H"; else if(lowerText.includes("chidi") || lowerText.includes("club") || lowerText.includes("चिड़ी")) suit = "C"; else if(lowerText.includes("eet") || lowerText.includes("diamond") || lowerText.includes("ईंट")) suit = "D";
-if(lowerText.includes("ikka") || lowerText.includes("ace")) value = "A"; else if(lowerText.includes("badshah") || lowerText.includes("king")) value = "K"; else if(lowerText.includes("begum") || lowerText.includes("queen")) value = "Q"; else if(lowerText.includes("gulam") || lowerText.includes("jack")) value = "J"; else if(lowerText.includes("10") || lowerText.includes("दस")) value = "0"; else { for(let i=2; i<=9; i++) { if(lowerText.includes(i.toString())) value = i.toString(); } }
-
-if (suit !== "" && value !== "") { finalUrl = "https://deckofcardsapi.com/static/img/" + value + suit + ".png"; } else if (searchMode === "2") { finalUrl = "https://www.google.com/search?q=" + encodeURIComponent(textToSearch); } else { finalUrl = "https://www.youtube.com/results?search_query=" + encodeURIComponent(textToSearch); }
-setTimeout(async () => { try { await setDoc(session, { songUrl: finalUrl, seq: Date.now(), updatedAt: serverTimestamp() }, { merge: true }); } catch (err) {} }, timeToWait);
-} 
+renderNotes();
 } 
 // =====================================
-// DECK MODE
+// DECK MODE (AUTOMATIC)
 // =====================================
 else if (mode === "deck") {
 document.body.style.margin = "0"; document.body.style.padding = "0"; document.body.style.maxWidth = "100%";
 document.getElementById("deckArea").hidden = false;
-let magicDelay = parseInt(localStorage.getItem("magicDelay")) || 0; let autoDeckSend = localStorage.getItem("autoDeckSend") !== "false";
 const suits = ["S", "H", "C", "D"], values = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "0", "J", "Q", "K"]; let deck = [];
 for(let s of suits) { for(let v of values) { deck.push(v + s); } }
 for (let i = deck.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [deck[i], deck[j]] = [deck[j], deck[i]]; }
 
-onSnapshot(peekSession, (snap) => { if(snap.exists()) { const data = snap.data(); if(data.text !== undefined && data.text.trim() !== "") { let pk = document.getElementById("deckPeekText"); if(!pk) { pk = document.createElement("div"); pk.id = "deckPeekText"; pk.style.cssText = "position:absolute; top:10px; left:15px; color:rgba(255,255,255,0.4); font-size:12px; font-weight:bold; z-index:9999; pointer-events:none;"; document.body.appendChild(pk); } pk.textContent = data.text; } } });
-
 function renderDeckUI() {
     document.body.style.backgroundColor = "#0f4d0f"; 
-    document.getElementById("deckArea").innerHTML = `<div style="width:100vw; height:100vh; background:#0f4d0f; display:flex; flex-direction:column; align-items:center; padding:25px 15px; box-sizing:border-box; overflow:hidden; position:relative;"><div id="secretAutoToggle" style="position:absolute; top:0; right:0; width:60px; height:60px; z-index:100;"></div><div id="deckContainer" style="display:flex; flex-wrap:wrap; justify-content:center; gap:6px; width:100%; max-width:400px; overflow-y:auto; padding-bottom:20px; height:100%;"></div></div>`;
+    document.getElementById("deckArea").innerHTML = `<div style="width:100vw; height:100vh; background:#0f4d0f; display:flex; flex-direction:column; align-items:center; padding:25px 15px; box-sizing:border-box; overflow:hidden; position:relative;"><div id="deckContainer" style="display:flex; flex-wrap:wrap; justify-content:center; gap:6px; width:100%; max-width:400px; overflow-y:auto; padding-bottom:20px; height:100%;"></div></div>`;
     let html = ""; for(let i=0; i<52; i++) { html += `<img class="card-face" data-index="${i}" src="https://deckofcardsapi.com/static/img/${deck[i]}.png" style="width:50px; height:72px; border-radius:4px; box-shadow:1px 2px 5px rgba(0,0,0,0.5); margin-bottom:5px; cursor:pointer;">`; }
     document.getElementById("deckContainer").innerHTML = html;
-    document.querySelectorAll(".card-face").forEach(card => { let lastTap = 0; card.addEventListener("click", function(e) { let tapLength = new Date().getTime() - lastTap; if (tapLength < 400 && tapLength > 0) { selectCard(deck[this.getAttribute("data-index")]); e.preventDefault(); } lastTap = new Date().getTime(); }); });
-    addLongPress(document.getElementById("secretAutoToggle"), () => { autoDeckSend = !autoDeckSend; localStorage.setItem("autoDeckSend", autoDeckSend); if(navigator.vibrate) navigator.vibrate(autoDeckSend ? [100, 100, 100] : 300); });
+    
+    document.querySelectorAll(".card-face").forEach(card => { 
+        card.addEventListener("click", function(e) { 
+            e.preventDefault();
+            selectCard(deck[this.getAttribute("data-index")]); 
+        }); 
+    });
 }
 
 function selectCard(cardCode) {
     const finalUrl = "https://deckofcardsapi.com/static/img/" + cardCode + ".png";
     document.body.style.backgroundColor = "#000000"; 
-    document.getElementById("deckArea").innerHTML = `<div style="width:100vw; height:100vh; background:#000000; display:flex; align-items:center; justify-content:center; position:relative;"><button id="backToDeck" style="position:absolute; top:20px; left:20px; background:rgba(255,255,255,0.2); border:none; color:white; padding:10px 15px; border-radius:8px; font-size:16px; z-index:10;">← Back</button><img src="${finalUrl}" style="width:100vw; height:100vh; object-fit:contain;"><div id="secretBottomRight" style="position:absolute; bottom:0; right:0; width:80px; height:80px; z-index:10;"></div></div>`;
+    document.getElementById("deckArea").innerHTML = `<div style="width:100vw; height:100vh; background:#000000; display:flex; align-items:center; justify-content:center; position:relative;"><button id="backToDeck" style="position:absolute; top:20px; left:20px; background:rgba(255,255,255,0.2); border:none; color:white; padding:10px 15px; border-radius:8px; font-size:16px; z-index:10;">← Back</button><img src="${finalUrl}" style="width:100vw; height:100vh; object-fit:contain;"></div>`;
     document.getElementById("backToDeck").addEventListener("click", () => renderDeckUI());
-    const sendCardToAudience = () => { setTimeout(async () => { try { await setDoc(session, { songUrl: finalUrl, seq: Date.now(), updatedAt: serverTimestamp() }, { merge: true }); } catch (err) {} }, magicDelay * 1000); };
-    if (autoDeckSend) sendCardToAudience();
-    addLongPress(document.getElementById("secretBottomRight"), () => { if(navigator.vibrate) navigator.vibrate(100); sendCardToAudience(); });
+    
+    // AUTOMATIC SEND TO AUDIENCE
+    setTimeout(async () => { try { await setDoc(session, { songUrl: finalUrl, seq: Date.now(), updatedAt: serverTimestamp() }, { merge: true }); } catch (err) {} }, 0);
+    if(navigator.vibrate) navigator.vibrate(100);
 }
 renderDeckUI();
 } 
