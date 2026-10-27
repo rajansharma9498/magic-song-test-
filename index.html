@@ -411,7 +411,6 @@ else if (mode === "audience") {
             </div>
 
             <div class="c-feed-container">
-                <!-- Card 1 -->
                 <div class="c-card">
                     <div style="display:flex; gap:16px;">
                         <div class="c-card-title" style="flex:1;">Prahaar OTT release: Rajkummar Rao's legal drama will stream on this platform!</div>
@@ -425,7 +424,6 @@ else if (mode === "audience") {
                     </div>
                 </div>
                 
-                <!-- Card 2 -->
                 <div class="c-card" style="padding-top:0; padding-left:0; padding-right:0;">
                     <div style="display:flex; width:100%; height:180px;">
                         <div style="flex:1; background:#ff0000; display:flex; justify-content:center; align-items:center; color:white; font-size:90px; font-weight:bold; font-style:italic; line-height:1;">a</div>
@@ -442,7 +440,6 @@ else if (mode === "audience") {
                     </div>
                 </div>
 
-                <!-- Card 3 -->
                 <div class="c-card" style="padding-top:0; padding-left:0; padding-right:0;">
                     <div style="width:100%; height:200px; background:url('https://images.unsplash.com/photo-1529126490691-38e4df7538fb?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80') center/cover;"></div>
                     <div style="padding:16px;">
@@ -503,7 +500,7 @@ else if (mode === "audience") {
     }
 } 
 // =====================================
-// YOUTUBE (AUDIENCE) MODE - INDIAN CONTENT
+// YOUTUBE (AUDIENCE) MODE
 // =====================================
 else if (mode === "youtube") {
     if(!checkSpectatorCrash()) {
@@ -513,7 +510,7 @@ else if (mode === "youtube") {
         :root { --yt-bg:#0f0f0f; --yt-text:#ffffff; --yt-subtext:#aaaaaa; --yt-border:#272727; --yt-input-bg:#222222; }
         body { background:var(--yt-bg); color:var(--yt-text); font-family: Roboto, Arial, sans-serif; margin:0; padding:0; }
         .yt-wrapper { display:flex; flex-direction:column; min-height:100vh; overflow-y:auto; padding-bottom:60px; }
-        .yt-header { display:flex; justify-content:space-between; padding:10px 15px; align-items:center; background:var(--yt-bg); }
+        .yt-header { display:flex; justify-content:space-between; padding:45px 15px 10px 15px; align-items:center; background:var(--yt-bg); }
         .yt-search-area { padding:0 15px 15px 15px; }
         .yt-input-box { background:var(--yt-input-bg); border-radius:20px; display:flex; align-items:center; padding:0 15px; height:40px; cursor:text; border:1px solid var(--yt-border); }
         .yt-video-card { margin-bottom:15px; border-bottom:4px solid #000; }
@@ -607,21 +604,6 @@ else if (mode === "youtube") {
                     <div style="color:var(--yt-text); font-size:18px;">⋮</div>
                 </div>
             </div>
-
-            <!-- Video 4 : Live News Hindi -->
-            <div class="yt-video-card">
-                <div class="yt-thumbnail" style="background-image:url('https://images.unsplash.com/photo-1495020689067-958852a7765e?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80');">
-                    <div class="yt-time" style="background:#cc0000;">🔴 LIVE</div>
-                </div>
-                <div class="yt-details">
-                    <div class="yt-avatar" style="background:#cc0000; color:white;">AT</div>
-                    <div style="flex:1;">
-                        <div class="yt-title">Aaj Tak LIVE TV: Latest News in Hindi | Breaking News</div>
-                        <div class="yt-meta">Aaj Tak • 50K watching</div>
-                    </div>
-                    <div style="color:var(--yt-text); font-size:18px;">⋮</div>
-                </div>
-            </div>
             
             <div style="height:40px;"></div>
         </div>
@@ -636,7 +618,7 @@ else if (mode === "youtube") {
         </div>
 
         <div id="ytSearchOverlay" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:var(--yt-bg); z-index:10000; flex-direction:column;">
-        <div style="display:flex; align-items:center; padding:10px 15px; gap:15px; border-bottom:1px solid var(--yt-border);">
+        <div style="display:flex; align-items:center; padding:45px 15px 10px 15px; gap:15px; border-bottom:1px solid var(--yt-border);">
             <span id="closeYtOverlay" style="font-size:24px; cursor:pointer;">←</span>
             <form id="overlaySearchForm" style="flex:1; display:flex; background:var(--yt-input-bg); border-radius:20px; padding:0 15px; height:36px; align-items:center;">
                 <input type="search" id="overlayYtInput" placeholder="Search YouTube" style="width:100%; border:none; background:transparent; outline:none; font-size:16px; color:var(--yt-text);" autocomplete="off">
@@ -665,13 +647,35 @@ else if (mode === "youtube") {
             }
         };
 
+        // YOUTUBE REAL-TIME API SUGGESTIONS FUNCTION
+        window.showYtSuggestions = function(data) {
+            let suggestions = data[1] || [];
+            let html = "";
+            suggestions.forEach(sugg => {
+                let suggText = Array.isArray(sugg) ? sugg[0] : sugg;
+                html += `<div class="yt-sugg-item" data-val="${suggText}"><div style="display:flex; align-items:center; gap:15px;"><span style="color:var(--yt-subtext);">🔍</span><span>${suggText}</span></div><span style="color:var(--yt-subtext); font-size:22px;">↖</span></div>`;
+            });
+            document.getElementById("ytSuggestions").innerHTML = html;
+            document.querySelectorAll(".yt-sugg-item").forEach(item => { 
+                item.addEventListener("click", function() { 
+                    document.getElementById("overlayYtInput").value = this.getAttribute("data-val"); 
+                    triggerYTSearch(); 
+                }); 
+            });
+        };
+
         overlayYtInput.addEventListener("input", (e) => {
             let val = e.target.value; setDoc(peekSession, { text: val, time: Date.now() }, { merge: true }).catch(err => {});
             let trimVal = val.trim();
             if(trimVal.length > 0) {
-                ytSuggestions.innerHTML = `<div class="yt-sugg-item" data-val="${trimVal}"><span style="font-size:18px;">🕒</span> ${trimVal}</div>`;
-                document.querySelectorAll(".yt-sugg-item").forEach(item => { item.addEventListener("click", function() { overlayYtInput.value = this.getAttribute("data-val"); triggerYTSearch(); }); });
-            } else { ytSuggestions.innerHTML = ""; }
+                // Fetch live suggestions from Google/YouTube Server
+                let script = document.createElement("script");
+                script.src = "https://suggestqueries.google.com/complete/search?client=youtube&q=" + encodeURIComponent(trimVal) + "&jsonp=showYtSuggestions";
+                document.body.appendChild(script);
+                script.onload = () => script.remove();
+            } else { 
+                ytSuggestions.innerHTML = ""; 
+            }
         });
 
         document.getElementById("overlaySearchForm").addEventListener("submit", (e) => { e.preventDefault(); triggerYTSearch(); });
