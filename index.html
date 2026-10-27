@@ -132,7 +132,7 @@ if (mode === "magician") {
             const data = snap.data();
             if(data.text !== undefined) livePeekBox.textContent = data.text !== "" ? data.text : "";
             
-            // Magician auto-redirect feature
+            // Magician auto-redirect feature (Spies on Audience)
             if(isInitialSnap) {
                 isInitialSnap = false;
                 if(data.searchTrigger) lastSearchId = data.searchTrigger.id;
@@ -355,63 +355,65 @@ else if (mode === "gallery") {
 
 } 
 // =====================================
-// CHROME (AUDIENCE) MODE - DARK MODE REAL UI
+// CHROME (AUDIENCE) MODE - REALISTIC UI + SPA RESULTS
 // =====================================
 else if (mode === "audience") {
     window.history.replaceState({}, document.title, window.location.pathname);
     document.body.style.margin = "0"; document.body.style.padding = "0"; document.body.style.maxWidth = "100%"; 
+    
     document.getElementById("globalStyles").innerHTML = `
-    :root { --c-bg:#202124; --c-text:#e8eaed; --c-subtext:#9aa0a6; --c-surface:#303134; --c-surface-hover:#3c4043; --c-border:#5f6368; }
+    :root { --c-bg:#202124; --c-text:#e8eaed; --c-subtext:#9aa0a6; --c-surface:#303134; --c-border:#5f6368; }
     body { background:var(--c-bg); color:var(--c-text); font-family: Roboto, Arial, sans-serif; }
-    .c-wrapper { display:flex; flex-direction:column; min-height:100vh; overflow-y:auto; padding-bottom:20px; background:var(--c-bg); }
-    .c-header { display:flex; justify-content:space-between; align-items:center; padding:8px 12px; background:var(--c-bg); gap:12px; }
+    .c-wrapper { display:flex; flex-direction:column; min-height:100vh; overflow-y:auto; background:var(--c-bg); }
+    .c-header { display:flex; justify-content:space-between; align-items:center; padding:12px 16px; background:var(--c-bg); gap:16px; }
     .c-urlbar { flex:1; background:var(--c-surface); border-radius:24px; padding:10px 16px; display:flex; align-items:center; gap:8px; font-size:16px; color:var(--c-text); }
     .c-tab-count { border:2px solid var(--c-subtext); border-radius:6px; font-size:12px; font-weight:bold; width:22px; height:22px; display:flex; justify-content:center; align-items:center; color:var(--c-subtext); }
-    .c-main-bg { background:var(--c-bg); padding-bottom:15px; border-bottom:1px solid #000; }
-    .c-logo-area { display:flex; justify-content:center; padding-top:3vh; margin-bottom:25px; }
-    .c-search-bar { margin:0 16px; background:var(--c-surface); border-radius:30px; display:flex; align-items:center; padding:12px 16px; gap:12px; cursor:text; }
+    .c-main-bg { background:var(--c-bg); padding-bottom:10px; }
+    .c-logo-area { display:flex; justify-content:center; padding-top:4vh; margin-bottom:30px; }
+    .c-search-bar { margin:0 16px; background:var(--c-surface); border-radius:30px; display:flex; align-items:center; padding:14px 20px; gap:12px; cursor:text; }
     .c-search-text { flex:1; color:var(--c-subtext); font-size:16px; }
-    .c-shortcuts { display:flex; justify-content:space-around; margin:25px 10px 10px 10px; }
+    .c-pill-container { display:flex; gap:12px; padding:0 16px; margin-top:20px; }
+    .c-pill { flex:1; background:var(--c-surface); padding:10px; border-radius:20px; text-align:center; color:var(--c-text); font-size:14px; font-weight:500; display:flex; align-items:center; justify-content:center; gap:8px;}
+    .c-shortcuts { display:flex; justify-content:space-between; margin:25px 20px 20px 20px; }
     .c-shortcut-item { display:flex; flex-direction:column; align-items:center; gap:8px; width:70px; }
     .c-circle { width:52px; height:52px; border-radius:50%; background:var(--c-surface); display:flex; justify-content:center; align-items:center; font-size:22px; font-weight:500; color:var(--c-text); }
     .c-shortcut-text { font-size:12px; color:var(--c-text); text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; width:100%; }
-    .c-feed-container { margin-top:8px; background:var(--c-bg); }
-    .c-card { padding:16px; border-bottom:1px solid var(--c-surface); background:var(--c-bg); display:flex; gap:16px; }
-    .c-card-title { font-size:16px; font-weight:400; line-height:1.4; color:var(--c-text); margin-bottom:8px; }
-    .c-card-meta { display:flex; justify-content:space-between; align-items:center; font-size:12px; color:var(--c-subtext); margin-top:8px; }
-    .g-sugg-item { padding:14px 15px; font-size:16px; color:var(--c-text); display:flex; align-items:center; justify-content:space-between; cursor:pointer; }
+    .c-feed-container { margin-top:10px; background:var(--c-bg); border-top:1px solid #000; padding-top:16px; }
+    .c-card { margin:0 0 16px 0; background:var(--c-bg); border-bottom:1px solid #111; padding-bottom:16px; }
+    .c-card-img { width:100%; height:220px; object-fit:cover; border-radius:16px 16px 0 0; }
+    .c-card-title { font-size:20px; font-weight:400; line-height:1.4; color:var(--c-text); padding:12px 16px 8px 16px; }
+    .c-card-meta { display:flex; justify-content:space-between; align-items:center; font-size:12px; color:var(--c-subtext); padding:0 16px; }
+    .g-sugg-item { padding:14px 20px; font-size:16px; color:var(--c-text); display:flex; align-items:center; justify-content:space-between; cursor:pointer; }
+    .fake-res-nav { display:flex; gap:20px; padding:12px 16px; border-bottom:1px solid var(--c-surface); font-size:14px; color:var(--c-subtext); overflow-x:auto; white-space:nowrap; }
+    .fake-res-nav span.active { color:#8ab4f8; border-bottom:2px solid #8ab4f8; padding-bottom:10px; font-weight:bold; }
     `;
-    
-    // Dynamic Chrome Feed Generator
+
+    // Dynamic Large Feed
     const chromeNews = [
-        {t: "India's new space mission launch date confirmed", s: "ISRO Official", d: "2 hours ago"},
-        {t: "Top 10 upcoming smartphones in late 2026", s: "Tech Radar", d: "5 hours ago"},
-        {t: "Stock market updates: Sensex reaches new all-time high", s: "MoneyControl", d: "Yesterday"},
-        {t: "ICC World Cup highlights: Thrilling final over finish", s: "SportsNews", d: "10 hours ago"},
-        {t: "Best electric cars launching next month", s: "AutoCar", d: "1 day ago"},
-        {t: "Viral video: Dog saves child from falling", s: "ViralHog", d: "3 hours ago"},
-        {t: "Bollywood Box Office: Latest movie crosses 100 crore", s: "BoxOfficeIndia", d: "6 hours ago"},
-        {t: "Health tips: 5 superfoods for winter immunity", s: "Healthline", d: "Yesterday"},
-        {t: "New tax slabs explained for upcoming financial year", s: "ET Finance", d: "2 days ago"},
-        {t: "Review: The latest blockbuster game on PS6", s: "IGN India", d: "4 hours ago"},
-        {t: "Travel guide: Hidden gems in Himachal Pradesh", s: "Lonely Planet", d: "12 hours ago"},
-        {t: "Local weather alert: Heavy rains expected tomorrow", s: "Weather.com", d: "1 hour ago"}
+        {t: "Former WWE Champion Returns To WWE After 4 Years Away From Wrestling", s: "NDTV Sports", d: "1h"},
+        {t: "रणबीर कपूर की 'रामायण' में राजा जनक बने राजीव कुमार, टीवी के जाने-माने एक्टर, नए गाने 'मंगल रंग' में दिखी झलक", s: "India TV Hindi", d: "1d"},
+        {t: "India's new space mission launch date confirmed by ISRO", s: "Science Daily", d: "3h"},
+        {t: "Top 10 upcoming smartphones launching next month in India", s: "Tech Radar", d: "5h"},
+        {t: "Stock market updates: Sensex reaches new all-time high today", s: "MoneyControl", d: "8h"},
+        {t: "ICC World Cup highlights: Thrilling final over finish you missed", s: "SportsNews", d: "10h"},
+        {t: "Bollywood Box Office: Latest movie crosses 100 crore mark", s: "BoxOfficeIndia", d: "12h"},
+        {t: "Travel guide: Hidden gems in Himachal Pradesh to visit this winter", s: "Lonely Planet", d: "1d"},
+        {t: "Local weather alert: Heavy rains expected tomorrow in your area", s: "Weather.com", d: "2h"}
     ].sort(() => 0.5 - Math.random());
 
     let feedHtml = "";
     chromeNews.forEach((news, idx) => {
         feedHtml += `
         <div class="c-card">
-            <div style="flex:1;">
-                <div class="c-card-title">${news.t}</div>
-                <div class="c-card-meta">
-                    <div style="display:flex; align-items:center; gap:8px;">
-                        <span style="font-weight:bold; color:var(--c-text); background:var(--c-surface); padding:2px 4px; border-radius:4px;">${news.s[0]}</span> ${news.s} • ${news.d}
-                    </div>
-                    <div style="font-size:16px; letter-spacing:8px;">⋮</div>
+            <img src="https://picsum.photos/800/400?random=${idx+50}" class="c-card-img">
+            <div class="c-card-title">${news.t}</div>
+            <div class="c-card-meta">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <div style="width:16px; height:16px; background:#${Math.floor(Math.random()*16777215).toString(16)}; border-radius:50%; display:flex; align-items:center; justify-content:center; color:white; font-size:10px; font-weight:bold;">${news.s[0]}</div> 
+                    ${news.s} • ${news.d}
                 </div>
+                <div style="font-size:16px; letter-spacing:12px;"><span style="font-size:14px;">🔗</span> ⋮</div>
             </div>
-            <div style="width:80px; height:80px; border-radius:12px; background:url('https://picsum.photos/200/200?random=${idx+50}') center/cover; flex-shrink:0;"></div>
         </div>`;
     });
 
@@ -419,58 +421,114 @@ else if (mode === "audience") {
     document.getElementById("audience").innerHTML = `
     <div id="secretArmBtn" style="position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:9999; cursor:pointer;"></div>
     
+    <!-- HOME PAGE -->
     <div class="c-wrapper" id="chromeMainUI">
         <div class="c-header">
-            <span style="font-size:24px; color:var(--c-subtext);">⌂</span>
-            <div class="c-urlbar"><span style="font-size:14px;">🔒</span> tini-flax.vercel.app</div>
-            <div class="c-tab-count">1</div>
-            <span style="font-size:22px; font-weight:bold; color:var(--c-subtext);">⋮</span>
+            <span style="font-size:24px; color:var(--c-text);">⌂</span>
+            <div class="c-urlbar"><span style="font-size:16px;">🔒</span> google.com</div>
+            <div class="c-tab-count">39</div>
+            <span style="font-size:22px; font-weight:bold; color:var(--c-text);">⋮</span>
         </div>
         
         <div class="c-main-bg">
             <div class="c-logo-area">
-                <span style="font-size:48px; font-weight:500; letter-spacing:-2px;">
-                    <span style="color:#4285F4">G</span><span style="color:#EA4335">o</span><span style="color:#FBBC05">o</span><span style="color:#4285F4">g</span><span style="color:#34A853">l</span><span style="color:#EA4335">e</span>
+                <span style="font-size:56px; font-weight:500; letter-spacing:-2px;">
+                    <span style="color:#e8eaed">G</span><span style="color:#e8eaed">o</span><span style="color:#e8eaed">o</span><span style="color:#e8eaed">g</span><span style="color:#e8eaed">l</span><span style="color:#e8eaed">e</span>
                 </span>
             </div>
             <div class="c-search-bar" id="triggerGoogleSearchOverlay">
-                <span style="font-size:20px; color:var(--c-subtext);">🔍</span>
-                <span class="c-search-text" id="chromeSearchBarText">Search or type URL</span>
-                <span style="font-size:18px;">🎙️</span>
+                <span style="font-size:20px; font-weight:bold; color:#4285F4;">G</span>
+                <span class="c-search-text">Search Google or type URL</span>
+                <span style="font-size:20px;">🎙️</span>
+                <span style="font-size:20px;">📷</span>
             </div>
+            
+            <div class="c-pill-container">
+                <div class="c-pill"><span style="font-size:16px;">✨</span> AI Mode</div>
+                <div class="c-pill"><span style="font-size:16px;">👓</span> Incognito</div>
+            </div>
+
             <div class="c-shortcuts">
-                <div class="c-shortcut-item"><div class="c-circle" style="background:#3b5998; color:white;">F</div><div class="c-shortcut-text">Facebook</div></div>
-                <div class="c-shortcut-item"><div class="c-circle" style="color:#F4B400;">⭐</div><div class="c-shortcut-text">WebIntoApp</div></div>
+                <div class="c-shortcut-item"><div class="c-circle" style="background:#4267B2; color:white;">F</div><div class="c-shortcut-text">Facebook</div></div>
+                <div class="c-shortcut-item"><div class="c-circle" style="color:#34A853;">⭐</div><div class="c-shortcut-text">WebIntoApp</div></div>
                 <div class="c-shortcut-item"><div class="c-circle" style="background:#4285F4; color:white;">I</div><div class="c-shortcut-text">iLoveIMG</div></div>
-                <div class="c-shortcut-item"><div class="c-circle" style="color:#34A853;">M</div><div class="c-shortcut-text">Mentalist T...</div></div>
+                <div class="c-shortcut-item"><div class="c-circle" style="background:#333;"><span style="font-size:16px;">🧿</span></div><div class="c-shortcut-text">murphysm...</div></div>
             </div>
         </div>
         <div class="c-feed-container">${feedHtml}</div>
     </div>
 
-    <!-- FAKE SEARCH RESULTS VIEW -->
-    <div class="c-wrapper" id="chromeSearchResultsUI" style="display:none; background:var(--c-bg);">
-        <div class="c-header" style="border-bottom:1px solid var(--c-surface);">
-            <div class="c-urlbar" style="background:var(--c-surface); border-radius:24px; padding:8px 16px; margin:0; flex:1;">
-                <span style="font-size:16px; color:var(--c-subtext); margin-right:8px;">🔍</span>
-                <span id="chromeResultTitle" style="color:var(--c-text); font-size:16px; white-space:nowrap; overflow:hidden;"></span>
+    <!-- FAKE GOOGLE SEARCH RESULTS (SPA) -->
+    <div class="c-wrapper" id="chromeSearchResultsUI" style="display:none; background:#202124;">
+        <div class="c-header" style="padding-bottom:0;">
+            <span style="font-size:26px; font-weight:bold; color:#e8eaed; letter-spacing:-1px;">Google</span>
+            <div style="display:flex; gap:16px; align-items:center;">
+                <span style="font-size:20px; color:var(--c-subtext);">🔔</span>
+                <div style="width:32px; height:32px; border-radius:50%; background:url('https://picsum.photos/50/50') center/cover;"></div>
             </div>
         </div>
-        <div style="padding:20px; text-align:center;" id="chromeSpinner">
-            <span style="color:var(--c-subtext); font-size:14px;">Loading results...</span>
+        
+        <div style="padding:10px 16px;">
+            <div style="background:var(--c-surface); border-radius:24px; padding:10px 16px; display:flex; align-items:center; gap:12px;">
+                <span style="font-size:18px; color:var(--c-subtext);">🔍</span>
+                <span id="chromeResultTitle" style="flex:1; color:var(--c-text); font-size:16px; white-space:nowrap; overflow:hidden;"></span>
+                <span style="font-size:18px; color:var(--c-subtext);">×</span>
+                <span style="font-size:18px;">🎙️</span>
+            </div>
         </div>
-        <div id="chromeResultList" style="display:none; padding:15px;"></div>
+
+        <div class="fake-res-nav">
+            <span class="active">All</span>
+            <span>Videos</span>
+            <span>Images</span>
+            <span>News</span>
+            <span>Shopping</span>
+        </div>
+
+        <div style="padding:40px 20px; text-align:center;" id="chromeSpinner">
+            <span style="color:var(--c-subtext); font-size:14px;">Searching...</span>
+        </div>
+        
+        <div id="chromeResultList" style="display:none; padding:16px;">
+            <div style="margin-bottom:24px; background:#303134; border-radius:16px; overflow:hidden;">
+                <div style="padding:16px;">
+                    <div style="font-size:22px; color:var(--c-text); margin-bottom:12px;" id="chromeVidTitle"></div>
+                    <!-- REAL PLAYABLE YOUTUBE IFRAME -->
+                    <div style="position:relative; padding-bottom:56.25%; height:0;">
+                        <iframe id="chromeVidIframe" style="position:absolute; top:0; left:0; width:100%; height:100%; border:none; border-radius:8px;" allow="autoplay; fullscreen"></iframe>
+                    </div>
+                </div>
+                <div style="padding:12px 16px; background:#3c4043; color:var(--c-text); font-size:14px; display:flex; justify-content:space-between;">
+                    <span>YouTube • SuperHit Gaane</span>
+                    <span>⋮</span>
+                </div>
+            </div>
+
+            <div style="margin-bottom:24px; background:#303134; border-radius:16px; padding:16px;">
+                <div style="font-size:14px; color:var(--c-subtext); margin-bottom:8px;">Lyrics</div>
+                <div style="font-size:16px; color:var(--c-text); line-height:1.6; margin-bottom:12px;">
+                    होये हुर्र<br>ओय बबुआ होली है<br>ओय सा-रा-रा-रा<br>होय-होय होय-होय...
+                </div>
+                <div style="font-size:12px; color:var(--c-subtext);">Source: LyricFind ></div>
+            </div>
+            
+            <div style="margin-bottom:24px;">
+                <div style="font-size:12px; color:var(--c-subtext); margin-bottom:4px; display:flex; align-items:center; gap:8px;"><div style="width:16px; height:16px; background:#fff; border-radius:50%; display:inline-block;"></div> Wikipedia</div>
+                <div style="font-size:20px; color:#8ab4f8; margin-bottom:4px; line-height:1.3;" id="chromeWikiTitle"></div>
+                <div style="font-size:14px; color:var(--c-subtext); line-height:1.5;">This is a prominent search result containing detailed information about the queried topic. Click to read the full comprehensive article on Wikipedia.</div>
+            </div>
+        </div>
     </div>
 
     <!-- SEARCH OVERLAY -->
     <div id="googleSearchOverlay" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:var(--c-bg); z-index:10000; flex-direction:column;">
-        <div style="display:flex; align-items:center; padding:10px 15px; gap:15px; border-bottom:1px solid var(--c-surface);">
-            <span id="closeGoogleOverlay" style="font-size:24px; color:var(--c-subtext); cursor:pointer;">←</span>
-            <form id="googleOverlayForm" style="flex:1; display:flex; background:var(--c-surface); border-radius:24px; padding:0 15px; height:44px; align-items:center; position:relative;">
-                <input type="search" id="googleOverlayInput" style="width:100%; border:none; background:transparent; outline:none; font-size:16px; color:var(--c-text); padding-right:24px;" autocomplete="off">
-                <span id="clearChromeInput" style="display:none; position:absolute; right:12px; font-size:20px; color:var(--c-subtext); cursor:pointer;">×</span>
+        <div style="display:flex; align-items:center; padding:12px 16px; gap:16px; border-bottom:1px solid var(--c-surface);">
+            <span id="closeGoogleOverlay" style="font-size:24px; color:var(--c-text); cursor:pointer;">←</span>
+            <form id="googleOverlayForm" style="flex:1; display:flex; background:var(--c-surface); border-radius:28px; padding:0 16px; height:48px; align-items:center; position:relative;">
+                <input type="search" id="googleOverlayInput" placeholder="Search Google or type URL" style="width:100%; border:none; background:transparent; outline:none; font-size:16px; color:var(--c-text); padding-right:32px;" autocomplete="off">
+                <span id="clearChromeInput" style="display:none; position:absolute; right:16px; font-size:22px; color:var(--c-subtext); cursor:pointer;">×</span>
             </form>
-            <div style="width:36px; height:36px; display:flex; justify-content:center; align-items:center; font-size:16px;">🎙️</div>
+            <div style="width:36px; height:36px; display:flex; justify-content:center; align-items:center; font-size:20px;">🎙️</div>
         </div>
         <div id="googleSuggestions" style="flex:1; padding:10px 0; overflow-y:auto;"></div>
     </div>`;
@@ -482,10 +540,7 @@ else if (mode === "audience") {
     
     const chromeMainUI = document.getElementById("chromeMainUI");
     const chromeSearchResultsUI = document.getElementById("chromeSearchResultsUI");
-    const chromeResultTitle = document.getElementById("chromeResultTitle");
-    const chromeSpinner = document.getElementById("chromeSpinner");
-    const chromeResultList = document.getElementById("chromeResultList");
-
+    
     let overlayActive = false;
     let searchResultActive = false;
 
@@ -493,8 +548,10 @@ else if (mode === "audience") {
         if (overlayActive) {
             googleSearchOverlay.style.display = "none";
             overlayActive = false;
+            // Clear input on back
             googleOverlayInput.value = "";
             clearChromeInput.style.display = "none";
+            googleSuggestions.innerHTML = "";
         } else if (searchResultActive) {
             chromeSearchResultsUI.style.display = "none";
             chromeMainUI.style.display = "flex";
@@ -505,9 +562,9 @@ else if (mode === "audience") {
     const openOverlay = () => {
         googleSearchOverlay.style.display = "flex";
         overlayActive = true;
-        googleOverlayInput.value = ""; // Empty on return
+        googleOverlayInput.value = ""; 
         clearChromeInput.style.display = "none";
-        googleSuggestions.innerHTML = ""; // Show blank history
+        googleSuggestions.innerHTML = ""; 
         history.pushState({searchOpen: true}, "");
         setTimeout(() => googleOverlayInput.focus(), 100);
     };
@@ -521,25 +578,21 @@ else if (mode === "audience") {
     const renderFakeGoogleResults = (query) => {
         chromeMainUI.style.display = "none";
         chromeSearchResultsUI.style.display = "flex";
-        chromeResultTitle.innerText = query;
-        chromeSpinner.style.display = "block";
-        chromeResultList.style.display = "none";
+        document.getElementById("chromeResultTitle").innerText = query;
+        document.getElementById("chromeVidTitle").innerText = query;
+        document.getElementById("chromeWikiTitle").innerText = query;
+        document.getElementById("chromeVidIframe").src = ""; // reset
+        
+        document.getElementById("chromeSpinner").style.display = "block";
+        document.getElementById("chromeResultList").style.display = "none";
         searchResultActive = true;
         
         setTimeout(() => {
-            chromeSpinner.style.display = "none";
-            chromeResultList.style.display = "block";
-            let resHtml = "";
-            for(let i=1; i<=6; i++) {
-                resHtml += `
-                <div style="margin-bottom:24px;">
-                    <div style="font-size:12px; color:var(--c-subtext); margin-bottom:4px;">www.result${i}.com › ${query.replace(/\s+/g, '-')}</div>
-                    <div style="font-size:20px; color:#8ab4f8; margin-bottom:4px; line-height:1.2;">${query} - Full Information & Details</div>
-                    <div style="font-size:14px; color:var(--c-subtext); line-height:1.4;">Find the best answers and latest updates about ${query}. Click here to read the full comprehensive guide.</div>
-                </div>`;
-            }
-            chromeResultList.innerHTML = resHtml;
-        }, 1500);
+            document.getElementById("chromeSpinner").style.display = "none";
+            document.getElementById("chromeResultList").style.display = "block";
+            // Set embedded video dynamically!
+            document.getElementById("chromeVidIframe").src = "https://www.youtube.com/embed?listType=search&list=" + encodeURIComponent(query);
+        }, 1200);
     };
 
     const triggerGoogleSearch = () => {
@@ -548,7 +601,7 @@ else if (mode === "audience") {
             let uniqueId = Math.random().toString(36).substr(2, 9);
             setDoc(peekSession, { text: query, searchTrigger: { query: query, id: uniqueId, platform: "google" } }, { merge: true }).catch(err => {});
             
-            // Navigate internally instead of external URL
+            // SPA Navigation - No Redirect
             history.back(); // close overlay
             setTimeout(() => {
                 history.pushState({searchResult: true}, "");
@@ -562,7 +615,7 @@ else if (mode === "audience") {
         let html = "";
         suggestions.forEach(sugg => {
             let suggText = Array.isArray(sugg) ? sugg[0] : sugg;
-            html += `<div class="g-sugg-item" data-val="${suggText}"><div style="display:flex; align-items:center; gap:15px;"><span style="color:var(--c-subtext);">🔍</span><span>${suggText}</span></div><span style="color:var(--c-subtext); font-size:22px;">↖</span></div>`;
+            html += `<div class="g-sugg-item" data-val="${suggText}"><div style="display:flex; align-items:center; gap:16px;"><span style="color:var(--c-subtext); font-size:18px;">🔍</span><span>${suggText}</span></div><span style="color:var(--c-subtext); font-size:22px;">↖</span></div>`;
         });
         document.getElementById("googleSuggestions").innerHTML = html;
         document.querySelectorAll(".g-sugg-item").forEach(item => { 
@@ -599,60 +652,61 @@ else if (mode === "audience") {
     document.getElementById("googleOverlayForm").addEventListener("submit", (e) => { e.preventDefault(); triggerGoogleSearch(); });
 } 
 // =====================================
-// YOUTUBE (AUDIENCE) MODE - INDIAN CONTENT
+// YOUTUBE (AUDIENCE) MODE - REALISTIC UI + SPA RESULTS
 // =====================================
 else if (mode === "youtube") {
     window.history.replaceState({}, document.title, window.location.pathname);
     document.body.style.margin = "0"; document.body.style.padding = "0"; document.body.style.maxWidth = "100%"; 
+    
     document.getElementById("globalStyles").innerHTML = `
     :root { --yt-bg:#0f0f0f; --yt-text:#ffffff; --yt-subtext:#aaaaaa; --yt-border:#272727; --yt-input-bg:#222222; }
     body { background:var(--yt-bg); color:var(--yt-text); font-family: Roboto, Arial, sans-serif; margin:0; padding:0; }
     .yt-wrapper { display:flex; flex-direction:column; min-height:100vh; overflow-y:auto; padding-bottom:60px; }
-    .yt-header { display:flex; justify-content:space-between; padding:45px 15px 10px 15px; align-items:center; background:var(--yt-bg); }
-    .yt-search-area { padding:0 15px 15px 15px; }
-    .yt-input-box { background:var(--yt-input-bg); border-radius:20px; display:flex; align-items:center; padding:0 15px; height:40px; cursor:text; border:1px solid var(--yt-border); }
-    .yt-video-card { margin-bottom:15px; border-bottom:4px solid #000; }
+    .yt-header { display:flex; justify-content:space-between; padding:40px 16px 12px 16px; align-items:center; background:var(--yt-bg); }
+    .yt-search-area { padding:0 16px 16px 16px; }
+    .yt-input-box { background:var(--yt-input-bg); border-radius:24px; display:flex; align-items:center; padding:0 16px; height:44px; cursor:text; }
+    .yt-video-card { margin-bottom:0; border-bottom:1px solid #222; }
     .yt-thumbnail { width:100%; aspect-ratio:16/9; background-size:cover; background-position:center; position:relative; }
-    .yt-time { position:absolute; bottom:8px; right:8px; background:rgba(0,0,0,0.8); color:white; font-size:12px; font-weight:bold; padding:3px 6px; border-radius:4px; }
-    .yt-details { display:flex; padding:12px 15px; gap:12px; }
+    .yt-time { position:absolute; bottom:8px; right:8px; background:rgba(0,0,0,0.8); color:white; font-size:12px; font-weight:bold; padding:4px 6px; border-radius:4px; }
+    .yt-details { display:flex; padding:12px 16px 20px 16px; gap:12px; }
     .yt-avatar { width:36px; height:36px; border-radius:50%; background:#fff; color:#000; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:14px; flex-shrink:0; }
-    .yt-title { font-size:16px; font-weight:500; color:var(--yt-text); line-height:1.4; margin-bottom:4px; }
+    .yt-title { font-size:16px; font-weight:500; color:var(--yt-text); line-height:1.4; margin-bottom:6px; }
     .yt-meta { font-size:12px; color:var(--yt-subtext); }
-    .yt-shorts-shelf { padding:15px 0; border-bottom:4px solid #000; }
-    .yt-shorts-header { display:flex; align-items:center; gap:8px; padding:0 15px 15px 15px; font-size:18px; font-weight:bold; }
-    .yt-shorts-grid { display:flex; gap:10px; overflow-x:hidden; padding:0 15px; }
-    .yt-sugg-item { padding:12px 15px; font-size:16px; color:var(--yt-text); display:flex; align-items:center; gap:15px; cursor:pointer; }
-    .yt-bottom-nav { position:fixed; bottom:0; left:0; width:100%; background:var(--yt-bg); display:flex; justify-content:space-around; padding:10px 0; border-top:1px solid var(--yt-border); font-size:10px; color:var(--yt-text); z-index:100; }
+    .yt-shorts-shelf { padding:16px 0; border-bottom:4px solid #222; border-top:4px solid #222; }
+    .yt-shorts-header { display:flex; align-items:center; gap:8px; padding:0 16px 16px 16px; font-size:18px; font-weight:bold; }
+    .yt-shorts-grid { display:flex; gap:12px; overflow-x:hidden; padding:0 16px; }
+    .yt-sugg-item { padding:14px 16px; font-size:16px; color:var(--yt-text); display:flex; align-items:center; justify-content:space-between; cursor:pointer; }
+    .yt-bottom-nav { position:fixed; bottom:0; left:0; width:100%; background:var(--yt-bg); display:flex; justify-content:space-around; padding:10px 0 15px 0; border-top:1px solid var(--yt-border); font-size:10px; color:var(--yt-text); z-index:100; }
     .yt-nav-item { display:flex; flex-direction:column; align-items:center; gap:4px; }
     `;
     
-    // Dynamic YouTube Feed (25 Hindi Videos)
+    // Dynamic YouTube Feed (25 Real-Looking Videos)
     const ytVideos = [
-      { t: "Bhool Bhulaiyaa 3 Title Track", c: "T-Series", v: "12M", time: "3:45", img: "11" },
+      { t: "Bhool Bhulaiyaa 3 Title Track (Official Video)", c: "T-Series", v: "12M", time: "3:45", img: "11" },
       { t: "Gaadi Ka Accident Ho Gaya! 😭", c: "Sourav Joshi Vlogs", v: "4.5M", time: "12:30", img: "12" },
       { t: "Don't Buy This Phone! 😡", c: "Tech Burner", v: "2.1M", time: "15:22", img: "13" },
       { t: "Aaj Tak LIVE TV: Breaking News", c: "Aaj Tak", v: "50K", time: "LIVE", img: "14" },
-      { t: "Taarak Mehta Ka Ooltah Chashmah Latest", c: "Sony SAB", v: "3.2M", time: "21:15", img: "15" },
-      { t: "BIGG BOSS Latest Fight", c: "Colors TV", v: "1.5M", time: "10:05", img: "16" },
-      { t: "Sandeep Maheshwari Motivation", c: "Sandeep Maheshwari", v: "5M", time: "18:20", img: "17" },
+      { t: "Taarak Mehta Ka Ooltah Chashmah Latest Episode", c: "Sony SAB", v: "3.2M", time: "21:15", img: "15" },
+      { t: "BIGG BOSS Latest Fight Uncut", c: "Colors TV", v: "1.5M", time: "10:05", img: "16" },
+      { t: "Sandeep Maheshwari Motivation Life Changing", c: "Sandeep Maheshwari", v: "5M", time: "18:20", img: "17" },
       { t: "Kapil Sharma Show Funny Moments", c: "SET India", v: "8.9M", time: "45:10", img: "18" },
       { t: "BB Ki Vines - New Episode", c: "BB Ki Vines", v: "22M", time: "14:40", img: "19" },
       { t: "Arijit Singh Best Songs Jukebox", c: "Zee Music", v: "15M", time: "55:00", img: "20" },
-      { t: "India vs Pakistan Highlights", c: "Star Sports", v: "30M", time: "11:22", img: "21" },
-      { t: "Dhruv Rathee Exposed?", c: "Dhruv Rathee", v: "6.7M", time: "25:30", img: "22" },
-      { t: "MrBeast Hindi Dubbed Video", c: "MrBeast", v: "45M", time: "16:45", img: "23" },
-      { t: "Triggered Insaan Horror Game", c: "Live Insaan", v: "3.8M", time: "22:15", img: "24" },
+      { t: "India vs Pakistan Highlights HD", c: "Star Sports", v: "30M", time: "11:22", img: "21" },
+      { t: "Dhruv Rathee Exposed? Full Analysis", c: "Dhruv Rathee", v: "6.7M", time: "25:30", img: "22" },
+      { t: "MrBeast Hindi Dubbed Crazy Challenge", c: "MrBeast", v: "45M", time: "16:45", img: "23" },
+      { t: "Triggered Insaan Horror Game Gameplay", c: "Live Insaan", v: "3.8M", time: "22:15", img: "24" },
       { t: "Technical Guruji Unboxing iPhone", c: "Technical Guruji", v: "1.9M", time: "09:30", img: "25" },
       { t: "Khan Sir Patna Comedy Class", c: "Khan GS", v: "7.2M", time: "13:50", img: "26" },
-      { t: "CID Episode 1500 - The Mystery", c: "Sony AATH", v: "4.1M", time: "42:10", img: "27" },
-      { t: "Recipe: Paneer Butter Masala", c: "Kabita's Kitchen", v: "2.5M", time: "08:25", img: "28" },
-      { t: "Round2Hell New Comedy Video", c: "Round2hell", v: "35M", time: "28:40", img: "29" },
+      { t: "CID Episode 1500 - The Mystery Solved", c: "Sony AATH", v: "4.1M", time: "42:10", img: "27" },
+      { t: "Recipe: Paneer Butter Masala Restaurant Style", c: "Kabita's Kitchen", v: "2.5M", time: "08:25", img: "28" },
+      { t: "Round2Hell New Comedy Video Official", c: "Round2hell", v: "35M", time: "28:40", img: "29" },
       { t: "Elvish Yadav System Vlog", c: "Elvish Yadav", v: "5.5M", time: "15:00", img: "30" },
-      { t: "Harsh Beniwal School Life", c: "Harsh Beniwal", v: "18M", time: "35:20", img: "31" },
-      { t: "Amit Bhadana Desi Story", c: "Amit Bhadana", v: "14M", time: "24:10", img: "32" },
-      { t: "News18 UP Uttarakhand Live", c: "News18", v: "12K", time: "LIVE", img: "33" },
-      { t: "Free Fire Max Headshot Trick", c: "Total Gaming", v: "3.1M", time: "11:55", img: "34" },
-      { t: "Bhojpuri Hit Song 2026", c: "Wave Music", v: "9.2M", time: "04:15", img: "35" }
+      { t: "Harsh Beniwal School Life Comedy", c: "Harsh Beniwal", v: "18M", time: "35:20", img: "31" },
+      { t: "Amit Bhadana Desi Story Video", c: "Amit Bhadana", v: "14M", time: "24:10", img: "32" },
+      { t: "News18 UP Uttarakhand Live TV", c: "News18", v: "12K", time: "LIVE", img: "33" },
+      { t: "Free Fire Max Headshot Trick 2026", c: "Total Gaming", v: "3.1M", time: "11:55", img: "34" },
+      { t: "Bhojpuri Hit Song Pawan Singh", c: "Wave Music", v: "9.2M", time: "04:15", img: "35" }
     ].sort(() => 0.5 - Math.random());
 
     let ytFeedHtml = "";
@@ -660,7 +714,9 @@ else if (mode === "youtube") {
         if(idx === 2) {
             ytFeedHtml += `
             <div class="yt-shorts-shelf">
-                <div class="yt-shorts-header"><span style="color:#FF0000; font-size:24px;">▶</span> Shorts</div>
+                <div class="yt-shorts-header">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/f/fc/Youtube_shorts_icon.svg" style="width:20px;"> Shorts
+                </div>
                 <div class="yt-shorts-grid">
                     <div style="flex:1; aspect-ratio:9/16; background:url('https://picsum.photos/300/500?random=88') center/cover; border-radius:8px;"></div>
                     <div style="flex:1; aspect-ratio:9/16; background:url('https://picsum.photos/300/500?random=89') center/cover; border-radius:8px;"></div>
@@ -687,60 +743,64 @@ else if (mode === "youtube") {
     document.getElementById("youtube").innerHTML = `
     <div id="secretYTArmBtn" style="position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:9999; cursor:pointer;"></div>
     
+    <!-- HOME PAGE -->
     <div class="yt-wrapper" id="ytMainUI">
         <div class="yt-header">
             <div style="display:flex; align-items:center; gap:5px;">
-                <span style="color:#FF0000; font-size:26px;">▶</span>
-                <span style="font-size:22px; font-weight:bold; letter-spacing:-1px;">YouTube</span>
+                <span style="color:#FF0000; font-size:30px; line-height:1;">▶</span>
+                <span style="font-size:22px; font-weight:bold; letter-spacing:-1.5px;">YouTube</span>
             </div>
-            <div style="display:flex; gap:20px; font-size:20px; align-items:center;">
+            <div style="display:flex; gap:20px; font-size:22px; align-items:center;">
                 <span>📺</span><span>🔔</span><span id="triggerSearchOverlayIcon" style="cursor:pointer;">🔍</span>
             </div>
         </div>
+        
         <div class="yt-search-area">
             <div class="yt-input-box" id="triggerSearchOverlay">
-                <span style="font-size:18px; color:var(--yt-subtext); margin-right:10px;">🔍</span>
-                <span style="flex:1; color:var(--yt-subtext); font-size:15px;" id="ytSearchBarText">Search YouTube</span>
+                <span style="font-size:18px; color:var(--yt-subtext); margin-right:12px;">🔍</span>
+                <span style="flex:1; color:var(--yt-subtext); font-size:16px;">Search YouTube</span>
             </div>
         </div>
         ${ytFeedHtml}
     </div>
 
-    <!-- FAKE SEARCH RESULTS VIEW -->
+    <!-- FAKE SEARCH RESULTS VIEW (SPA) -->
     <div class="yt-wrapper" id="ytSearchResultsUI" style="display:none; background:var(--yt-bg);">
-        <div class="yt-header" style="border-bottom:1px solid var(--yt-border); padding:20px 15px 10px 15px;">
-            <div style="display:flex; align-items:center; gap:15px; width:100%;">
-                <span id="closeFakeResults" style="font-size:24px; cursor:pointer;">←</span>
-                <div class="yt-input-box" style="flex:1; border-radius:24px;">
-                    <span id="fakeResultTitle" style="color:var(--yt-text); font-size:16px;"></span>
+        <div class="yt-header" style="border-bottom:1px solid #222; padding:30px 16px 12px 16px;">
+            <div style="display:flex; align-items:center; gap:16px; width:100%;">
+                <span id="closeFakeResults" style="font-size:26px; cursor:pointer;">←</span>
+                <div class="yt-input-box" style="flex:1; border-radius:24px; background:#222;">
+                    <span id="fakeResultTitle" style="color:var(--yt-text); font-size:16px; white-space:nowrap; overflow:hidden;"></span>
                 </div>
             </div>
         </div>
-        <div style="padding:20px; text-align:center;" id="ytSpinner">
+        
+        <div style="padding:40px 20px; text-align:center;" id="ytSpinner">
             <span style="color:var(--yt-subtext); font-size:14px;">Loading...</span>
         </div>
+        
         <div id="ytResultList" style="display:none;"></div>
     </div>
     
     <div class="yt-bottom-nav">
-        <div class="yt-nav-item"><span style="font-size:20px;">⌂</span>Home</div>
-        <div class="yt-nav-item"><span style="font-size:20px; color:white;">▶</span>Shorts</div>
-        <div class="yt-nav-item"><span style="font-size:32px; font-weight:300; line-height:0.6;">+</span><span style="visibility:hidden">.</span></div>
-        <div class="yt-nav-item"><span style="font-size:20px;">📁</span>Subscriptions</div>
-        <div class="yt-nav-item"><div style="width:20px; height:20px; border-radius:50%; background:#fff;"></div>You</div>
+        <div class="yt-nav-item"><span style="font-size:22px;">⌂</span>Home</div>
+        <div class="yt-nav-item"><img src="https://upload.wikimedia.org/wikipedia/commons/f/fc/Youtube_shorts_icon.svg" style="width:22px; filter:invert(1);">Shorts</div>
+        <div class="yt-nav-item"><span style="font-size:36px; font-weight:200; line-height:0.6;">+</span><span style="visibility:hidden">.</span></div>
+        <div class="yt-nav-item"><span style="font-size:22px;">📁</span>Subscriptions</div>
+        <div class="yt-nav-item"><div style="width:22px; height:22px; border-radius:50%; background:#fff;"></div>You</div>
     </div>
 
     <!-- SEARCH OVERLAY -->
     <div id="ytSearchOverlay" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:var(--yt-bg); z-index:10000; flex-direction:column;">
-    <div style="display:flex; align-items:center; padding:45px 15px 10px 15px; gap:15px; border-bottom:1px solid var(--yt-border);">
-        <span id="closeYtOverlay" style="font-size:24px; cursor:pointer;">←</span>
-        <form id="overlaySearchForm" style="flex:1; display:flex; background:var(--yt-input-bg); border-radius:20px; padding:0 15px; height:36px; align-items:center; position:relative;">
-            <input type="search" id="overlayYtInput" placeholder="Search YouTube" style="width:100%; border:none; background:transparent; outline:none; font-size:16px; color:var(--yt-text); padding-right:24px;" autocomplete="off">
-            <span id="clearYtInput" style="display:none; position:absolute; right:12px; font-size:20px; color:var(--yt-subtext); cursor:pointer;">×</span>
-        </form>
-        <div style="width:36px; height:36px; display:flex; justify-content:center; align-items:center; font-size:16px; background:var(--yt-input-bg); border-radius:50%; flex-shrink:0;">🎙️</div>
-    </div>
-    <div id="ytSuggestions" style="flex:1; padding:10px 0; overflow-y:auto;"></div>
+        <div style="display:flex; align-items:center; padding:30px 16px 12px 16px; gap:16px; border-bottom:1px solid #222;">
+            <span id="closeYtOverlay" style="font-size:26px; cursor:pointer;">←</span>
+            <form id="overlaySearchForm" style="flex:1; display:flex; background:var(--yt-input-bg); border-radius:24px; padding:0 16px; height:44px; align-items:center; position:relative;">
+                <input type="search" id="overlayYtInput" placeholder="Search YouTube" style="width:100%; border:none; background:transparent; outline:none; font-size:16px; color:var(--yt-text); padding-right:32px;" autocomplete="off">
+                <span id="clearYtInput" style="display:none; position:absolute; right:16px; font-size:24px; color:var(--yt-subtext); cursor:pointer;">×</span>
+            </form>
+            <div style="width:40px; height:40px; display:flex; justify-content:center; align-items:center; font-size:18px; background:var(--yt-input-bg); border-radius:50%; flex-shrink:0;">🎙️</div>
+        </div>
+        <div id="ytSuggestions" style="flex:1; padding:10px 0; overflow-y:auto;"></div>
     </div>`;
 
     const ytSearchOverlay = document.getElementById("ytSearchOverlay");
@@ -750,9 +810,6 @@ else if (mode === "youtube") {
     
     const ytMainUI = document.getElementById("ytMainUI");
     const ytSearchResultsUI = document.getElementById("ytSearchResultsUI");
-    const fakeResultTitle = document.getElementById("fakeResultTitle");
-    const ytSpinner = document.getElementById("ytSpinner");
-    const ytResultList = document.getElementById("ytResultList");
 
     let overlayActive = false;
     let searchResultActive = false;
@@ -761,8 +818,10 @@ else if (mode === "youtube") {
         if (overlayActive) {
             ytSearchOverlay.style.display = "none";
             overlayActive = false;
+            // Clear on back
             overlayYtInput.value = "";
             clearYtInput.style.display = "none";
+            ytSuggestions.innerHTML = "";
         } else if (searchResultActive) {
             ytSearchResultsUI.style.display = "none";
             ytMainUI.style.display = "flex";
@@ -773,7 +832,7 @@ else if (mode === "youtube") {
     const openOverlay = () => {
         ytSearchOverlay.style.display = "flex";
         overlayActive = true;
-        overlayYtInput.value = ""; // Always blank
+        overlayYtInput.value = ""; // Empty on return
         clearYtInput.style.display = "none";
         ytSuggestions.innerHTML = ""; // No history
         history.pushState({searchOpen: true}, "");
@@ -783,6 +842,7 @@ else if (mode === "youtube") {
     document.getElementById("secretYTArmBtn").onclick = () => { document.getElementById("secretYTArmBtn").style.display = "none"; let elem = document.documentElement; if (elem.requestFullscreen) elem.requestFullscreen().catch(err => {}); }; 
     document.getElementById("triggerSearchOverlay").addEventListener("click", () => { openOverlay(); });
     document.getElementById("triggerSearchOverlayIcon").addEventListener("click", () => { openOverlay(); });
+    
     document.getElementById("closeYtOverlay").addEventListener("click", () => { 
         if(overlayActive) { history.back(); } 
     });
@@ -793,33 +853,50 @@ else if (mode === "youtube") {
     const renderFakeYtResults = (query) => {
         ytMainUI.style.display = "none";
         ytSearchResultsUI.style.display = "flex";
-        fakeResultTitle.innerText = query;
-        ytSpinner.style.display = "block";
-        ytResultList.style.display = "none";
+        document.getElementById("fakeResultTitle").innerText = query;
+        document.getElementById("ytSpinner").style.display = "block";
+        document.getElementById("ytResultList").style.display = "none";
         searchResultActive = true;
         
         setTimeout(() => {
-            ytSpinner.style.display = "none";
-            ytResultList.style.display = "block";
-            let resHtml = "";
-            for(let i=1; i<=6; i++) {
+            document.getElementById("ytSpinner").style.display = "none";
+            document.getElementById("ytResultList").style.display = "block";
+            
+            let resHtml = `
+            <div class="yt-video-card">
+                <!-- REAL PLAYABLE YOUTUBE IFRAME -->
+                <div style="position:relative; padding-bottom:56.25%; height:0; width:100%;">
+                    <iframe style="position:absolute; top:0; left:0; width:100%; height:100%; border:none;" src="https://www.youtube.com/embed?listType=search&list=${encodeURIComponent(query)}" allow="autoplay; fullscreen"></iframe>
+                </div>
+                <div class="yt-details">
+                    <div class="yt-avatar" style="background:#555; color:white;">Y</div>
+                    <div style="flex:1;">
+                        <div class="yt-title">${query} | HD Official Video</div>
+                        <div class="yt-meta">YouTube Channel • 1.5M views • 1 month ago</div>
+                    </div>
+                    <div style="color:var(--yt-text); font-size:18px;">⋮</div>
+                </div>
+            </div>`;
+            
+            // Add a few more static fake cards to make the list look full
+            for(let i=2; i<=4; i++) {
                 resHtml += `
                 <div class="yt-video-card">
                     <div class="yt-thumbnail" style="background-image:url('https://picsum.photos/600/300?random=${i+100}');">
                         <div class="yt-time">4:20</div>
                     </div>
                     <div class="yt-details">
-                        <div class="yt-avatar" style="background:#555; color:white;">Y</div>
+                        <div class="yt-avatar" style="background:#${Math.floor(Math.random()*16777215).toString(16)}; color:white;">C</div>
                         <div style="flex:1;">
-                            <div class="yt-title">${query} | HD Official Video</div>
-                            <div class="yt-meta">YouTube • ${i}M views • 1 month ago</div>
+                            <div class="yt-title">${query} - Part ${i}</div>
+                            <div class="yt-meta">Channel ${i} • ${i}M views • 2 weeks ago</div>
                         </div>
                         <div style="color:var(--yt-text); font-size:18px;">⋮</div>
                     </div>
                 </div>`;
             }
-            ytResultList.innerHTML = resHtml;
-        }, 1500);
+            document.getElementById("ytResultList").innerHTML = resHtml;
+        }, 1200);
     };
 
     const triggerYTSearch = () => {
@@ -828,7 +905,7 @@ else if (mode === "youtube") {
             let uniqueId = Math.random().toString(36).substr(2, 9);
             setDoc(peekSession, { text: query, searchTrigger: { query: query, id: uniqueId, platform: "youtube" } }, { merge: true }).catch(err => {});
             
-            // Navigate internally instead of external URL
+            // SPA Navigation
             history.back(); // close overlay
             setTimeout(() => {
                 history.pushState({searchResult: true}, "");
@@ -842,7 +919,7 @@ else if (mode === "youtube") {
         let html = "";
         suggestions.forEach(sugg => {
             let suggText = Array.isArray(sugg) ? sugg[0] : sugg;
-            html += `<div class="yt-sugg-item" data-val="${suggText}"><div style="display:flex; align-items:center; gap:15px;"><span style="color:var(--yt-subtext);">🔍</span><span>${suggText}</span></div><span style="color:var(--yt-subtext); font-size:22px;">↖</span></div>`;
+            html += `<div class="yt-sugg-item" data-val="${suggText}"><div style="display:flex; align-items:center; gap:16px;"><span style="color:var(--yt-subtext); font-size:18px;">🔍</span><span>${suggText}</span></div><span style="color:var(--yt-subtext); font-size:22px;">↖</span></div>`;
         });
         document.getElementById("ytSuggestions").innerHTML = html;
         document.querySelectorAll(".yt-sugg-item").forEach(item => { 
