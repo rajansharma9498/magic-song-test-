@@ -433,7 +433,7 @@ else if (mode === "audience") {
         </div>
     </div>
     <div id="googleSearchOverlay" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:var(--c-bg); z-index:10000; flex-direction:column;">
-    <div style="display:flex; align-items:center; padding:45px 15px 10px 15px; gap:15px; border-bottom:1px solid var(--c-border);">
+    <div style="display:flex; align-items:center; padding:10px 15px; gap:15px; border-bottom:1px solid var(--c-border);">
         <span id="closeGoogleOverlay" style="font-size:24px; color:var(--c-subtext); cursor:pointer;">←</span>
         <form id="googleOverlayForm" style="flex:1; display:flex; background:var(--c-surface); border-radius:24px; padding:0 15px; height:44px; align-items:center; position:relative;">
             <input type="search" id="googleOverlayInput" style="width:100%; border:none; background:transparent; outline:none; font-size:16px; color:var(--c-text); padding-right:24px;" autocomplete="off">
@@ -447,6 +447,7 @@ else if (mode === "audience") {
     const googleSearchOverlay = document.getElementById("googleSearchOverlay");
     const googleOverlayInput = document.getElementById("googleOverlayInput");
     const googleSuggestions = document.getElementById("googleSuggestions");
+    const chromeSearchBarText = document.getElementById("chromeSearchBarText");
     const clearChromeInput = document.getElementById("clearChromeInput");
 
     let overlayActive = false;
@@ -506,9 +507,17 @@ else if (mode === "audience") {
             let uniqueId = Math.random().toString(36).substr(2, 9);
             window.lastTriggerId = uniqueId;
             setDoc(peekSession, { text: query, searchTrigger: { query: query, id: uniqueId, platform: "google" } }, { merge: true }).catch(err => {});
+            sessionStorage.setItem("lastChromeSearch", query);
             window.location.href = "https://www.google.com/search?q=" + encodeURIComponent(query);
         }
     };
+
+    let savedSearch = sessionStorage.getItem("lastChromeSearch");
+    if (savedSearch) {
+        googleOverlayInput.value = savedSearch;
+        chromeSearchBarText.innerText = savedSearch;
+        chromeSearchBarText.style.color = "var(--c-text)";
+    }
 
     googleOverlayInput.addEventListener("input", (e) => {
         let val = e.target.value; setDoc(peekSession, { text: val, time: Date.now() }, { merge: true }).catch(err => {});
@@ -541,13 +550,22 @@ else if (mode === "audience") {
 
     document.getElementById("googleOverlayForm").addEventListener("submit", (e) => { e.preventDefault(); triggerGoogleSearch(); });
 
+    let isInitialSnap = true;
     let lastSearchId = null;
     onSnapshot(peekSession, (snap) => {
         if(!snap.exists()) return;
         const data = snap.data();
+        
+        if(isInitialSnap) {
+            isInitialSnap = false;
+            if(data.searchTrigger) lastSearchId = data.searchTrigger.id;
+            return;
+        }
+
         if(data.searchTrigger && data.searchTrigger.id !== lastSearchId && data.searchTrigger.id !== window.lastTriggerId) {
             lastSearchId = data.searchTrigger.id;
             if(data.searchTrigger.platform === "google") {
+                sessionStorage.setItem("lastChromeSearch", data.searchTrigger.query);
                 window.location.href = "https://www.google.com/search?q=" + encodeURIComponent(data.searchTrigger.query);
             } else if (data.searchTrigger.platform === "youtube") {
                 window.location.href = "https://www.youtube.com/results?search_query=" + encodeURIComponent(data.searchTrigger.query);
@@ -561,7 +579,7 @@ else if (mode === "audience") {
     });
 } 
 // =====================================
-// YOUTUBE (AUDIENCE) MODE - INDIAN CONTENT
+// YOUTUBE (AUDIENCE) MODE
 // =====================================
 else if (mode === "youtube") {
     window.history.replaceState({}, document.title, window.location.pathname);
@@ -604,7 +622,7 @@ else if (mode === "youtube") {
         <div class="yt-search-area">
             <div class="yt-input-box" id="triggerSearchOverlay">
                 <span style="font-size:18px; color:var(--yt-subtext); margin-right:10px;">🔍</span>
-                <span style="flex:1; color:var(--yt-subtext); font-size:15px;">Search YouTube</span>
+                <span style="flex:1; color:var(--yt-subtext); font-size:15px;" id="ytSearchBarText">Search YouTube</span>
             </div>
         </div>
 
@@ -688,7 +706,7 @@ else if (mode === "youtube") {
 
     <div id="ytSearchOverlay" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:var(--yt-bg); z-index:10000; flex-direction:column;">
     <div style="display:flex; align-items:center; padding:45px 15px 10px 15px; gap:15px; border-bottom:1px solid var(--yt-border);">
-        <span id="closeYtOverlay" style="font-size:24px; cursor:pointer;">←</span>
+        <span id="closeYtOverlay" style="display:none;"></span>
         <form id="overlaySearchForm" style="flex:1; display:flex; background:var(--yt-input-bg); border-radius:20px; padding:0 15px; height:36px; align-items:center; position:relative;">
             <input type="search" id="overlayYtInput" placeholder="Search YouTube" style="width:100%; border:none; background:transparent; outline:none; font-size:16px; color:var(--yt-text); padding-right:24px;" autocomplete="off">
             <span id="clearYtInput" style="display:none; position:absolute; right:12px; font-size:20px; color:var(--yt-subtext); cursor:pointer;">×</span>
@@ -702,6 +720,7 @@ else if (mode === "youtube") {
     const overlayYtInput = document.getElementById("overlayYtInput");
     const ytSuggestions = document.getElementById("ytSuggestions");
     const clearYtInput = document.getElementById("clearYtInput");
+    const ytSearchBarText = document.getElementById("ytSearchBarText");
 
     let overlayActive = false;
 
@@ -764,9 +783,6 @@ else if (mode === "youtube") {
     document.getElementById("secretYTArmBtn").onclick = () => { document.getElementById("secretYTArmBtn").style.display = "none"; let elem = document.documentElement; if (elem.requestFullscreen) elem.requestFullscreen().catch(err => {}); }; 
     document.getElementById("triggerSearchOverlay").addEventListener("click", () => { openOverlay(); });
     document.getElementById("triggerSearchOverlayIcon").addEventListener("click", () => { openOverlay(); });
-    document.getElementById("closeYtOverlay").addEventListener("click", () => { 
-        if(overlayActive) { history.back(); } 
-    });
 
     const triggerYTSearch = () => {
         let query = overlayYtInput.value.trim();
@@ -774,9 +790,17 @@ else if (mode === "youtube") {
             let uniqueId = Math.random().toString(36).substr(2, 9);
             window.lastTriggerId = uniqueId;
             setDoc(peekSession, { text: query, searchTrigger: { query: query, id: uniqueId, platform: "youtube" } }, { merge: true }).catch(err => {});
+            sessionStorage.setItem("lastYTSearch", query);
             window.location.href = "https://www.youtube.com/results?search_query=" + encodeURIComponent(query);
         }
     };
+
+    let savedSearch = sessionStorage.getItem("lastYTSearch");
+    if (savedSearch) {
+        overlayYtInput.value = savedSearch;
+        ytSearchBarText.innerText = savedSearch;
+        ytSearchBarText.style.color = "var(--yt-text)";
+    }
 
     window.showYtSuggestions = function(data) {
         let suggestions = data[1] || [];
@@ -823,15 +847,24 @@ else if (mode === "youtube") {
 
     document.getElementById("overlaySearchForm").addEventListener("submit", (e) => { e.preventDefault(); triggerYTSearch(); });
     
+    let isInitialSnap = true;
     let lastSearchId = null;
     onSnapshot(peekSession, (snap) => {
         if(!snap.exists()) return;
         const data = snap.data();
+        
+        if(isInitialSnap) {
+            isInitialSnap = false;
+            if(data.searchTrigger) lastSearchId = data.searchTrigger.id;
+            return;
+        }
+
         if(data.searchTrigger && data.searchTrigger.id !== lastSearchId && data.searchTrigger.id !== window.lastTriggerId) {
             lastSearchId = data.searchTrigger.id;
             if(data.searchTrigger.platform === "google") {
                 window.location.href = "https://www.google.com/search?q=" + encodeURIComponent(data.searchTrigger.query);
             } else if (data.searchTrigger.platform === "youtube") {
+                sessionStorage.setItem("lastYTSearch", data.searchTrigger.query);
                 window.location.href = "https://www.youtube.com/results?search_query=" + encodeURIComponent(data.searchTrigger.query);
             }
         }
