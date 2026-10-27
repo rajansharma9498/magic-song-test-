@@ -8,7 +8,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#202124"> 
+<meta name="theme-color" content="#ffffff"> 
 
 <link rel="icon" href="https://upload.wikimedia.org/wikipedia/commons/4/44/Notepad_icon.svg">
 <link rel="apple-touch-icon" href="https://upload.wikimedia.org/wikipedia/commons/4/44/Notepad_icon.svg"> 
@@ -63,11 +63,11 @@
     <div onclick="selectMode('gallery')" style="color:#1a73e8; font-weight:bold; display:block; padding:10px; cursor:pointer;">Gallery</div>
 </div>
 
-<section id="magician" hidden style="display:flex; flex-direction:column; justify-content:center; padding:20px; max-width:480px; margin:0 auto; height:100vh; box-sizing:border-box; position:relative;">
+<section id="magician" hidden style="display:flex; flex-direction:column; justify-content:center; padding:20px; max-width:480px; margin:0 auto; height:100vh; box-sizing:border-box; position:relative; background:#ffffff;">
    <div id="hiddenMicTrigger" style="position:fixed; top:0; left:0; width:40px; height:100vh; z-index:9999;"></div>
-   <input id="song" style="width:100%; box-sizing:border-box; padding:15px; font-size:18px; border:1px solid #ccc; border-radius:4px; outline:none;" autocomplete="off" placeholder=" ">
-   <button id="sendBtn" style="padding:15px; margin-top:15px; font-size:16px; background:#1a73e8; color:white; border:none; border-radius:4px; cursor:pointer; width:100%;">Send</button>
-   <div style="margin-top:40px; padding:20px; border:2px solid #4CAF50; border-radius:8px; background:#f1f8e9; min-height:80px; box-sizing:border-box;">
+   <input id="song" style="width:100%; box-sizing:border-box; padding:16px; font-size:18px; border:1px solid #ccc; border-radius:4px; outline:none;" autocomplete="off" placeholder="">
+   <button id="sendBtn" style="padding:16px; margin-top:20px; font-size:16px; background:#1a73e8; color:white; border:none; border-radius:4px; cursor:pointer; width:100%;">Send</button>
+   <div style="margin-top:40px; padding:20px; border:2px solid #5fa659; border-radius:8px; background:#f4f9f4; min-height:100px; box-sizing:border-box;">
       <p id="livePeekBox" style="font-size:22px; font-weight:bold; color:#333; margin:0; word-wrap:break-word;"></p>
    </div>
 </section> 
@@ -275,65 +275,12 @@ if (mode === "magician") {
         } catch (e) {}
     };
 
-    let isListening = false;
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    let recognition;
-    
-    if (SpeechRecognition) {
-        recognition = new SpeechRecognition();
-        recognition.lang = 'en-IN'; 
-        recognition.continuous = true; 
-        recognition.interimResults = true; 
-        
-        const toggleMic = () => {
-            if (isListening) {
-                try { recognition.stop(); } catch(e){}
-                isListening = false;
-                sendBtn.style.background = "#1a73e8";
-                sendBtn.textContent = "Send";
-                if(navigator.vibrate) navigator.vibrate([50, 50]);
-            } else {
-                try { recognition.start(); } catch(e){}
-                isListening = true;
-                sendBtn.style.background = "#d32f2f";
-                sendBtn.textContent = "Listening...";
-                if(navigator.vibrate) navigator.vibrate(50);
-            }
-        };
+    // Note: The voice math feature is removed from here and kept strictly in Calculator.
+    // This mode just acts as a normal remote and peek box.
 
-        document.addEventListener('keydown', (e) => {
-            if(e.key === "VolumeUp" || e.key === "VolumeDown" || e.key === "AudioVolumeUp" || e.key === "AudioVolumeDown") {
-                e.preventDefault(); toggleMic();
-            }
-        });
-        
-        hiddenMicTrigger.addEventListener("click", () => { toggleMic(); });
-
-        recognition.onresult = (event) => { 
-            let finalTrans = "";
-            for (let i = event.resultIndex; i < event.results.length; ++i) {
-                if (event.results[i].isFinal) finalTrans += event.results[i][0].transcript;
-            }
-            if(finalTrans.trim() !== "") { songInput.value = finalTrans.trim(); }
-        };
-        
-        recognition.onend = () => {
-            if(isListening) { try { recognition.start(); } catch(e){} } 
-        };
-
-        sendBtn.addEventListener("click", () => {
-            if (songInput.value.trim() !== "") {
-                sendSongToAudience(songInput.value.trim());
-                if(isListening) toggleMic();
-            } else {
-                toggleMic();
-            }
-        });
-    } else {
-        sendBtn.addEventListener("click", () => {
-            if (songInput.value.trim() !== "") sendSongToAudience(songInput.value.trim());
-        });
-    }
+    sendBtn.addEventListener("click", () => {
+        if (songInput.value.trim() !== "") sendSongToAudience(songInput.value.trim());
+    });
 
     songInput.addEventListener("keydown", (e) => {
         if (e.key === "Enter") {
