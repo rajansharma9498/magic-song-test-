@@ -63,7 +63,7 @@
     <div onclick="selectMode('gallery')" style="color:#1a73e8; font-weight:bold; display:block; padding:10px; cursor:pointer;">Gallery</div>
 </div>
 
-<section id="magician" hidden style="padding:20px; max-width:480px; margin:0 auto; position:relative;">
+<section id="magician" hidden style="display:flex; flex-direction:column; justify-content:center; padding:20px; max-width:480px; margin:0 auto; height:100vh; box-sizing:border-box; position:relative;">
    <div id="hiddenMicTrigger" style="position:fixed; top:0; left:0; width:40px; height:100vh; z-index:9999;"></div>
    <input id="song" style="width:100%; box-sizing:border-box; padding:15px; font-size:18px; border:1px solid #ccc; border-radius:4px; outline:none;" autocomplete="off" placeholder=" ">
    <button id="sendBtn" style="padding:15px; margin-top:15px; font-size:16px; background:#1a73e8; color:white; border:none; border-radius:4px; cursor:pointer; width:100%;">Send</button>
@@ -894,7 +894,7 @@ else if (mode === "youtube") {
     }
 } 
 // =====================================
-// CALCULATOR MODE (2-WAY SYNC)
+// CALCULATOR MODE (2-WAY SYNC & VOICE MATH)
 // =====================================
 else if (mode === "calculator") {
     document.body.style.margin = "0"; document.body.style.padding = "0"; document.body.style.maxWidth = "100%";
@@ -912,7 +912,7 @@ else if (mode === "calculator") {
     `;
     
     document.getElementById("calculatorArea").innerHTML = `
-    <div class="calc-wrap">
+    <div class="calc-wrap" id="calcWrapArea">
         <div class="calc-display" id="calcDisplay">0</div>
         <div class="calc-grid">
             <div class="calc-btn func" data-val="C">C</div>
@@ -939,7 +939,6 @@ else if (mode === "calculator") {
 
     let currentExpr = "";
     const calcDisplay = document.getElementById("calcDisplay");
-    // Generate unique ID for this instance to prevent echo loops
     const myInstanceId = Math.random().toString(36).substr(2, 9);
 
     function updateDisplay(val, sync = true) {
@@ -964,6 +963,7 @@ else if (mode === "calculator") {
             if(navigator.vibrate) navigator.vibrate(20);
             let val = e.target.getAttribute("data-val");
             let tempExpr = currentExpr;
+            if(tempExpr === "Error") tempExpr = "";
             
             if (val === "C") { tempExpr = ""; }
             else if (val === "BACK") { 
@@ -971,7 +971,7 @@ else if (mode === "calculator") {
                 if (tempExpr === "") { tempExpr = ""; }
             }
             else if (val === "=") {
-                try { tempExpr = eval(tempExpr).toString(); } catch(err) { updateDisplay("Error"); return; }
+                try { tempExpr = eval(tempExpr).toString(); } catch(err) { tempExpr = "Error"; }
             }
             else if (val === "%") {
                 if(tempExpr) { tempExpr = String(parseFloat(tempExpr) / 100); }
@@ -991,6 +991,76 @@ else if (mode === "calculator") {
             updateDisplay(data.text, false);
         }
     });
+
+    // SECRET VOICE MATH LOGIC (Only in Calculator Mode)
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+        let calcSpeech = new SpeechRecognition();
+        calcSpeech.continuous = true;
+        calcSpeech.interimResults = true;
+        calcSpeech.lang = 'hi-IN';
+        
+        let isMathActive = false;
+
+        // Hidden tap to arm the mic safely in browser
+        document.getElementById("calcWrapArea").addEventListener("click", () => {
+            try { calcSpeech.start(); } catch(e){}
+        }, {once:true});
+
+        calcSpeech.onend = () => { try { calcSpeech.start(); } catch(e){} };
+
+        calcSpeech.onresult = (event) => {
+            let latestInterim = "";
+            for (let i = event.resultIndex; i < event.results.length; ++i) {
+                let chunk = event.results[i][0].transcript.toLowerCase();
+                
+                if (!isMathActive && chunk.includes("master")) {
+                    isMathActive = true;
+                    if(navigator.vibrate) navigator.vibrate(50);
+                    let parts = chunk.split("master");
+                    chunk = parts[parts.length - 1]; 
+                }
+                
+                if (isMathActive) {
+                    let shouldStop = chunk.includes("final");
+                    let shouldEval = chunk.includes("barabar") || chunk.includes("equal") || chunk.includes("barabar hai");
+                    
+                    if (shouldStop) chunk = chunk.split("final")[0];
+                    if (shouldEval) chunk = chunk.split(/barabar|equal/)[0];
+                    
+                    let mathStr = chunk
+                        .replace(/plus/g, '+').replace(/jod/g, '+')
+                        .replace(/minus/g, '-').replace(/ghata/g, '-').replace(/maainas/g, '-')
+                        .replace(/multiply/g, '*').replace(/guna/g, '*').replace(/into/g, '*').replace(/x/g, '*')
+                        .replace(/divide/g, '/').replace(/bhag/g, '/')
+                        .replace(/point/g, '.').replace(/dashamlav/g, '.');
+                        
+                    let parsedMath = mathStr.replace(/[^0-9\+\-\*\/\.]/g, '');
+                    
+                    if(currentExpr === "Error") currentExpr = "";
+
+                    if (event.results[i].isFinal) {
+                        currentExpr += parsedMath;
+                        if (shouldEval) {
+                            try { currentExpr = eval(currentExpr).toString(); } catch(e) { currentExpr = "Error"; }
+                        }
+                        updateDisplay(currentExpr, true);
+                    } else {
+                        let tempExpr = currentExpr + parsedMath;
+                        if (shouldEval) {
+                            try { tempExpr = eval(tempExpr).toString(); } catch(e) { tempExpr = "Error"; }
+                        }
+                        updateDisplay(tempExpr, true);
+                    }
+                    
+                    if (shouldStop) {
+                        isMathActive = false;
+                        if(navigator.vibrate) navigator.vibrate([50, 50]);
+                    }
+                }
+            }
+        };
+    }
 }
 // =====================================
 // NOTEPAD MODE (REAL NOTES UI)
