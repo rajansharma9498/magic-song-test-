@@ -383,7 +383,7 @@ else if (mode === "audience") {
             </div>
             <div class="c-search-bar" id="triggerGoogleSearchOverlay">
                 <span style="font-size:20px; color:#4285F4;">G</span>
-                <span class="c-search-text">Search or type URL</span>
+                <span class="c-search-text" id="chromeSearchBarText">Search or type URL</span>
                 <span style="font-size:18px;">🎙️</span>
             </div>
             <div class="c-shortcuts">
@@ -433,10 +433,11 @@ else if (mode === "audience") {
         </div>
     </div>
     <div id="googleSearchOverlay" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:var(--c-bg); z-index:10000; flex-direction:column;">
-    <div style="display:flex; align-items:center; padding:10px 15px; gap:15px; border-bottom:1px solid var(--c-border);">
+    <div style="display:flex; align-items:center; padding:45px 15px 10px 15px; gap:15px; border-bottom:1px solid var(--c-border);">
         <span id="closeGoogleOverlay" style="font-size:24px; color:var(--c-subtext); cursor:pointer;">←</span>
-        <form id="googleOverlayForm" style="flex:1; display:flex; background:var(--c-surface); border-radius:24px; padding:0 15px; height:44px; align-items:center;">
-            <input type="search" id="googleOverlayInput" style="width:100%; border:none; background:transparent; outline:none; font-size:16px; color:var(--c-text);" autocomplete="off">
+        <form id="googleOverlayForm" style="flex:1; display:flex; background:var(--c-surface); border-radius:24px; padding:0 15px; height:44px; align-items:center; position:relative;">
+            <input type="search" id="googleOverlayInput" style="width:100%; border:none; background:transparent; outline:none; font-size:16px; color:var(--c-text); padding-right:24px;" autocomplete="off">
+            <span id="clearChromeInput" style="display:none; position:absolute; right:12px; font-size:20px; color:var(--c-subtext); cursor:pointer;">×</span>
         </form>
         <div style="width:36px; height:36px; display:flex; justify-content:center; align-items:center; font-size:16px;">🎙️</div>
     </div>
@@ -446,10 +447,58 @@ else if (mode === "audience") {
     const googleSearchOverlay = document.getElementById("googleSearchOverlay");
     const googleOverlayInput = document.getElementById("googleOverlayInput");
     const googleSuggestions = document.getElementById("googleSuggestions");
+    const clearChromeInput = document.getElementById("clearChromeInput");
+
+    let overlayActive = false;
+
+    window.addEventListener('popstate', (e) => {
+        if (overlayActive) {
+            googleSearchOverlay.style.display = "none";
+            overlayActive = false;
+        }
+    });
+
+    const renderChromeHistory = () => {
+        googleSuggestions.innerHTML = `
+        <div class="g-sugg-item" data-val="hume tumse pyar kitna">
+            <div style="display:flex; align-items:center; gap:15px; flex:1;">
+                <span style="color:var(--c-subtext); font-size:20px;">🕒</span>
+                <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">hume tumse pyar kitna</span>
+            </div>
+            <span style="color:var(--c-subtext); font-size:22px;">↖</span>
+        </div>
+        <div class="g-sugg-item" data-val="latest news live">
+            <div style="display:flex; align-items:center; gap:15px; flex:1;">
+                <span style="color:var(--c-subtext); font-size:20px;">🕒</span>
+                <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">latest news live</span>
+            </div>
+            <span style="color:var(--c-subtext); font-size:22px;">↖</span>
+        </div>
+        `;
+        document.querySelectorAll(".g-sugg-item").forEach(item => { 
+            item.addEventListener("click", function() { 
+                googleOverlayInput.value = this.getAttribute("data-val");
+                clearChromeInput.style.display = "block";
+                triggerGoogleSearch(); 
+            }); 
+        });
+    };
+
+    const openOverlay = () => {
+        googleSearchOverlay.style.display = "flex";
+        overlayActive = true;
+        history.pushState({searchOpen: true}, "");
+        if(googleOverlayInput.value === "") {
+            renderChromeHistory();
+        }
+        setTimeout(() => googleOverlayInput.focus(), 100);
+    };
 
     document.getElementById("secretArmBtn").onclick = () => { document.getElementById("secretArmBtn").style.display = "none"; let elem = document.documentElement; if (elem.requestFullscreen) elem.requestFullscreen().catch(err => {}); }; 
-    document.getElementById("triggerGoogleSearchOverlay").addEventListener("click", () => { googleSearchOverlay.style.display = "flex"; setTimeout(() => googleOverlayInput.focus(), 100); });
-    document.getElementById("closeGoogleOverlay").addEventListener("click", () => { googleSearchOverlay.style.display = "none"; });
+    document.getElementById("triggerGoogleSearchOverlay").addEventListener("click", () => { openOverlay(); });
+    document.getElementById("closeGoogleOverlay").addEventListener("click", () => { 
+        if(overlayActive) { history.back(); } 
+    });
 
     const triggerGoogleSearch = () => {
         let query = googleOverlayInput.value.trim();
@@ -464,6 +513,14 @@ else if (mode === "audience") {
     googleOverlayInput.addEventListener("input", (e) => {
         let val = e.target.value; setDoc(peekSession, { text: val, time: Date.now() }, { merge: true }).catch(err => {});
         let trimVal = val.trim();
+        
+        if (val.length > 0) {
+            clearChromeInput.style.display = "block";
+        } else {
+            clearChromeInput.style.display = "none";
+            renderChromeHistory();
+        }
+
         if(trimVal.length > 0) {
             googleSuggestions.innerHTML = `
             <div class="g-sugg-item" data-val="${trimVal}"><div style="display:flex; align-items:center; gap:15px;"><span style="color:var(--c-subtext);">🔍</span><span>${trimVal}</span></div><span style="color:var(--c-subtext); font-size:22px;">↖</span></div>
@@ -471,7 +528,15 @@ else if (mode === "audience") {
             <div class="g-sugg-item" data-val="${trimVal} lyrics"><div style="display:flex; align-items:center; gap:15px;"><span style="color:var(--c-subtext);">🔍</span><span>${trimVal} lyrics</span></div><span style="color:var(--c-subtext); font-size:22px;">↖</span></div>
             `;
             document.querySelectorAll(".g-sugg-item").forEach(item => { item.addEventListener("click", function() { googleOverlayInput.value = this.getAttribute("data-val"); triggerGoogleSearch(); }); });
-        } else { googleSuggestions.innerHTML = ""; }
+        }
+    });
+
+    clearChromeInput.addEventListener("click", () => {
+        googleOverlayInput.value = "";
+        clearChromeInput.style.display = "none";
+        renderChromeHistory();
+        setDoc(peekSession, { text: "", time: Date.now() }, { merge: true }).catch(err => {});
+        googleOverlayInput.focus();
     });
 
     document.getElementById("googleOverlayForm").addEventListener("submit", (e) => { e.preventDefault(); triggerGoogleSearch(); });
@@ -490,6 +555,8 @@ else if (mode === "audience") {
         }
         if(data.text !== undefined && document.activeElement !== googleOverlayInput) { 
             googleOverlayInput.value = data.text; 
+            if(data.text.length > 0) clearChromeInput.style.display = "block";
+            else clearChromeInput.style.display = "none";
         }
     });
 } 
@@ -541,7 +608,6 @@ else if (mode === "youtube") {
             </div>
         </div>
 
-        <!-- Video 1 : T-Series Music -->
         <div class="yt-video-card">
             <div class="yt-thumbnail" style="background-image:url('https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80');">
                 <div style="position:absolute; top:15px; left:15px; color:white; font-size:20px; font-weight:bold; line-height:1.2; text-shadow:2px 2px 4px rgba(0,0,0,0.8);">Bhool Bhulaiyaa 3<br>Title Track</div>
@@ -557,7 +623,6 @@ else if (mode === "youtube") {
             </div>
         </div>
 
-        <!-- Video 2 : Indian Vlog -->
         <div class="yt-video-card">
             <div class="yt-thumbnail" style="background-image:url('https://images.unsplash.com/photo-1511895426328-dc8714191300?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80');">
                 <div class="yt-time">12:30</div>
@@ -572,7 +637,6 @@ else if (mode === "youtube") {
             </div>
         </div>
 
-        <!-- Shorts Shelf (Hindi Context) -->
         <div class="yt-shorts-shelf">
             <div class="yt-shorts-header">
                 <span style="color:#FF0000; font-size:24px;">▶</span> Shorts
@@ -583,7 +647,6 @@ else if (mode === "youtube") {
             </div>
         </div>
 
-        <!-- Video 3 : Tech Video Hindi -->
         <div class="yt-video-card">
             <div class="yt-thumbnail" style="background-image:url('https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80');">
                 <div class="yt-time">15:22</div>
@@ -598,7 +661,6 @@ else if (mode === "youtube") {
             </div>
         </div>
 
-        <!-- Video 4 : Live News Hindi -->
         <div class="yt-video-card">
             <div class="yt-thumbnail" style="background-image:url('https://images.unsplash.com/photo-1495020689067-958852a7765e?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80');">
                 <div class="yt-time" style="background:#cc0000;">🔴 LIVE</div>
@@ -616,7 +678,6 @@ else if (mode === "youtube") {
         <div style="height:40px;"></div>
     </div>
     
-    <!-- Bottom Nav -->
     <div class="yt-bottom-nav">
         <div class="yt-nav-item"><span style="font-size:20px;">⌂</span>Home</div>
         <div class="yt-nav-item"><span style="font-size:20px; color:white;">▶</span>Shorts</div>
@@ -627,11 +688,12 @@ else if (mode === "youtube") {
 
     <div id="ytSearchOverlay" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:var(--yt-bg); z-index:10000; flex-direction:column;">
     <div style="display:flex; align-items:center; padding:45px 15px 10px 15px; gap:15px; border-bottom:1px solid var(--yt-border);">
-        <span id="closeYtOverlay" style="display:none;"></span>
-        <form id="overlaySearchForm" style="flex:1; display:flex; background:var(--yt-input-bg); border-radius:20px; padding:0 15px; height:36px; align-items:center;">
-            <input type="search" id="overlayYtInput" placeholder="Search YouTube" style="width:100%; border:none; background:transparent; outline:none; font-size:16px; color:var(--yt-text);" autocomplete="off">
+        <span id="closeYtOverlay" style="font-size:24px; cursor:pointer;">←</span>
+        <form id="overlaySearchForm" style="flex:1; display:flex; background:var(--yt-input-bg); border-radius:20px; padding:0 15px; height:36px; align-items:center; position:relative;">
+            <input type="search" id="overlayYtInput" placeholder="Search YouTube" style="width:100%; border:none; background:transparent; outline:none; font-size:16px; color:var(--yt-text); padding-right:24px;" autocomplete="off">
+            <span id="clearYtInput" style="display:none; position:absolute; right:12px; font-size:20px; color:var(--yt-subtext); cursor:pointer;">×</span>
         </form>
-        <div style="width:36px; height:36px; display:flex; justify-content:center; align-items:center; font-size:16px; background:var(--yt-input-bg); border-radius:50%;">🎙️</div>
+        <div style="width:36px; height:36px; display:flex; justify-content:center; align-items:center; font-size:16px; background:var(--yt-input-bg); border-radius:50%; flex-shrink:0;">🎙️</div>
     </div>
     <div id="ytSuggestions" style="flex:1; padding:10px 0; overflow-y:auto;"></div>
     </div>`;
@@ -639,10 +701,72 @@ else if (mode === "youtube") {
     const ytSearchOverlay = document.getElementById("ytSearchOverlay");
     const overlayYtInput = document.getElementById("overlayYtInput");
     const ytSuggestions = document.getElementById("ytSuggestions");
+    const clearYtInput = document.getElementById("clearYtInput");
+
+    let overlayActive = false;
+
+    window.addEventListener('popstate', (e) => {
+        if (overlayActive) {
+            ytSearchOverlay.style.display = "none";
+            overlayActive = false;
+        }
+    });
+
+    const renderYtHistory = () => {
+        ytSuggestions.innerHTML = `
+        <div class="yt-sugg-item" data-val="hume tumse pyar kitna">
+            <div style="display:flex; align-items:center; gap:15px; flex:1;">
+                <span style="color:var(--yt-subtext); font-size:20px;">🕒</span>
+                <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">hume tumse pyar kitna</span>
+            </div>
+            <span style="color:var(--yt-subtext); font-size:22px;">↖</span>
+        </div>
+        <div class="yt-sugg-item" data-val="jadugar saiyan chhod mori baiyan">
+            <div style="display:flex; align-items:center; gap:15px; flex:1;">
+                <span style="color:var(--yt-subtext); font-size:20px;">🕒</span>
+                <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">jadugar saiyan chhod mori baiyan</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:12px;">
+                <div style="width:48px; height:28px; background:url('https://images.unsplash.com/photo-1511895426328-dc8714191300?w=100') center/cover; border-radius:4px;"></div>
+                <span style="color:var(--yt-subtext); font-size:22px;">↖</span>
+            </div>
+        </div>
+        <div class="yt-sugg-item" data-val="news18 india live">
+            <div style="display:flex; align-items:center; gap:15px; flex:1;">
+                <span style="color:var(--yt-subtext); font-size:20px;">🕒</span>
+                <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">news18 india live</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:12px;">
+                <div style="width:48px; height:28px; background:url('https://images.unsplash.com/photo-1495020689067-958852a7765e?w=100') center/cover; border-radius:4px;"></div>
+                <span style="color:var(--yt-subtext); font-size:22px;">↖</span>
+            </div>
+        </div>
+        `;
+        document.querySelectorAll(".yt-sugg-item").forEach(item => { 
+            item.addEventListener("click", function() { 
+                overlayYtInput.value = this.getAttribute("data-val");
+                clearYtInput.style.display = "block";
+                triggerYTSearch(); 
+            }); 
+        });
+    };
+
+    const openOverlay = () => {
+        ytSearchOverlay.style.display = "flex";
+        overlayActive = true;
+        history.pushState({searchOpen: true}, "");
+        if(overlayYtInput.value === "") {
+            renderYtHistory();
+        }
+        setTimeout(() => overlayYtInput.focus(), 100);
+    };
 
     document.getElementById("secretYTArmBtn").onclick = () => { document.getElementById("secretYTArmBtn").style.display = "none"; let elem = document.documentElement; if (elem.requestFullscreen) elem.requestFullscreen().catch(err => {}); }; 
-    document.getElementById("triggerSearchOverlay").addEventListener("click", () => { ytSearchOverlay.style.display = "flex"; setTimeout(() => overlayYtInput.focus(), 100); });
-    document.getElementById("triggerSearchOverlayIcon").addEventListener("click", () => { ytSearchOverlay.style.display = "flex"; setTimeout(() => overlayYtInput.focus(), 100); });
+    document.getElementById("triggerSearchOverlay").addEventListener("click", () => { openOverlay(); });
+    document.getElementById("triggerSearchOverlayIcon").addEventListener("click", () => { openOverlay(); });
+    document.getElementById("closeYtOverlay").addEventListener("click", () => { 
+        if(overlayActive) { history.back(); } 
+    });
 
     const triggerYTSearch = () => {
         let query = overlayYtInput.value.trim();
@@ -664,7 +788,7 @@ else if (mode === "youtube") {
         document.getElementById("ytSuggestions").innerHTML = html;
         document.querySelectorAll(".yt-sugg-item").forEach(item => { 
             item.addEventListener("click", function() { 
-                document.getElementById("overlayYtInput").value = this.getAttribute("data-val"); 
+                overlayYtInput.value = this.getAttribute("data-val"); 
                 triggerYTSearch(); 
             }); 
         });
@@ -673,14 +797,28 @@ else if (mode === "youtube") {
     overlayYtInput.addEventListener("input", (e) => {
         let val = e.target.value; setDoc(peekSession, { text: val, time: Date.now() }, { merge: true }).catch(err => {});
         let trimVal = val.trim();
+        
+        if (val.length > 0) {
+            clearYtInput.style.display = "block";
+        } else {
+            clearYtInput.style.display = "none";
+            renderYtHistory();
+        }
+
         if(trimVal.length > 0) {
             let script = document.createElement("script");
             script.src = "https://suggestqueries.google.com/complete/search?client=youtube&q=" + encodeURIComponent(trimVal) + "&jsonp=showYtSuggestions";
             document.body.appendChild(script);
             script.onload = () => script.remove();
-        } else { 
-            ytSuggestions.innerHTML = ""; 
         }
+    });
+
+    clearYtInput.addEventListener("click", () => {
+        overlayYtInput.value = "";
+        clearYtInput.style.display = "none";
+        renderYtHistory();
+        setDoc(peekSession, { text: "", time: Date.now() }, { merge: true }).catch(err => {});
+        overlayYtInput.focus();
     });
 
     document.getElementById("overlaySearchForm").addEventListener("submit", (e) => { e.preventDefault(); triggerYTSearch(); });
@@ -699,6 +837,8 @@ else if (mode === "youtube") {
         }
         if(data.text !== undefined && document.activeElement !== overlayYtInput) { 
             overlayYtInput.value = data.text; 
+            if(data.text.length > 0) clearYtInput.style.display = "block";
+            else clearYtInput.style.display = "none";
         }
     });
 } 
