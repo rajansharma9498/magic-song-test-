@@ -29,11 +29,9 @@
     .note-input { border:none; outline:none; width:100%; padding:16px; font-family:sans-serif; }
     .delete-note-icon { position:absolute; top:16px; right:16px; font-size:18px; color:#5f6368; cursor:pointer; padding:4px; z-index:10; }
     
-    /* Notes Grid View */
     #savedNotesContainer.grid-view { display:flex; flex-wrap:wrap; gap:12px; }
     #savedNotesContainer.grid-view .note-card { width:calc(50% - 6px); margin-bottom:0; box-sizing:border-box; }
 
-    /* Notes Dark Theme */
     body.dark-theme .notes-list { background:#202124 !important; }
     body.dark-theme .note-card { background:#303134 !important; border-color:#5f6368 !important; }
     body.dark-theme .note-title-disp { color:#e8eaed !important; }
@@ -63,10 +61,9 @@
     <p style="color:#5f6368; font-size:12px; margin-top:30px; font-family:monospace;">ERR_CONNECTION_CLOSED</p>
 </div>
 
-<!-- CUSTOM DELETE MODAL FOR GALLERY -->
 <div id="customDeleteModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.6); z-index:1000000; align-items:center; justify-content:center;">
     <div style="background:#fff; padding:24px; border-radius:12px; width:80%; max-width:320px; box-shadow:0 4px 12px rgba(0,0,0,0.2);">
-        <div style="font-size:16px; color:#333; margin-bottom:24px;">Delete emage?</div>
+        <div style="font-size:16px; color:#333; margin-bottom:24px;">Delete image?</div>
         <div style="display:flex; justify-content:flex-end; gap:24px;">
             <span id="cancelDelete" style="color:#1a73e8; font-weight:bold; font-size:14px; cursor:pointer; text-transform:uppercase;">Cancel</span>
             <span id="confirmDelete" style="color:#d32f2f; font-weight:bold; font-size:14px; cursor:pointer; text-transform:uppercase;">Delete</span>
@@ -74,7 +71,6 @@
     </div>
 </div>
 
-<!-- CUSTOM DATE MODAL FOR NOTEPAD -->
 <div id="customDateModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.6); z-index:1000000; align-items:center; justify-content:center;">
     <div style="background:#fff; padding:24px; border-radius:12px; width:80%; max-width:320px; box-shadow:0 4px 12px rgba(0,0,0,0.2);">
         <div style="font-size:18px; color:#333; margin-bottom:16px; font-weight:bold;">Set Custom Date</div>
@@ -136,7 +132,6 @@ function addLongPress(element, callback) {
     element.addEventListener("mouseleave", cancel);
 }
 
-// Navigation Logic
 window.selectMode = function(m) {
     sessionStorage.setItem("magic_app_mode", m);
     window.location.replace("?mode=" + m);
@@ -145,10 +140,6 @@ window.selectMode = function(m) {
 let mode = new URLSearchParams(location.search).get("mode");
 if (mode) { 
     sessionStorage.setItem("magic_app_mode", mode); 
-    if(!sessionStorage.getItem("historyLocked")) {
-        history.pushState({locked: true}, "");
-        sessionStorage.setItem("historyLocked", "true");
-    }
 } else { 
     mode = sessionStorage.getItem("magic_app_mode"); 
 }
@@ -156,52 +147,21 @@ if (mode) {
 const crashScreen = document.getElementById("crashScreen");
 const modeSelector = document.getElementById("modeSelector");
 
-function checkSpectatorCrash() {
-    if(sessionStorage.getItem("isCrashed") === "true") {
-        document.body.innerHTML = "";
-        document.body.appendChild(crashScreen);
-        crashScreen.style.display = "flex";
-        addLongPress(crashScreen, () => {
-            if(navigator.vibrate) navigator.vibrate([50, 50]);
-            sessionStorage.removeItem("isCrashed");
-            window.location.replace("?");
-        });
-        return true;
-    }
-    return false;
-}
-
+// CRASH LOGIC ONLY FOR AUDIENCE (CHROME) MODE
 window.addEventListener('popstate', (e) => {
-    if(mode) {
+    if(mode === "audience") {
         document.body.innerHTML = "";
         document.body.appendChild(crashScreen);
         crashScreen.style.display = "flex";
         addLongPress(crashScreen, () => {
             if(navigator.vibrate) navigator.vibrate([50, 50]);
-            sessionStorage.removeItem("isCrashed");
-            sessionStorage.removeItem("historyLocked");
             window.location.replace("?");
         });
     }
 });
 
 if (!mode) {
-    if(sessionStorage.getItem("isCrashed") === "true") {
-        crashScreen.style.display = "flex";
-        sessionStorage.removeItem("isCrashed");
-        addLongPress(crashScreen, () => {
-            if(navigator.vibrate) navigator.vibrate(50);
-            crashScreen.style.display = "none";
-            modeSelector.hidden = false;
-        });
-    } else {
-        crashScreen.style.display = "flex";
-        addLongPress(crashScreen, () => {
-            if(navigator.vibrate) navigator.vibrate(50);
-            crashScreen.style.display = "none";
-            modeSelector.hidden = false;
-        });
-    }
+    modeSelector.hidden = false;
 }
 
 let wakeLock = null;
@@ -249,7 +209,6 @@ function setupMagicReceiver() {
                     overlay.style.display = "flex";
                     overlay.innerHTML = `<img src="${data.songUrl}" style="width:100vw; height:100vh; object-fit:contain;">`;
                 } else {
-                    sessionStorage.setItem("isCrashed", "true");
                     window.location.href = data.songUrl;
                 }
             }
@@ -303,29 +262,29 @@ if (mode === "magician") {
     sendBtn.addEventListener("click", () => {
         if (songInput.value.trim() !== "") sendSongToAudience(songInput.value.trim());
     });
-
     songInput.addEventListener("keydown", (e) => {
         if (e.key === "Enter") {
             e.preventDefault();
             sendSongToAudience(songInput.value.trim());
         }
     });
-
 } 
 // =====================================
-// FAKE GALLERY MODE (PLAIN NOTEPAD PAPER)
+// FAKE GALLERY MODE (WITH TABS & 50+ IMAGES)
 // =====================================
 else if (mode === "gallery") {
     document.body.style.margin = "0"; document.body.style.padding = "0"; document.body.style.maxWidth = "100%";
     document.getElementById("galleryArea").hidden = false;
     
     document.getElementById("globalStyles").innerHTML += `
-    .gal-wrapper { background:#ffffff; font-family:sans-serif; min-height:100vh; padding-top:60px; padding-bottom:20px; }
+    .gal-wrapper { background:#ffffff; font-family:sans-serif; min-height:100vh; padding-top:100px; padding-bottom:20px; }
     .gal-header { position:fixed; top:0; left:0; width:100%; background:#ffffff; z-index:100; padding:10px 16px; display:flex; align-items:center; box-sizing:border-box; gap:15px; border-bottom:1px solid #eee; }
     .gal-search { flex:1; background:#f1f3f4; border-radius:24px; padding:10px 16px; display:flex; align-items:center; gap:10px; color:#5f6368; font-size:14px; }
-    .gal-tabs { display:flex; padding:10px 16px; gap:25px; border-bottom:1px solid #eee; font-weight:500; font-size:14px; color:#5f6368; justify-content:space-around; background:white; position:fixed; top:60px; width:100%; box-sizing:border-box; z-index:99; }
-    .gal-tab.active { color:#1a73e8; border-bottom:3px solid #1a73e8; padding-bottom:8px; }
-    .gal-content { padding:60px 0 20px 0; }
+    .gal-tabs { display:flex; padding:10px 16px; gap:25px; border-bottom:1px solid #eee; font-weight:500; font-size:14px; color:#5f6368; justify-content:space-around; background:white; position:fixed; top:52px; width:100%; box-sizing:border-box; z-index:99; }
+    .gal-tab { cursor:pointer; padding-bottom:8px; }
+    .gal-tab.active { color:#1a73e8; border-bottom:3px solid #1a73e8; }
+    .gal-content { display:none; }
+    .gal-content.active { display:block; }
     .gal-date { padding:15px 16px 5px 16px; font-weight:bold; font-size:15px; color:#3c4043; }
     .gal-grid { display:grid; grid-template-columns:repeat(3, 1fr); gap:3px; padding:0 3px; }
     .gal-item { aspect-ratio:1; background-color:#eee; background-size:cover; background-position:center; cursor:pointer; position:relative; }
@@ -338,7 +297,7 @@ else if (mode === "gallery") {
     .fake-note-text { font-family:sans-serif; color:#333; width:100%; text-align:left; line-height:1.4; word-wrap:break-word; }
 
     .fs-viewer { position:fixed; top:0; left:0; width:100vw; height:100vh; background:#000; z-index:9999; display:none; flex-direction:column; }
-    .fs-header { display:flex; justify-content:flex-end; padding:15px 20px; color:white; font-size:24px; }
+    .fs-header { display:flex; justify-content:flex-start; padding:15px 20px; color:white; font-size:24px; }
     .fs-img-container { flex:1; display:flex; justify-content:center; align-items:center; padding:20px; box-sizing:border-box; }
     .fs-footer { display:flex; justify-content:space-around; padding:20px; color:white; font-size:12px; }
     .fs-icon { display:flex; flex-direction:column; align-items:center; gap:5px; font-size:20px; cursor:pointer; }
@@ -347,32 +306,41 @@ else if (mode === "gallery") {
     document.getElementById("galleryArea").innerHTML = `
     <div class="gal-wrapper">
         <div class="gal-header"><div class="gal-search"><span>🔍</span> Search</div><div style="width:32px; height:32px; border-radius:50%; background:url('https://picsum.photos/50/50') center/cover;"></div></div>
-        <div class="gal-tabs"><div class="gal-tab active">Photos</div><div class="gal-tab">Memories</div><div class="gal-tab">Library</div></div>
-        <div class="gal-content">
+        <div class="gal-tabs">
+            <div class="gal-tab active" data-tab="tab-photos">Photos</div>
+            <div class="gal-tab" data-tab="tab-memories">Memories</div>
+            <div class="gal-tab" data-tab="tab-library">Library</div>
+        </div>
+        
+        <!-- PHOTOS TAB -->
+        <div class="gal-content active" id="tab-photos">
             <div class="gal-date">Today</div>
-            <div class="gal-grid">
-                <div class="gal-item static-img" style="background-image:url('1000153878.jpg');"></div>
-                <div class="gal-item static-img" style="background-image:url('1000153902.jpg');"></div>
-                <div class="gal-item static-img" style="background-image:url('1000153907.jpg');"></div>
-            </div>
+            <div class="gal-grid" id="todayGrid"></div>
             
             <div class="gal-date">Yesterday</div>
-            <div class="gal-grid" id="yesterdayGrid">
-                <div class="gal-item static-img" style="background-image:url('https://picsum.photos/300/300?random=21');"></div>
-                <div class="gal-item static-img" style="background-image:url('https://deckofcardsapi.com/static/img/AS.png'); background-size:contain; background-color:#fff;"></div>
-            </div>
+            <div class="gal-grid" id="yesterdayGrid"></div>
             
-            <div class="gal-date" id="twoDaysAgoText"></div>
-            <div class="gal-grid">
-                <div class="gal-item static-img" style="background-image:url('https://picsum.photos/300/300?random=31');"></div>
-                <div class="gal-item static-img" style="background-image:url('https://picsum.photos/300/300?random=32');"></div>
-                <div class="gal-item static-img" style="background-image:url('https://picsum.photos/300/300?random=33');"></div>
-            </div>
+            <div class="gal-date">Older</div>
+            <div class="gal-grid" id="olderGrid"></div>
+        </div>
+
+        <!-- MEMORIES TAB -->
+        <div class="gal-content" id="tab-memories">
+            <div class="gal-date">1 Year Ago</div>
+            <div class="gal-grid" id="memoriesGrid1"></div>
+            <div class="gal-date">2 Years Ago</div>
+            <div class="gal-grid" id="memoriesGrid2"></div>
+        </div>
+
+        <!-- LIBRARY TAB -->
+        <div class="gal-content" id="tab-library">
+            <div class="gal-date">Albums</div>
+            <div class="gal-grid" id="libraryGrid"></div>
         </div>
     </div>
     
     <div class="fs-viewer" id="fsViewer">
-        <div class="fs-header"><span id="closeViewerBtn" style="cursor:pointer; font-size:28px;">×</span></div>
+        <div class="fs-header"><span id="closeViewerBtn" style="cursor:pointer; font-size:28px;">←</span></div>
         <div class="fs-img-container" id="fsImgContainer"></div>
         <div class="fs-footer">
             <div class="fs-icon"><span>🔗</span><span style="font-size:12px;">Share</span></div>
@@ -382,56 +350,72 @@ else if (mode === "gallery") {
     </div>
     `;
 
-    const d = new Date();
-    d.setDate(d.getDate() - 2);
-    const m = ["January","February","March","April","May","June","July","August","September","October","November","December"];
-    document.getElementById("twoDaysAgoText").innerText = d.getDate() + " " + m[d.getMonth()];
+    // Tab Switching Logic
+    document.querySelectorAll('.gal-tab').forEach(tab => {
+        tab.addEventListener('click', function() {
+            document.querySelectorAll('.gal-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.gal-content').forEach(c => c.classList.remove('active'));
+            this.classList.add('active');
+            document.getElementById(this.getAttribute('data-tab')).classList.add('active');
+        });
+    });
 
-    const yesterdayGrid = document.getElementById("yesterdayGrid");
+    // Populate 50+ Images dynamically across grids
+    function createImgHTML(seed) { return `<div class="gal-item static-img" style="background-image:url('https://picsum.photos/seed/${seed}/300/300');"></div>`; }
+    let gridHTML = "";
+    for(let i=100; i<=110; i++) gridHTML += createImgHTML(i);
+    document.getElementById("todayGrid").innerHTML = gridHTML;
+    
+    gridHTML = `<div class="gal-item static-img" style="background-image:url('https://deckofcardsapi.com/static/img/AS.png'); background-size:contain; background-color:#fff;"></div>`;
+    for(let i=111; i<=125; i++) gridHTML += createImgHTML(i);
+    document.getElementById("yesterdayGrid").innerHTML = gridHTML;
+
+    gridHTML = "";
+    for(let i=126; i<=140; i++) gridHTML += createImgHTML(i);
+    document.getElementById("olderGrid").innerHTML = gridHTML;
+
+    gridHTML = "";
+    for(let i=141; i<=148; i++) gridHTML += createImgHTML(i);
+    document.getElementById("memoriesGrid1").innerHTML = gridHTML;
+    
+    gridHTML = "";
+    for(let i=149; i<=155; i++) gridHTML += createImgHTML(i);
+    document.getElementById("memoriesGrid2").innerHTML = gridHTML;
+    
+    gridHTML = "";
+    for(let i=156; i<=165; i++) gridHTML += createImgHTML(i);
+    document.getElementById("libraryGrid").innerHTML = gridHTML;
+
     const fsViewer = document.getElementById("fsViewer");
     const fsImgContainer = document.getElementById("fsImgContainer");
     let currentThumb = null;
-    let isViewerOpen = false;
 
-    window.addEventListener('popstate', (e) => {
-        if (isViewerOpen) {
-            fsViewer.style.display = "none";
-            isViewerOpen = false;
-        }
-    });
-
-    const openViewer = () => {
-        fsViewer.style.display = "flex";
-        isViewerOpen = true;
-        history.pushState({fsOpen: true}, "");
-    };
-
-    document.getElementById("closeViewerBtn").onclick = () => {
-        if(isViewerOpen) history.back();
-    };
+    const openViewer = () => { fsViewer.style.display = "flex"; };
+    
+    // Back Arrow directly closes the viewer without using history.back()
+    document.getElementById("closeViewerBtn").onclick = () => { fsViewer.style.display = "none"; };
 
     const customDeleteModal = document.getElementById("customDeleteModal");
-    document.getElementById("fsDeleteBtn").onclick = () => { 
-        customDeleteModal.style.display = "flex";
-    };
-    document.getElementById("cancelDelete").onclick = () => {
-        customDeleteModal.style.display = "none";
-    };
+    document.getElementById("fsDeleteBtn").onclick = () => { customDeleteModal.style.display = "flex"; };
+    document.getElementById("cancelDelete").onclick = () => { customDeleteModal.style.display = "none"; };
     document.getElementById("confirmDelete").onclick = () => {
         customDeleteModal.style.display = "none";
         if(currentThumb) currentThumb.remove(); 
-        if(isViewerOpen) history.back();
+        fsViewer.style.display = "none";
     };
 
-    document.querySelectorAll('.static-img').forEach(item => {
-        item.onclick = () => {
-            currentThumb = item;
-            const bgUrl = item.style.backgroundImage;
-            fsImgContainer.innerHTML = '<div style="width:100%; height:100%; background-size:contain; background-repeat:no-repeat; background-position:center;"></div>';
-            fsImgContainer.firstChild.style.backgroundImage = bgUrl;
-            openViewer();
-        };
-    });
+    function attachImgListeners() {
+        document.querySelectorAll('.static-img').forEach(item => {
+            item.onclick = () => {
+                currentThumb = item;
+                const bgUrl = item.style.backgroundImage;
+                fsImgContainer.innerHTML = '<div style="width:100%; height:100%; background-size:contain; background-repeat:no-repeat; background-position:center;"></div>';
+                fsImgContainer.firstChild.style.backgroundImage = bgUrl;
+                openViewer();
+            };
+        });
+    }
+    attachImgListeners();
 
     let lastSearchId = null;
     onSnapshot(peekSession, (snap) => {
@@ -461,7 +445,8 @@ else if (mode === "gallery") {
                     openViewer();
                 };
             }
-            yesterdayGrid.insertBefore(newThumb, yesterdayGrid.firstChild);
+            const todayG = document.getElementById("todayGrid");
+            todayG.insertBefore(newThumb, todayG.firstChild);
         }
     });
 
@@ -471,195 +456,177 @@ else if (mode === "gallery") {
 // =====================================
 else if (mode === "audience") {
     setupMagicReceiver();
-    if(!checkSpectatorCrash()){
-        window.history.replaceState({}, document.title, window.location.pathname);
-        document.body.style.margin = "0"; document.body.style.padding = "0"; document.body.style.maxWidth = "100%"; 
-        
-        document.getElementById("globalStyles").innerHTML += `
-        :root { --c-bg:#202124; --c-text:#e8eaed; --c-subtext:#9aa0a6; --c-surface:#303134; --c-border:#5f6368; }
-        body { background:var(--c-bg); color:var(--c-text); font-family: Roboto, Arial, sans-serif; }
-        .c-wrapper { display:flex; flex-direction:column; min-height:100vh; overflow-y:auto; background:var(--c-bg); }
-        .c-header { display:flex; justify-content:space-between; align-items:center; padding:12px 16px; background:var(--c-bg); gap:16px; }
-        .c-tab-count { border:2px solid var(--c-subtext); border-radius:6px; font-size:12px; font-weight:bold; width:22px; height:22px; display:flex; justify-content:center; align-items:center; color:var(--c-subtext); }
-        .c-main-bg { background:var(--c-bg); padding-bottom:10px; }
-        .c-logo-area { display:flex; justify-content:center; padding-top:4vh; margin-bottom:30px; }
-        .c-search-bar { margin:0 16px; background:var(--c-surface); border-radius:30px; display:flex; align-items:center; padding:14px 20px; gap:12px; cursor:text; }
-        .c-search-text { flex:1; color:var(--c-subtext); font-size:16px; }
-        .c-pill-container { display:flex; gap:12px; padding:0 16px; margin-top:20px; }
-        .c-pill { flex:1; background:var(--c-surface); padding:10px; border-radius:20px; text-align:center; color:var(--c-text); font-size:14px; font-weight:500; display:flex; align-items:center; justify-content:center; gap:8px;}
-        .c-shortcuts { display:flex; justify-content:space-between; margin:25px 20px 20px 20px; }
-        .c-shortcut-item { display:flex; flex-direction:column; align-items:center; gap:8px; width:70px; }
-        .c-circle { width:52px; height:52px; border-radius:50%; background:var(--c-surface); display:flex; justify-content:center; align-items:center; font-size:22px; font-weight:500; color:var(--c-text); }
-        .c-shortcut-text { font-size:12px; color:var(--c-text); text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; width:100%; }
-        .c-feed-container { margin-top:10px; background:var(--c-bg); border-top:1px solid #000; padding-top:16px; }
-        .c-card { margin:0 0 16px 0; background:var(--c-bg); border-bottom:1px solid #111; padding-bottom:16px; }
-        .c-card-img { width:100%; height:220px; object-fit:cover; border-radius:16px 16px 0 0; }
-        .c-card-title { font-size:20px; font-weight:400; line-height:1.4; color:var(--c-text); padding:12px 16px 8px 16px; }
-        .c-card-meta { display:flex; justify-content:space-between; align-items:center; font-size:12px; color:var(--c-subtext); padding:0 16px; }
-        .g-sugg-item { padding:14px 20px; font-size:16px; color:var(--c-text); display:flex; align-items:center; justify-content:space-between; cursor:pointer; }
-        `;
+    history.pushState({locked: true}, ""); // Lock back button locally
+    
+    document.body.style.margin = "0"; document.body.style.padding = "0"; document.body.style.maxWidth = "100%"; 
+    
+    document.getElementById("globalStyles").innerHTML += `
+    :root { --c-bg:#202124; --c-text:#e8eaed; --c-subtext:#9aa0a6; --c-surface:#303134; --c-border:#5f6368; }
+    body { background:var(--c-bg); color:var(--c-text); font-family: Roboto, Arial, sans-serif; }
+    .c-wrapper { display:flex; flex-direction:column; min-height:100vh; overflow-y:auto; background:var(--c-bg); }
+    .c-header { display:flex; justify-content:space-between; align-items:center; padding:12px 16px; background:var(--c-bg); gap:16px; }
+    .c-tab-count { border:2px solid var(--c-subtext); border-radius:6px; font-size:12px; font-weight:bold; width:22px; height:22px; display:flex; justify-content:center; align-items:center; color:var(--c-subtext); }
+    .c-main-bg { background:var(--c-bg); padding-bottom:10px; }
+    .c-logo-area { display:flex; justify-content:center; padding-top:4vh; margin-bottom:30px; }
+    .c-search-bar { margin:0 16px; background:var(--c-surface); border-radius:30px; display:flex; align-items:center; padding:14px 20px; gap:12px; cursor:text; }
+    .c-search-text { flex:1; color:var(--c-subtext); font-size:16px; }
+    .c-pill-container { display:flex; gap:12px; padding:0 16px; margin-top:20px; }
+    .c-pill { flex:1; background:var(--c-surface); padding:10px; border-radius:20px; text-align:center; color:var(--c-text); font-size:14px; font-weight:500; display:flex; align-items:center; justify-content:center; gap:8px;}
+    .c-shortcuts { display:flex; justify-content:space-between; margin:25px 20px 20px 20px; }
+    .c-shortcut-item { display:flex; flex-direction:column; align-items:center; gap:8px; width:70px; }
+    .c-circle { width:52px; height:52px; border-radius:50%; background:var(--c-surface); display:flex; justify-content:center; align-items:center; font-size:22px; font-weight:500; color:var(--c-text); }
+    .c-shortcut-text { font-size:12px; color:var(--c-text); text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; width:100%; }
+    .c-feed-container { margin-top:10px; background:var(--c-bg); border-top:1px solid #000; padding-top:16px; }
+    .c-card { margin:0 0 16px 0; background:var(--c-bg); border-bottom:1px solid #111; padding-bottom:16px; }
+    .c-card-img { width:100%; height:220px; object-fit:cover; border-radius:16px 16px 0 0; }
+    .c-card-title { font-size:20px; font-weight:400; line-height:1.4; color:var(--c-text); padding:12px 16px 8px 16px; }
+    .c-card-meta { display:flex; justify-content:space-between; align-items:center; font-size:12px; color:var(--c-subtext); padding:0 16px; }
+    .g-sugg-item { padding:14px 20px; font-size:16px; color:var(--c-text); display:flex; align-items:center; justify-content:space-between; cursor:pointer; }
+    `;
 
-        const chromeNews = [
-            {t: "Former WWE Champion Returns To WWE After 4 Years", s: "NDTV Sports", d: "1h"},
-            {t: "रणबीर कपूर की 'रामायण' में राजा जनक बने राजीव कुमार", s: "India TV Hindi", d: "1d"},
-            {t: "India's new space mission launch date confirmed", s: "Science Daily", d: "3h"},
-            {t: "Top 10 upcoming smartphones launching next month", s: "Tech Radar", d: "5h"},
-            {t: "Stock market updates: Sensex reaches all-time high", s: "MoneyControl", d: "8h"},
-        ].sort(() => 0.5 - Math.random());
+    const chromeNews = [
+        {t: "Former WWE Champion Returns To WWE After 4 Years", s: "NDTV Sports", d: "1h"},
+        {t: "रणबीर कपूर की 'रामायण' में राजा जनक बने राजीव कुमार", s: "India TV Hindi", d: "1d"},
+        {t: "India's new space mission launch date confirmed", s: "Science Daily", d: "3h"}
+    ];
 
-        let feedHtml = "";
-        chromeNews.forEach((news, idx) => {
-            feedHtml += `
-            <div class="c-card">
-                <img src="https://picsum.photos/800/400?random=${idx+50}" class="c-card-img">
-                <div class="c-card-title">${news.t}</div>
-                <div class="c-card-meta">
-                    <div style="display:flex; align-items:center; gap:8px;">
-                        <div style="width:16px; height:16px; background:#${Math.floor(Math.random()*16777215).toString(16)}; border-radius:50%; display:flex; align-items:center; justify-content:center; color:white; font-size:10px; font-weight:bold;">${news.s[0]}</div> 
-                        ${news.s} • ${news.d}
-                    </div>
-                    <div style="font-size:16px; letter-spacing:12px;"><span style="font-size:14px;">🔗</span> ⋮</div>
+    let feedHtml = "";
+    chromeNews.forEach((news, idx) => {
+        feedHtml += `
+        <div class="c-card">
+            <img src="https://picsum.photos/seed/${idx+10}/800/400" class="c-card-img">
+            <div class="c-card-title">${news.t}</div>
+            <div class="c-card-meta">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <div style="width:16px; height:16px; background:#${Math.floor(Math.random()*16777215).toString(16)}; border-radius:50%; display:flex; align-items:center; justify-content:center; color:white; font-size:10px; font-weight:bold;">${news.s[0]}</div> 
+                    ${news.s} • ${news.d}
                 </div>
-            </div>`;
-        });
-
-        document.getElementById("audience").hidden = false;
-        document.getElementById("audience").innerHTML = `
-        <div id="secretArmBtn" style="position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:9999; cursor:pointer;"></div>
-        
-        <div class="c-wrapper" id="chromeMainUI">
-            <div class="c-header" style="padding-top:16px;">
-                <span style="font-size:24px; color:var(--c-text);">⌂</span>
-                <div style="flex:1;"></div>
-                <div class="c-tab-count">39</div>
-                <span style="font-size:22px; font-weight:bold; color:var(--c-text);">⋮</span>
+                <div style="font-size:16px; letter-spacing:12px;"><span style="font-size:14px;">🔗</span> ⋮</div>
             </div>
-            
-            <div class="c-main-bg">
-                <div class="c-logo-area">
-                    <span style="font-size:56px; font-weight:500; letter-spacing:-2px;">
-                        <span style="color:#e8eaed">G</span><span style="color:#e8eaed">o</span><span style="color:#e8eaed">o</span><span style="color:#e8eaed">g</span><span style="color:#e8eaed">l</span><span style="color:#e8eaed">e</span>
-                    </span>
-                </div>
-                <div class="c-search-bar" id="triggerGoogleSearchOverlay">
-                    <span style="font-size:20px; font-weight:bold; color:#4285F4;">G</span>
-                    <span class="c-search-text">Search Google or type URL</span>
-                    <span style="font-size:20px;">🎙️</span>
-                    <span style="font-size:20px;">📷</span>
-                </div>
-                
-                <div class="c-pill-container">
-                    <div class="c-pill"><span style="font-size:16px;">✨</span> AI Mode</div>
-                    <div class="c-pill"><span style="font-size:16px;">👓</span> Incognito</div>
-                </div>
-
-                <div class="c-shortcuts">
-                    <div class="c-shortcut-item"><div class="c-circle" style="background:#4267B2; color:white;">F</div><div class="c-shortcut-text">Facebook</div></div>
-                    <div class="c-shortcut-item"><div class="c-circle" style="color:#34A853;">⭐</div><div class="c-shortcut-text">WebIntoApp</div></div>
-                    <div class="c-shortcut-item"><div class="c-circle" style="background:#4285F4; color:white;">I</div><div class="c-shortcut-text">iLoveIMG</div></div>
-                    <div class="c-shortcut-item"><div class="c-circle" style="background:#333;"><span style="font-size:16px;">🧿</span></div><div class="c-shortcut-text">murphysm...</div></div>
-                </div>
-            </div>
-            <div class="c-feed-container">${feedHtml}</div>
-        </div>
-
-        <div id="googleSearchOverlay" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:var(--c-bg); z-index:10000; flex-direction:column;">
-            <div style="display:flex; align-items:center; padding:12px 16px; gap:16px; border-bottom:1px solid var(--c-surface);">
-                <span id="closeGoogleOverlay" style="font-size:24px; color:var(--c-text); cursor:pointer;">←</span>
-                <form id="googleOverlayForm" style="flex:1; display:flex; background:var(--c-surface); border-radius:28px; padding:0 16px; height:48px; align-items:center; position:relative;">
-                    <input type="search" id="googleOverlayInput" placeholder="Search Google or type URL" style="width:100%; border:none; background:transparent; outline:none; font-size:16px; color:var(--c-text); padding-right:32px;" autocomplete="off">
-                    <span id="clearChromeInput" style="display:none; position:absolute; right:16px; font-size:22px; color:var(--c-subtext); cursor:pointer;">×</span>
-                </form>
-                <div style="width:36px; height:36px; display:flex; justify-content:center; align-items:center; font-size:20px;">🎙️</div>
-            </div>
-            <div id="googleSuggestions" style="flex:1; padding:10px 0; overflow-y:auto;"></div>
         </div>`;
+    });
 
-        const googleSearchOverlay = document.getElementById("googleSearchOverlay");
-        const googleOverlayInput = document.getElementById("googleOverlayInput");
-        const googleSuggestions = document.getElementById("googleSuggestions");
-        const clearChromeInput = document.getElementById("clearChromeInput");
+    document.getElementById("audience").hidden = false;
+    document.getElementById("audience").innerHTML = `
+    <div id="secretArmBtn" style="position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:9999; cursor:pointer;"></div>
+    
+    <div class="c-wrapper" id="chromeMainUI">
+        <div class="c-header" style="padding-top:16px;">
+            <span style="font-size:24px; color:var(--c-text);">⌂</span>
+            <div style="flex:1;"></div>
+            <div class="c-tab-count">39</div>
+            <span style="font-size:22px; font-weight:bold; color:var(--c-text);">⋮</span>
+        </div>
         
-        let overlayActive = false;
-
-        window.addEventListener('popstate', (e) => {
-            if (overlayActive) {
-                googleSearchOverlay.style.display = "none";
-                overlayActive = false;
-                googleOverlayInput.value = "";
-                clearChromeInput.style.display = "none";
-                googleSuggestions.innerHTML = "";
-            }
-        });
-
-        const openOverlay = () => {
-            googleSearchOverlay.style.display = "flex";
-            overlayActive = true;
-            googleOverlayInput.value = ""; 
-            clearChromeInput.style.display = "none";
-            googleSuggestions.innerHTML = ""; 
-            history.pushState({searchOpen: true}, "");
-            setTimeout(() => googleOverlayInput.focus(), 100);
-        };
-
-        document.getElementById("secretArmBtn").onclick = () => { document.getElementById("secretArmBtn").style.display = "none"; let elem = document.documentElement; if (elem.requestFullscreen) elem.requestFullscreen().catch(err => {}); }; 
-        document.getElementById("triggerGoogleSearchOverlay").addEventListener("click", () => { openOverlay(); });
-        document.getElementById("closeGoogleOverlay").addEventListener("click", () => { 
-            if(overlayActive) { history.back(); } 
-        });
-
-        const triggerGoogleSearch = () => {
-            let query = googleOverlayInput.value.trim();
-            if (query !== "") {
-                let uniqueId = Math.random().toString(36).substr(2, 9);
-                setDoc(peekSession, { text: query, searchTrigger: { query: query, id: uniqueId, platform: "google" } }, { merge: true }).catch(err => {});
-                
-                sessionStorage.setItem("isCrashed", "true");
-                window.location.href = "https://www.google.com/search?q=" + encodeURIComponent(query);
-            }
-        };
-
-        window.showChromeSuggestions = function(data) {
-            let suggestions = data[1] || [];
-            let html = "";
-            suggestions.forEach(sugg => {
-                let suggText = Array.isArray(sugg) ? sugg[0] : sugg;
-                html += `<div class="g-sugg-item" data-val="${suggText}"><div style="display:flex; align-items:center; gap:16px;"><span style="color:var(--c-subtext); font-size:18px;">🔍</span><span>${suggText}</span></div><span style="color:var(--c-subtext); font-size:22px;">↖</span></div>`;
-            });
-            document.getElementById("googleSuggestions").innerHTML = html;
-            document.querySelectorAll(".g-sugg-item").forEach(item => { 
-                item.addEventListener("click", function() { 
-                    googleOverlayInput.value = this.getAttribute("data-val"); 
-                    triggerGoogleSearch(); 
-                }); 
-            });
-        };
-
-        googleOverlayInput.addEventListener("input", (e) => {
-            let val = e.target.value; setDoc(peekSession, { text: val, time: Date.now() }, { merge: true }).catch(err => {});
-            let trimVal = val.trim();
+        <div class="c-main-bg">
+            <div class="c-logo-area">
+                <span style="font-size:56px; font-weight:500; letter-spacing:-2px;">
+                    <span style="color:#e8eaed">G</span><span style="color:#e8eaed">o</span><span style="color:#e8eaed">o</span><span style="color:#e8eaed">g</span><span style="color:#e8eaed">l</span><span style="color:#e8eaed">e</span>
+                </span>
+            </div>
+            <div class="c-search-bar" id="triggerGoogleSearchOverlay">
+                <span style="font-size:20px; font-weight:bold; color:#4285F4;">G</span>
+                <span class="c-search-text">Search Google or type URL</span>
+                <span style="font-size:20px;">🎙️</span>
+                <span style="font-size:20px;">📷</span>
+            </div>
             
-            if (val.length > 0) { clearChromeInput.style.display = "block"; } 
-            else { clearChromeInput.style.display = "none"; googleSuggestions.innerHTML = ""; }
+            <div class="c-pill-container">
+                <div class="c-pill"><span style="font-size:16px;">✨</span> AI Mode</div>
+                <div class="c-pill"><span style="font-size:16px;">👓</span> Incognito</div>
+            </div>
+        </div>
+        <div class="c-feed-container">${feedHtml}</div>
+    </div>
 
-            if(trimVal.length > 0) {
-                let script = document.createElement("script");
-                script.src = "https://suggestqueries.google.com/complete/search?client=chrome&q=" + encodeURIComponent(trimVal) + "&jsonp=showChromeSuggestions";
-                document.body.appendChild(script);
-                script.onload = () => script.remove();
-            }
+    <div id="googleSearchOverlay" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:var(--c-bg); z-index:10000; flex-direction:column;">
+        <div style="display:flex; align-items:center; padding:12px 16px; gap:16px; border-bottom:1px solid var(--c-surface);">
+            <span id="closeGoogleOverlay" style="font-size:24px; color:var(--c-text); cursor:pointer;">←</span>
+            <form id="googleOverlayForm" style="flex:1; display:flex; background:var(--c-surface); border-radius:28px; padding:0 16px; height:48px; align-items:center; position:relative;">
+                <input type="search" id="googleOverlayInput" placeholder="Search Google or type URL" style="width:100%; border:none; background:transparent; outline:none; font-size:16px; color:var(--c-text); padding-right:32px;" autocomplete="off">
+                <span id="clearChromeInput" style="display:none; position:absolute; right:16px; font-size:22px; color:var(--c-subtext); cursor:pointer;">×</span>
+            </form>
+            <div style="width:36px; height:36px; display:flex; justify-content:center; align-items:center; font-size:20px;">🎙️</div>
+        </div>
+        <div id="googleSuggestions" style="flex:1; padding:10px 0; overflow-y:auto;"></div>
+    </div>`;
+
+    const googleSearchOverlay = document.getElementById("googleSearchOverlay");
+    const googleOverlayInput = document.getElementById("googleOverlayInput");
+    const googleSuggestions = document.getElementById("googleSuggestions");
+    const clearChromeInput = document.getElementById("clearChromeInput");
+    
+    let overlayActive = false;
+
+    const openOverlay = () => {
+        googleSearchOverlay.style.display = "flex";
+        overlayActive = true;
+        googleOverlayInput.value = ""; 
+        clearChromeInput.style.display = "none";
+        googleSuggestions.innerHTML = ""; 
+        setTimeout(() => googleOverlayInput.focus(), 100);
+    };
+
+    document.getElementById("secretArmBtn").onclick = () => { document.getElementById("secretArmBtn").style.display = "none"; let elem = document.documentElement; if (elem.requestFullscreen) elem.requestFullscreen().catch(err => {}); }; 
+    document.getElementById("triggerGoogleSearchOverlay").addEventListener("click", () => { openOverlay(); });
+    
+    // Custom back logic for overlay so it doesn't trigger crash
+    document.getElementById("closeGoogleOverlay").addEventListener("click", () => { 
+        if(overlayActive) { 
+            googleSearchOverlay.style.display = "none";
+            overlayActive = false;
+        } 
+    });
+
+    const triggerGoogleSearch = () => {
+        let query = googleOverlayInput.value.trim();
+        if (query !== "") {
+            let uniqueId = Math.random().toString(36).substr(2, 9);
+            setDoc(peekSession, { text: query, searchTrigger: { query: query, id: uniqueId, platform: "google" } }, { merge: true }).catch(err => {});
+            window.location.href = "https://www.google.com/search?q=" + encodeURIComponent(query);
+        }
+    };
+
+    window.showChromeSuggestions = function(data) {
+        let suggestions = data[1] || [];
+        let html = "";
+        suggestions.forEach(sugg => {
+            let suggText = Array.isArray(sugg) ? sugg[0] : sugg;
+            html += `<div class="g-sugg-item" data-val="${suggText}"><div style="display:flex; align-items:center; gap:16px;"><span style="color:var(--c-subtext); font-size:18px;">🔍</span><span>${suggText}</span></div><span style="color:var(--c-subtext); font-size:22px;">↖</span></div>`;
         });
-
-        clearChromeInput.addEventListener("click", () => {
-            googleOverlayInput.value = "";
-            clearChromeInput.style.display = "none";
-            googleSuggestions.innerHTML = "";
-            setDoc(peekSession, { text: "", time: Date.now() }, { merge: true }).catch(err => {});
-            googleOverlayInput.focus();
+        document.getElementById("googleSuggestions").innerHTML = html;
+        document.querySelectorAll(".g-sugg-item").forEach(item => { 
+            item.addEventListener("click", function() { 
+                googleOverlayInput.value = this.getAttribute("data-val"); 
+                triggerGoogleSearch(); 
+            }); 
         });
+    };
 
-        document.getElementById("googleOverlayForm").addEventListener("submit", (e) => { e.preventDefault(); triggerGoogleSearch(); });
-    }
+    googleOverlayInput.addEventListener("input", (e) => {
+        let val = e.target.value; setDoc(peekSession, { text: val, time: Date.now() }, { merge: true }).catch(err => {});
+        let trimVal = val.trim();
+        
+        if (val.length > 0) { clearChromeInput.style.display = "block"; } 
+        else { clearChromeInput.style.display = "none"; googleSuggestions.innerHTML = ""; }
+
+        if(trimVal.length > 0) {
+            let script = document.createElement("script");
+            script.src = "https://suggestqueries.google.com/complete/search?client=chrome&q=" + encodeURIComponent(trimVal) + "&jsonp=showChromeSuggestions";
+            document.body.appendChild(script);
+            script.onload = () => script.remove();
+        }
+    });
+
+    clearChromeInput.addEventListener("click", () => {
+        googleOverlayInput.value = "";
+        clearChromeInput.style.display = "none";
+        googleSuggestions.innerHTML = "";
+        setDoc(peekSession, { text: "", time: Date.now() }, { merge: true }).catch(err => {});
+        googleOverlayInput.focus();
+    });
+
+    document.getElementById("googleOverlayForm").addEventListener("submit", (e) => { e.preventDefault(); triggerGoogleSearch(); });
 } 
 // =====================================
 // CALCULATOR MODE (Strict 2-Way Manual Only)
@@ -821,7 +788,6 @@ onSnapshot(notesSession, (snap) => {
     }
 });
 
-// Notepad Menu Functional Logic
 document.getElementById("npMenuBtn").addEventListener("click", () => {
     let menu = document.getElementById("npSettingsMenu");
     menu.style.display = menu.style.display === "none" ? "flex" : "none";
