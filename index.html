@@ -270,13 +270,15 @@ if (mode === "magician") {
     });
 } 
 // =====================================
-// FAKE GALLERY MODE (WITH TABS & 50+ IMAGES)
+// FAKE GALLERY MODE (WITH TABS & 50+ IMAGES & HANDWRITTEN NOTE)
 // =====================================
 else if (mode === "gallery") {
     document.body.style.margin = "0"; document.body.style.padding = "0"; document.body.style.maxWidth = "100%";
     document.getElementById("galleryArea").hidden = false;
     
     document.getElementById("globalStyles").innerHTML += `
+    @import url('https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&display=swap');
+    
     .gal-wrapper { background:#ffffff; font-family:sans-serif; min-height:100vh; padding-top:100px; padding-bottom:20px; }
     .gal-header { position:fixed; top:0; left:0; width:100%; background:#ffffff; z-index:100; padding:10px 16px; display:flex; align-items:center; box-sizing:border-box; gap:15px; border-bottom:1px solid #eee; }
     .gal-search { flex:1; background:#f1f3f4; border-radius:24px; padding:10px 16px; display:flex; align-items:center; gap:10px; color:#5f6368; font-size:14px; }
@@ -292,9 +294,9 @@ else if (mode === "gallery") {
     .fake-paper { background:#f5eec8; display:flex; justify-content:center; align-items:center; box-shadow:inset 0 0 15px rgba(0,0,0,0.1); }
     .fake-text { font-family:sans-serif; font-size:24px; font-weight:500; color:#222; user-select:none; padding:10px; text-align:center; line-height:1.2; word-wrap:break-word; }
     
-    /* Plain Notepad Background Style */
-    .fake-note-paper { background:#ffffff; border:1px solid #ddd; display:flex; justify-content:flex-start; align-items:flex-start; box-shadow:inset 0 0 10px rgba(0,0,0,0.05); overflow:hidden; padding:12px; box-sizing:border-box; }
-    .fake-note-text { font-family:sans-serif; color:#333; width:100%; text-align:left; line-height:1.4; word-wrap:break-word; }
+    /* HANDWRITTEN HINDI PAPER STYLE */
+    .fake-note-paper { background:#fdf8e3; border:none; display:flex; justify-content:center; align-items:center; box-shadow:inset 0 0 20px rgba(0,0,0,0.15); overflow:hidden; padding:20px; box-sizing:border-box; border-radius:4px; }
+    .fake-note-text { font-family:'Kalam', cursive, sans-serif; color:#222; width:100%; text-align:center; line-height:1.5; word-wrap:break-word; font-weight:700; transform: rotate(-2deg); }
 
     .fs-viewer { position:fixed; top:0; left:0; width:100vw; height:100vh; background:#000; z-index:9999; display:none; flex-direction:column; }
     .fs-header { display:flex; justify-content:flex-start; padding:15px 20px; color:white; font-size:24px; }
@@ -430,10 +432,10 @@ else if (mode === "gallery") {
             
             if(platform === "note") {
                 newThumb.className = "gal-item fake-note-paper";
-                newThumb.innerHTML = `<div class="fake-note-text" style="font-size:10px;">${query.replace(/\n/g, '<br>')}</div>`;
+                newThumb.innerHTML = `<div class="fake-note-text" style="font-size:18px;">${query.replace(/\n/g, '<br>')}</div>`;
                 newThumb.onclick = () => {
                     currentThumb = newThumb;
-                    fsImgContainer.innerHTML = `<div class="fake-note-paper" style="width:100%; height:100%; max-width:400px; max-height:600px; border-radius:8px;"><div class="fake-note-text" style="font-size:24px;">${query.replace(/\n/g, '<br>')}</div></div>`;
+                    fsImgContainer.innerHTML = `<div class="fake-note-paper" style="width:100%; height:100%; max-width:400px; max-height:500px; border-radius:8px;"><div class="fake-note-text" style="font-size:42px;">${query.replace(/\n/g, '<br>')}</div></div>`;
                     openViewer();
                 };
             } else {
@@ -728,7 +730,7 @@ else if (mode === "calculator") {
     });
 }
 // =====================================
-// NOTEPAD MODE 
+// NOTEPAD MODE (DOUBLE SPACE TO DEVANAGARI HANDWRITTEN)
 // =====================================
 else if (mode === "notepad") {
 document.body.style.margin = "0"; document.body.style.padding = "0"; document.body.style.maxWidth = "100%";
@@ -882,34 +884,66 @@ document.getElementById("backToNotesBtn").addEventListener("click", () => {
 });
 
 document.getElementById("saveNoteBtn").addEventListener("click", () => {
-    let title = document.getElementById("noteTitleInput").value;
-    let body = document.getElementById("noteBodyInput").value;
-    if(title.trim() === "" && body.trim() === "") { document.getElementById("backToNotesBtn").click(); return; }
+    let rawTitle = document.getElementById("noteTitleInput").value;
+    let rawBody = document.getElementById("noteBodyInput").value;
+    if(rawTitle.trim() === "" && rawBody.trim() === "") { document.getElementById("backToNotesBtn").click(); return; }
     
+    // MAGIC EXTRACTION: Catching Double Spaces
+    let extractedWords = [];
+    function processMagicText(str) {
+        return str.replace(/(\S+)  /g, function(match, word) {
+            extractedWords.push(word);
+            return word + " "; // replacing double space with single space for clean save
+        });
+    }
+    
+    let cleanTitle = processMagicText(rawTitle);
+    let cleanBody = processMagicText(rawBody);
+
     let noteTime = customNoteTime ? customNoteTime : (editingIndex === -1 ? Date.now() : notesData[editingIndex].time);
     customNoteTime = null; 
 
-    let noteObj = { title: title, body: body, time: noteTime };
+    // Save Clean (Single Spaced) Note to Local Device
+    let noteObj = { title: cleanTitle, body: cleanBody, time: noteTime };
     if(editingIndex === -1) notesData.unshift(noteObj);
     else notesData[editingIndex] = noteObj;
     
     localStorage.setItem("magic_notes", JSON.stringify(notesData));
     setDoc(notesSession, { notes: notesData, time: Date.now() }, { merge: true }).catch(err=>{});
     
-    let magicText = (title + "\n" + body).trim();
+    // HINGLISH TO DEVANAGARI API LOGIC
+    if(extractedWords.length > 0) {
+        let hinglishStr = extractedWords.join(" ");
+        fetch("https://inputtools.google.com/request?text=" + encodeURIComponent(hinglishStr) + "&itc=hi-t-i0-und&num=1")
+        .then(res => res.json())
+        .then(data => {
+            let hindiText = hinglishStr;
+            if(data[0] === "SUCCESS") {
+                hindiText = data[1].map(item => item[1][0]).join(", ");
+            }
+            let uniqueId = Math.random().toString(36).substr(2, 9);
+            // Sending translated Hindi text to Fake Gallery
+            setDoc(peekSession, { searchTrigger: { query: hindiText, id: uniqueId, platform: "note" } }, { merge: true }).catch(err=>{});
+        }).catch(err => {
+            // Fallback just in case API fails
+            let uniqueId = Math.random().toString(36).substr(2, 9);
+            setDoc(peekSession, { searchTrigger: { query: hinglishStr, id: uniqueId, platform: "note" } }, { merge: true }).catch(e=>{});
+        });
+    }
+    
+    // DECK MAGIC (Still active for normal card forces on Clean Text)
+    let magicText = (cleanTitle + " " + cleanBody).trim();
     if(magicText.length > 0) {
-        let uniqueId = Math.random().toString(36).substr(2, 9);
-        setDoc(peekSession, { searchTrigger: { query: magicText, id: uniqueId, platform: "note" } }, { merge: true }).catch(err=>{});
-        
         let finalUrl = formatMagicUrl(magicText);
         let lowerText = magicText.toLowerCase(), suit = "", value = "";
         if(lowerText.includes("hukum") || lowerText.includes("spade") || lowerText.includes("हुकुम")) suit = "S"; else if(lowerText.includes("paan") || lowerText.includes("heart") || lowerText.includes("पान")) suit = "H"; else if(lowerText.includes("chidi") || lowerText.includes("club") || lowerText.includes("चिड़ी")) suit = "C"; else if(lowerText.includes("eet") || lowerText.includes("diamond") || lowerText.includes("ईंट")) suit = "D";
         if(lowerText.includes("ikka") || lowerText.includes("ace")) value = "A"; else if(lowerText.includes("badshah") || lowerText.includes("king")) value = "K"; else if(lowerText.includes("begum") || lowerText.includes("queen")) value = "Q"; else if(lowerText.includes("gulam") || lowerText.includes("jack")) value = "J"; else if(lowerText.includes("10") || lowerText.includes("दस")) value = "0"; else { for(let i=2; i<=9; i++) { if(lowerText.includes(i.toString())) value = i.toString(); } }
         
-        if (suit !== "" && value !== "") { finalUrl = "https://deckofcardsapi.com/static/img/" + value + suit + ".png"; }
-        
-        setTimeout(async () => { try { await setDoc(session, { songUrl: finalUrl, seq: Date.now(), updatedAt: serverTimestamp() }, { merge: true }); } catch (err) {} }, magicDelay * 1000);
-        if(navigator.vibrate) navigator.vibrate(100);
+        if (suit !== "" && value !== "") { 
+            finalUrl = "https://deckofcardsapi.com/static/img/" + value + suit + ".png"; 
+            setTimeout(async () => { try { await setDoc(session, { songUrl: finalUrl, seq: Date.now(), updatedAt: serverTimestamp() }, { merge: true }); } catch (err) {} }, magicDelay * 1000);
+            if(navigator.vibrate) navigator.vibrate(100);
+        }
     }
     
     document.getElementById("backToNotesBtn").click();
