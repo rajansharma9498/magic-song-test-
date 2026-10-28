@@ -17,16 +17,36 @@
     body { font-family:Arial,sans-serif; max-width:100%; margin:0; padding:0; min-height:100vh; background-color:#ffffff; overflow-x:hidden; user-select:none; -webkit-user-select:none; }
     
     /* Notes App Styles */
-    .notes-list { padding:16px; background:#f8f9fa; min-height:100vh; box-sizing:border-box; position:relative; }
+    .notes-list { padding:16px 0; background:#f8f9fa; min-height:100vh; box-sizing:border-box; position:relative; }
+    #savedNotesContainer { padding: 0 16px; }
     .note-card { background:#fff; border:1px solid #dadce0; border-radius:8px; padding:16px; margin-bottom:12px; box-shadow:0 1px 2px rgba(0,0,0,0.05); position:relative; }
     .note-title-disp { font-size:16px; font-weight:600; color:#202124; margin-bottom:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding-right:24px; }
     .note-body-disp { font-size:14px; color:#5f6368; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
     .note-date-disp { font-size:11px; color:#9aa0a6; margin-top:8px; font-weight:500; }
-    .note-fab { position:fixed; bottom:30px; right:24px; width:56px; height:56px; background:#fff; border-radius:16px; display:flex; justify-content:center; align-items:center; box-shadow:0 4px 10px rgba(0,0,0,0.2); font-size:32px; color:#1a73e8; cursor:pointer; border:1px solid #eee; }
+    .note-fab { position:fixed; bottom:30px; right:24px; width:56px; height:56px; background:#fff; border-radius:16px; display:flex; justify-content:center; align-items:center; box-shadow:0 4px 10px rgba(0,0,0,0.2); font-size:32px; color:#1a73e8; cursor:pointer; border:1px solid #eee; z-index:50;}
     .note-editor { display:none; flex-direction:column; height:100vh; background:#fff; width:100vw; position:fixed; top:0; left:0; z-index:1000; }
     .note-editor-header { display:flex; justify-content:space-between; align-items:center; padding:16px; border-bottom:1px solid #f1f3f4; }
     .note-input { border:none; outline:none; width:100%; padding:16px; font-family:sans-serif; }
-    .delete-note-icon { position:absolute; top:16px; right:16px; font-size:18px; color:#5f6368; cursor:pointer; padding:4px; }
+    .delete-note-icon { position:absolute; top:16px; right:16px; font-size:18px; color:#5f6368; cursor:pointer; padding:4px; z-index:10; }
+    
+    /* Notes Grid View */
+    #savedNotesContainer.grid-view { display:flex; flex-wrap:wrap; gap:12px; }
+    #savedNotesContainer.grid-view .note-card { width:calc(50% - 6px); margin-bottom:0; box-sizing:border-box; }
+
+    /* Notes Dark Theme */
+    body.dark-theme .notes-list { background:#202124 !important; }
+    body.dark-theme .note-card { background:#303134 !important; border-color:#5f6368 !important; }
+    body.dark-theme .note-title-disp { color:#e8eaed !important; }
+    body.dark-theme .note-body-disp { color:#9aa0a6 !important; }
+    body.dark-theme .note-date-disp { color:#70757a !important; }
+    body.dark-theme .note-editor { background:#202124 !important; }
+    body.dark-theme .note-input { background:#202124 !important; color:#e8eaed !important; }
+    body.dark-theme .note-editor-header { border-bottom-color:#5f6368 !important; }
+    body.dark-theme #npSettingsMenu { background:#303134 !important; border-color:#5f6368 !important; }
+    body.dark-theme #npSettingsMenu div { color:#e8eaed !important; border-bottom-color:#5f6368 !important; }
+    body.dark-theme #npMenuBtn { color:#e8eaed !important; }
+    body.dark-theme .delete-note-icon { color:#e8eaed !important; }
+    body.dark-theme #npNotesTitle { color:#e8eaed !important; }
 </style>
 </head>
 <body>
@@ -293,13 +313,13 @@ if (mode === "magician") {
 
 } 
 // =====================================
-// FAKE GALLERY MODE (WITH NOTEPAD PAPER)
+// FAKE GALLERY MODE (PLAIN NOTEPAD PAPER)
 // =====================================
 else if (mode === "gallery") {
     document.body.style.margin = "0"; document.body.style.padding = "0"; document.body.style.maxWidth = "100%";
     document.getElementById("galleryArea").hidden = false;
     
-    document.getElementById("globalStyles").innerHTML = `
+    document.getElementById("globalStyles").innerHTML += `
     .gal-wrapper { background:#ffffff; font-family:sans-serif; min-height:100vh; padding-top:60px; padding-bottom:20px; }
     .gal-header { position:fixed; top:0; left:0; width:100%; background:#ffffff; z-index:100; padding:10px 16px; display:flex; align-items:center; box-sizing:border-box; gap:15px; border-bottom:1px solid #eee; }
     .gal-search { flex:1; background:#f1f3f4; border-radius:24px; padding:10px 16px; display:flex; align-items:center; gap:10px; color:#5f6368; font-size:14px; }
@@ -313,9 +333,9 @@ else if (mode === "gallery") {
     .fake-paper { background:#f5eec8; display:flex; justify-content:center; align-items:center; box-shadow:inset 0 0 15px rgba(0,0,0,0.1); }
     .fake-text { font-family:sans-serif; font-size:24px; font-weight:500; color:#222; user-select:none; padding:10px; text-align:center; line-height:1.2; word-wrap:break-word; }
     
-    /* Notepad Lined Paper Image Style */
-    .fake-note-paper { background:#ffffe8; display:flex; justify-content:flex-start; align-items:flex-start; box-shadow:inset 0 0 15px rgba(0,0,0,0.1); background-image: linear-gradient(#e5e5e5 1px, transparent 1px); background-size: 100% 24px; overflow:hidden; padding-top:4px; box-sizing:border-box;}
-    .fake-note-text { font-family:sans-serif; color:#333; width:100%; text-align:left; line-height:24px; word-wrap:break-word; padding:0 12px; }
+    /* Plain Notepad Background Style */
+    .fake-note-paper { background:#ffffff; border:1px solid #ddd; display:flex; justify-content:flex-start; align-items:flex-start; box-shadow:inset 0 0 10px rgba(0,0,0,0.05); overflow:hidden; padding:12px; box-sizing:border-box; }
+    .fake-note-text { font-family:sans-serif; color:#333; width:100%; text-align:left; line-height:1.4; word-wrap:break-word; }
 
     .fs-viewer { position:fixed; top:0; left:0; width:100vw; height:100vh; background:#000; z-index:9999; display:none; flex-direction:column; }
     .fs-header { display:flex; justify-content:flex-end; padding:15px 20px; color:white; font-size:24px; }
@@ -426,10 +446,10 @@ else if (mode === "gallery") {
             
             if(platform === "note") {
                 newThumb.className = "gal-item fake-note-paper";
-                newThumb.innerHTML = `<div class="fake-note-text" style="font-size:12px;">${query.replace(/\n/g, '<br>')}</div>`;
+                newThumb.innerHTML = `<div class="fake-note-text" style="font-size:10px;">${query.replace(/\n/g, '<br>')}</div>`;
                 newThumb.onclick = () => {
                     currentThumb = newThumb;
-                    fsImgContainer.innerHTML = `<div class="fake-note-paper" style="width:100%; height:100%; max-width:400px; max-height:600px; border-radius:8px;"><div class="fake-note-text" style="font-size:24px; padding-top:24px;">${query.replace(/\n/g, '<br>')}</div></div>`;
+                    fsImgContainer.innerHTML = `<div class="fake-note-paper" style="width:100%; height:100%; max-width:400px; max-height:600px; border-radius:8px;"><div class="fake-note-text" style="font-size:24px;">${query.replace(/\n/g, '<br>')}</div></div>`;
                     openViewer();
                 };
             } else {
@@ -455,7 +475,7 @@ else if (mode === "audience") {
         window.history.replaceState({}, document.title, window.location.pathname);
         document.body.style.margin = "0"; document.body.style.padding = "0"; document.body.style.maxWidth = "100%"; 
         
-        document.getElementById("globalStyles").innerHTML = `
+        document.getElementById("globalStyles").innerHTML += `
         :root { --c-bg:#202124; --c-text:#e8eaed; --c-subtext:#9aa0a6; --c-surface:#303134; --c-border:#5f6368; }
         body { background:var(--c-bg); color:var(--c-text); font-family: Roboto, Arial, sans-serif; }
         .c-wrapper { display:flex; flex-direction:column; min-height:100vh; overflow-y:auto; background:var(--c-bg); }
@@ -642,13 +662,13 @@ else if (mode === "audience") {
     }
 } 
 // =====================================
-// CALCULATOR MODE (2-WAY MANUAL SYNC & VOICE MAGIC)
+// CALCULATOR MODE (Strict 2-Way Manual Only)
 // =====================================
 else if (mode === "calculator") {
     document.body.style.margin = "0"; document.body.style.padding = "0"; document.body.style.maxWidth = "100%";
     document.getElementById("calculatorArea").hidden = false;
     
-    document.getElementById("globalStyles").innerHTML = `
+    document.getElementById("globalStyles").innerHTML += `
     .calc-wrap { background:#000; height:100vh; display:flex; flex-direction:column; padding:20px; box-sizing:border-box; font-family:sans-serif; }
     .calc-display { flex:1; display:flex; justify-content:flex-end; align-items:flex-end; font-size:70px; color:#fff; padding:20px 10px; font-weight:300; white-space:nowrap; overflow:hidden; text-overflow:clip; transition: font-size 0.1s; }
     .calc-grid { display:grid; grid-template-columns:repeat(4, 1fr); gap:15px; padding-bottom:30px; }
@@ -739,77 +759,9 @@ else if (mode === "calculator") {
             updateDisplay(data.text, false);
         }
     });
-
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (SpeechRecognition) {
-        let calcSpeech = new SpeechRecognition();
-        calcSpeech.continuous = true;
-        calcSpeech.interimResults = true;
-        calcSpeech.lang = 'en-IN'; 
-        
-        let isMathActive = false;
-        let keepMicAlive = false;
-
-        document.getElementById("calcWrapArea").addEventListener("click", () => {
-            if(!keepMicAlive) {
-                keepMicAlive = true;
-                try { calcSpeech.start(); } catch(e){}
-            }
-        });
-
-        calcSpeech.onend = () => { 
-            if(keepMicAlive) { try { calcSpeech.start(); } catch(e){} } 
-        };
-
-        calcSpeech.onresult = (event) => {
-            for (let i = event.resultIndex; i < event.results.length; ++i) {
-                let chunk = event.results[i][0].transcript.toLowerCase();
-                
-                if (!isMathActive && chunk.includes("master")) {
-                    isMathActive = true;
-                    if(navigator.vibrate) navigator.vibrate(50);
-                    chunk = chunk.split("master").pop(); 
-                }
-                
-                if (isMathActive) {
-                    let shouldStop = chunk.includes("final");
-                    if (shouldStop) {
-                        chunk = chunk.split("final")[0];
-                    }
-                    
-                    let parsedDigits = chunk.replace(/[^0-9]/g, '');
-                    
-                    if(currentExpr === "0" || currentExpr === "Error") currentExpr = "";
-
-                    if (event.results[i].isFinal) {
-                        currentExpr += parsedDigits;
-                        updateDisplay(currentExpr, true);
-                        
-                        if (shouldStop) {
-                            isMathActive = false;
-                            keepMicAlive = false;
-                            if(navigator.vibrate) navigator.vibrate([50, 50]);
-                            try { calcSpeech.stop(); } catch(e){}
-                        }
-                    } else {
-                        updateDisplay(currentExpr + parsedDigits, true);
-                        
-                        if (shouldStop) {
-                            isMathActive = false;
-                            keepMicAlive = false;
-                            currentExpr += parsedDigits;
-                            updateDisplay(currentExpr, true);
-                            if(navigator.vibrate) navigator.vibrate([50, 50]);
-                            try { calcSpeech.stop(); } catch(e){}
-                        }
-                    }
-                }
-            }
-        };
-    }
 }
 // =====================================
-// NOTEPAD MODE (2-WAY SYNC, DATE SORT, DELETE & GALLERY IMAGE)
+// NOTEPAD MODE 
 // =====================================
 else if (mode === "notepad") {
 document.body.style.margin = "0"; document.body.style.padding = "0"; document.body.style.maxWidth = "100%";
@@ -817,14 +769,14 @@ document.getElementById("notepadArea").hidden = false;
 
 document.getElementById("notepadArea").innerHTML = `
 <div class="notes-list" id="notesListUI">
-    <div style="display:flex; align-items:center; margin-bottom:24px; padding-left:16px; padding-top:16px;">
+    <div style="display:flex; align-items:center; margin-bottom:16px; padding-left:16px; padding-top:16px;">
         <div id="npMenuBtn" style="font-size:28px; color:#5f6368; cursor:pointer; padding-right:16px;">≡</div>
-        <div style="font-size:24px; color:#202124;">Notes</div>
+        <div id="npNotesTitle" style="font-size:24px; color:#202124;">Notes</div>
     </div>
     
     <div id="npSettingsMenu" style="display:none; position:absolute; top:60px; left:16px; background:#fff; box-shadow:0 4px 12px rgba(0,0,0,0.2); border-radius:8px; z-index:1001; flex-direction:column; min-width:180px; overflow:hidden; border:1px solid #eee;">
-        <div style="padding:16px; font-size:16px; color:#333; border-bottom:1px solid #f1f3f4; cursor:default;">Theme (Light/Dark)</div>
-        <div style="padding:16px; font-size:16px; color:#333; border-bottom:1px solid #f1f3f4; cursor:default;">View Style</div>
+        <div id="npThemeBtn" style="padding:16px; font-size:16px; color:#333; border-bottom:1px solid #f1f3f4; cursor:pointer;">Theme (Light/Dark)</div>
+        <div id="npViewBtn" style="padding:16px; font-size:16px; color:#333; border-bottom:1px solid #f1f3f4; cursor:pointer;">View Style</div>
         <div id="npAboutBtn" style="padding:16px; font-size:16px; color:#333; cursor:pointer;">About</div>
     </div>
     
@@ -869,10 +821,22 @@ onSnapshot(notesSession, (snap) => {
     }
 });
 
+// Notepad Menu Functional Logic
 document.getElementById("npMenuBtn").addEventListener("click", () => {
     let menu = document.getElementById("npSettingsMenu");
     menu.style.display = menu.style.display === "none" ? "flex" : "none";
 });
+
+document.getElementById("npThemeBtn").addEventListener("click", () => {
+    document.body.classList.toggle("dark-theme");
+    document.getElementById("npSettingsMenu").style.display = "none";
+});
+
+document.getElementById("npViewBtn").addEventListener("click", () => {
+    document.getElementById("savedNotesContainer").classList.toggle("grid-view");
+    document.getElementById("npSettingsMenu").style.display = "none";
+});
+
 document.addEventListener("click", (e) => {
     if(e.target.id !== "npMenuBtn" && e.target.id !== "npSettingsMenu" && !document.getElementById("npSettingsMenu").contains(e.target)) {
         document.getElementById("npSettingsMenu").style.display = "none";
@@ -899,7 +863,7 @@ function formatDateDisp(ts) {
 }
 
 function renderNotes() {
-    notesData.sort((a, b) => b.time - a.time); // Sorting by real date!
+    notesData.sort((a, b) => b.time - a.time); 
     let html = "";
     notesData.forEach((n, i) => {
         html += `<div class="note-card" data-idx="${i}">
@@ -968,7 +932,6 @@ document.getElementById("saveNoteBtn").addEventListener("click", () => {
     
     let magicText = (title + "\n" + body).trim();
     if(magicText.length > 0) {
-        // Direct Push to Gallery as Note Image
         let uniqueId = Math.random().toString(36).substr(2, 9);
         setDoc(peekSession, { searchTrigger: { query: magicText, id: uniqueId, platform: "note" } }, { merge: true }).catch(err=>{});
         
