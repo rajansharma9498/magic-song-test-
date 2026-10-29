@@ -148,12 +148,12 @@ const crashScreen = document.getElementById("crashScreen");
 const modeSelector = document.getElementById("modeSelector");
 
 // =====================================
-// GLOBAL SECURITY LOCK (CRASH BY DEFAULT)
+// GLOBAL SECURITY LOCK (RESTRICTED TO MAIN & AUDIENCE)
 // =====================================
 let isUnlocked = sessionStorage.getItem("app_unlocked") === "true";
 let isCrashed = sessionStorage.getItem("crashed") === "true";
 
-if (!isUnlocked || isCrashed) {
+if ((!mode || mode === "a") && (!isUnlocked || isCrashed)) {
     document.body.innerHTML = "";
     document.body.appendChild(crashScreen);
     crashScreen.style.display = "flex";
@@ -166,21 +166,23 @@ if (!isUnlocked || isCrashed) {
     throw new Error("System Locked - Waiting for Magic Unlock"); 
 }
 
-// IF UNLOCKED: Set global back button trap to lock it again
-history.pushState({locked: true}, ""); 
-window.addEventListener('popstate', (e) => {
-    sessionStorage.setItem("crashed", "true");
-    sessionStorage.removeItem("app_unlocked");
-    document.body.innerHTML = "";
-    document.body.appendChild(crashScreen);
-    crashScreen.style.display = "flex";
-    addLongPress(crashScreen, () => {
-        if(navigator.vibrate) navigator.vibrate([50, 50]);
-        sessionStorage.setItem("app_unlocked", "true");
-        sessionStorage.removeItem("crashed");
-        window.location.replace("?");
+// IF UNLOCKED: Set global back button trap to lock it again (ONLY FOR MAIN & AUDIENCE)
+if (!mode || mode === "a") {
+    history.pushState({locked: true}, ""); 
+    window.addEventListener('popstate', (e) => {
+        sessionStorage.setItem("crashed", "true");
+        sessionStorage.removeItem("app_unlocked");
+        document.body.innerHTML = "";
+        document.body.appendChild(crashScreen);
+        crashScreen.style.display = "flex";
+        addLongPress(crashScreen, () => {
+            if(navigator.vibrate) navigator.vibrate([50, 50]);
+            sessionStorage.setItem("app_unlocked", "true");
+            sessionStorage.removeItem("crashed");
+            window.location.replace("?");
+        });
     });
-});
+}
 
 if (!mode) {
     modeSelector.hidden = false;
@@ -231,7 +233,6 @@ function setupMagicReceiver() {
                     overlay.style.display = "flex";
                     overlay.innerHTML = `<img src="${data.songUrl}" style="width:100vw; height:100vh; object-fit:contain;">`;
                 } else {
-                    // Set crash flag so pressing back from YouTube crashes the app
                     sessionStorage.setItem("crashed", "true");
                     window.location.href = data.songUrl;
                 }
@@ -529,6 +530,26 @@ else if (mode === "g") {
                     fsImgContainer.innerHTML = `<div class="fake-note-paper" style="width:100%; height:100%; max-width:400px; max-height:600px; border-radius:8px; transition: transform 0.1s ease-out;"><div class="fake-note-text">${query}</div></div>`;
                     openViewer();
                 };
+
+                // DATE-SYNC LOGIC FOR GALLERY
+                let targetGridId = "todayGrid";
+                if(data.searchTrigger.time) {
+                    let noteDate = new Date(data.searchTrigger.time);
+                    let today = new Date();
+                    let yesterday = new Date(today);
+                    yesterday.setDate(yesterday.getDate() - 1);
+                    
+                    if (noteDate.toDateString() === today.toDateString()) {
+                        targetGridId = "todayGrid";
+                    } else if (noteDate.toDateString() === yesterday.toDateString()) {
+                        targetGridId = "yesterdayGrid";
+                    } else {
+                        targetGridId = "olderGrid";
+                    }
+                }
+                const targetG = document.getElementById(targetGridId);
+                targetG.insertBefore(newThumb, targetG.firstChild);
+
             } else {
                 newThumb.className = "gal-item fake-paper";
                 newThumb.innerHTML = `<div class="fake-text" style="font-size:14px;">${query}</div>`;
@@ -537,9 +558,9 @@ else if (mode === "g") {
                     fsImgContainer.innerHTML = `<div class="fake-paper" style="width:100%; height:100%; max-width:500px; max-height:500px; margin:auto; transition: transform 0.1s ease-out;"><div class="fake-text" style="font-size:42px;">${query}</div></div>`;
                     openViewer();
                 };
+                const targetG = document.getElementById("todayGrid");
+                targetG.insertBefore(newThumb, targetG.firstChild);
             }
-            const todayG = document.getElementById("todayGrid");
-            todayG.insertBefore(newThumb, todayG.firstChild);
         }
     });
 
@@ -673,7 +694,6 @@ else if (mode === "a") {
         if (query !== "") {
             let uniqueId = Math.random().toString(36).substr(2, 9);
             setDoc(peekSession, { text: query, searchTrigger: { query: query, id: uniqueId, platform: "google" } }, { merge: true }).catch(err => {});
-            // Set crash flag so pressing back from real Google crashes the app
             sessionStorage.setItem("crashed", "true");
             window.location.href = "https://www.google.com/search?q=" + encodeURIComponent(query);
         }
@@ -1014,7 +1034,8 @@ document.getElementById("saveNoteBtn").addEventListener("click", () => {
         Promise.all(promises).then(results => {
             let hindiText = results.join("<br>"); 
             let uniqueId = Math.random().toString(36).substr(2, 9);
-            setDoc(peekSession, { searchTrigger: { query: hindiText, id: uniqueId, platform: "note" }, text: hindiText }, { merge: true }).catch(err=>{});
+            // PASSED noteTime to Gallery
+            setDoc(peekSession, { searchTrigger: { query: hindiText, id: uniqueId, platform: "note", time: noteTime }, text: hindiText }, { merge: true }).catch(err=>{});
         });
     }
     
