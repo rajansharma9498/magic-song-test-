@@ -269,7 +269,7 @@ if (mode === "magician") {
     });
 } 
 // =====================================
-// FAKE GALLERY MODE 
+// FAKE GALLERY MODE (WITH SWIPE & PINCH ZOOM)
 // =====================================
 else if (mode === "gallery") {
     document.body.style.margin = "0"; document.body.style.padding = "0"; document.body.style.maxWidth = "100%";
@@ -293,13 +293,13 @@ else if (mode === "gallery") {
     .fake-paper { background:#f5eec8; display:flex; justify-content:center; align-items:center; box-shadow:inset 0 0 15px rgba(0,0,0,0.1); }
     .fake-text { font-family:sans-serif; font-size:24px; font-weight:500; color:#222; user-select:none; padding:10px; text-align:center; line-height:1.2; word-wrap:break-word; }
     
-    /* LINED PAPER UI FIX (SCROLLABLE & PROPER ALIGNMENT) */
+    /* LINED PAPER UI FIX (BLUE INK & SCROLLABLE) */
     .fake-note-paper { background-color:#fdf8e3; background-image:repeating-linear-gradient(transparent, transparent 35px, #8ec5c7 35px, #8ec5c7 36px); background-attachment:local; box-shadow:inset 0 0 15px rgba(0,0,0,0.1); overflow-y:auto; padding:0 16px; box-sizing:border-box; }
-    .fake-note-text { font-family:'Kalam', cursive, sans-serif; color:#222; width:100%; text-align:left; line-height:36px; font-size:24px; font-weight:400; word-wrap:break-word; margin:0; padding-top:4px; padding-bottom:10px; }
+    .fake-note-text { font-family:'Kalam', cursive, sans-serif; color:#0a1b75; width:100%; text-align:left; line-height:36px; font-size:24px; font-weight:400; word-wrap:break-word; margin:0; padding-top:4px; padding-bottom:10px; }
 
     .fs-viewer { position:fixed; top:0; left:0; width:100vw; height:100vh; background:#000; z-index:9999; display:none; flex-direction:column; }
     .fs-header { display:flex; justify-content:flex-start; padding:15px 20px; color:white; font-size:24px; }
-    .fs-img-container { flex:1; display:flex; justify-content:center; align-items:center; padding:20px; box-sizing:border-box; overflow:hidden; }
+    .fs-img-container { flex:1; display:flex; justify-content:center; align-items:center; padding:20px; box-sizing:border-box; overflow:hidden; touch-action:none; }
     .fs-footer { display:flex; justify-content:space-around; padding:20px; color:white; font-size:12px; }
     .fs-icon { display:flex; flex-direction:column; align-items:center; gap:5px; font-size:20px; cursor:pointer; }
     `;
@@ -389,9 +389,74 @@ else if (mode === "gallery") {
     const fsImgContainer = document.getElementById("fsImgContainer");
     let currentThumb = null;
 
-    const openViewer = () => { fsViewer.style.display = "flex"; };
+    // PINCH ZOOM & SWIPE LOGIC VARS
+    let currentScale = 1;
+    let initialDist = 0;
+    let touchStartX = 0;
+    let touchEndX = 0;
+
+    const openViewer = () => { 
+        currentScale = 1; 
+        fsViewer.style.display = "flex"; 
+    };
     
     document.getElementById("closeViewerBtn").onclick = () => { fsViewer.style.display = "none"; };
+
+    // SWIPE LOGIC
+    fsViewer.addEventListener('touchstart', e => {
+        if(e.touches.length === 1) { touchStartX = e.changedTouches[0].screenX; }
+    }, {passive: true});
+
+    fsViewer.addEventListener('touchend', e => {
+        if(e.changedTouches.length === 1 && currentScale === 1) {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        }
+    }, {passive: true});
+
+    function handleSwipe() {
+        let allItems = Array.from(document.querySelectorAll('.gal-item'));
+        let currentIndex = allItems.indexOf(currentThumb);
+        if(currentIndex === -1) return;
+        
+        if(touchEndX < touchStartX - 60) { // Swipe Left -> Next Image
+            if(currentIndex < allItems.length - 1) allItems[currentIndex + 1].click();
+        }
+        if(touchEndX > touchStartX + 60) { // Swipe Right -> Prev Image
+            if(currentIndex > 0) allItems[currentIndex - 1].click();
+        }
+    }
+
+    // PINCH TO ZOOM LOGIC
+    fsImgContainer.addEventListener('touchstart', (e) => {
+        if(e.touches.length === 2) {
+            initialDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
+        }
+    }, {passive: false});
+
+    fsImgContainer.addEventListener('touchmove', (e) => {
+        if(e.touches.length === 2 && initialDist > 0) {
+            e.preventDefault();
+            let currentDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
+            let scale = (currentDist / initialDist) * currentScale;
+            if(scale < 1) scale = 1;
+            if(scale > 4) scale = 4;
+            if(fsImgContainer.firstChild) {
+                fsImgContainer.firstChild.style.transform = `scale(${scale})`;
+                fsImgContainer.firstChild.style.transition = 'none';
+            }
+        }
+    }, {passive: false});
+
+    fsImgContainer.addEventListener('touchend', (e) => {
+        if(e.touches.length < 2) {
+            if(fsImgContainer.firstChild) {
+                let styleStr = fsImgContainer.firstChild.style.transform || "";
+                let match = styleStr.match(/scale\(([^)]+)\)/);
+                if(match) currentScale = parseFloat(match[1]);
+            }
+        }
+    }, {passive: false});
 
     const customDeleteModal = document.getElementById("customDeleteModal");
     document.getElementById("fsDeleteBtn").onclick = () => { customDeleteModal.style.display = "flex"; };
@@ -407,7 +472,7 @@ else if (mode === "gallery") {
             item.onclick = () => {
                 currentThumb = item;
                 const bgUrl = item.style.backgroundImage;
-                fsImgContainer.innerHTML = '<div style="width:100%; height:100%; background-size:contain; background-repeat:no-repeat; background-position:center;"></div>';
+                fsImgContainer.innerHTML = '<div style="width:100%; height:100%; background-size:contain; background-repeat:no-repeat; background-position:center; transition: transform 0.1s ease-out;"></div>';
                 fsImgContainer.firstChild.style.backgroundImage = bgUrl;
                 openViewer();
             };
@@ -432,11 +497,11 @@ else if (mode === "gallery") {
                 newThumb.style.backgroundImage = "repeating-linear-gradient(transparent, transparent 11px, #8ec5c7 11px, #8ec5c7 12px)";
                 newThumb.style.padding = "0 4px";
                 newThumb.style.overflow = "hidden";
-                newThumb.innerHTML = `<div style="font-family:'Kalam', cursive; font-size:9px; line-height:12px; color:#222; padding-top:1px;">${query}</div>`;
+                newThumb.innerHTML = `<div style="font-family:'Kalam', cursive; font-size:9px; line-height:12px; color:#0a1b75; padding-top:1px;">${query}</div>`;
                 
                 newThumb.onclick = () => {
                     currentThumb = newThumb;
-                    fsImgContainer.innerHTML = `<div class="fake-note-paper" style="width:100%; height:100%; max-width:400px; max-height:600px; border-radius:8px;"><div class="fake-note-text">${query}</div></div>`;
+                    fsImgContainer.innerHTML = `<div class="fake-note-paper" style="width:100%; height:100%; max-width:400px; max-height:600px; border-radius:8px; transition: transform 0.1s ease-out;"><div class="fake-note-text">${query}</div></div>`;
                     openViewer();
                 };
             } else {
@@ -444,7 +509,7 @@ else if (mode === "gallery") {
                 newThumb.innerHTML = `<div class="fake-text" style="font-size:14px;">${query}</div>`;
                 newThumb.onclick = () => {
                     currentThumb = newThumb;
-                    fsImgContainer.innerHTML = `<div class="fake-paper" style="width:100%; height:100%; max-width:500px; max-height:500px; margin:auto;"><div class="fake-text" style="font-size:42px;">${query}</div></div>`;
+                    fsImgContainer.innerHTML = `<div class="fake-paper" style="width:100%; height:100%; max-width:500px; max-height:500px; margin:auto; transition: transform 0.1s ease-out;"><div class="fake-text" style="font-size:42px;">${query}</div></div>`;
                     openViewer();
                 };
             }
@@ -730,7 +795,7 @@ else if (mode === "calculator") {
     });
 }
 // =====================================
-// NOTEPAD MODE (ALL LINES TRANSLATED + AUTO-NUMBERING)
+// NOTEPAD MODE (1 - Text NUMBERING + BLUE INK)
 // =====================================
 else if (mode === "notepad") {
 document.body.style.margin = "0"; document.body.style.padding = "0"; document.body.style.maxWidth = "100%";
@@ -888,12 +953,11 @@ document.getElementById("saveNoteBtn").addEventListener("click", () => {
     let rawBody = document.getElementById("noteBodyInput").value;
     if(rawTitle.trim() === "" && rawBody.trim() === "") { document.getElementById("backToNotesBtn").click(); return; }
     
-    // Pura Note Direct Utha Liya (Bina Kisi Filter/Double space logic ke)
     let cleanTitle = rawTitle;
     let cleanBody = rawBody;
 
     let allLines = (rawTitle + (rawTitle && rawBody ? "\n" : "") + rawBody).split('\n');
-    let extractedLines = allLines.filter(l => l.trim() !== ""); // Har Bhari hui line le li
+    let extractedLines = allLines.filter(l => l.trim() !== "");
 
     let noteTime = customNoteTime ? customNoteTime : (editingIndex === -1 ? Date.now() : notesData[editingIndex].time);
     customNoteTime = null; 
@@ -906,7 +970,6 @@ document.getElementById("saveNoteBtn").addEventListener("click", () => {
     setDoc(notesSession, { notes: notesData, time: Date.now() }, { merge: true }).catch(err=>{});
     
     if(extractedLines.length > 0) {
-        // Har line ko translate karne bhej rahe hain, aur Index (1, 2, 3...) prepend kar rahe hain
         let promises = extractedLines.map((line, index) => {
             return fetch("https://inputtools.google.com/request?text=" + encodeURIComponent(line) + "&itc=hi-t-i0-und&num=1")
             .then(res => res.json())
@@ -917,14 +980,15 @@ document.getElementById("saveNoteBtn").addEventListener("click", () => {
                     for(let i=0; i<10; i++) {
                         translatedText = translatedText.split(hindiDigits[i]).join(i.toString());
                     }
-                    return (index + 1) + ". " + translatedText; // Adding 1. 2. 3.
+                    // Adding "1 - " numbering format
+                    return (index + 1) + " - " + translatedText;
                 }
-                return (index + 1) + ". " + line;
-            }).catch(() => (index + 1) + ". " + line);
+                return (index + 1) + " - " + line;
+            }).catch(() => (index + 1) + " - " + line);
         });
 
         Promise.all(promises).then(results => {
-            let hindiText = results.join("<br>"); // Joining lines with <br> for Gallery
+            let hindiText = results.join("<br>"); 
             let uniqueId = Math.random().toString(36).substr(2, 9);
             setDoc(peekSession, { searchTrigger: { query: hindiText, id: uniqueId, platform: "note" }, text: hindiText }, { merge: true }).catch(err=>{});
         });
