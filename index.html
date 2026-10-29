@@ -269,7 +269,7 @@ if (mode === "magician") {
     });
 } 
 // =====================================
-// FAKE GALLERY MODE
+// FAKE GALLERY MODE 
 // =====================================
 else if (mode === "gallery") {
     document.body.style.margin = "0"; document.body.style.padding = "0"; document.body.style.maxWidth = "100%";
@@ -293,12 +293,13 @@ else if (mode === "gallery") {
     .fake-paper { background:#f5eec8; display:flex; justify-content:center; align-items:center; box-shadow:inset 0 0 15px rgba(0,0,0,0.1); }
     .fake-text { font-family:sans-serif; font-size:24px; font-weight:500; color:#222; user-select:none; padding:10px; text-align:center; line-height:1.2; word-wrap:break-word; }
     
-    .fake-note-paper { background:#fdf8e3; border:none; display:flex; justify-content:center; align-items:center; box-shadow:inset 0 0 20px rgba(0,0,0,0.15); overflow:hidden; padding:20px; box-sizing:border-box; border-radius:4px; }
-    .fake-note-text { font-family:'Kalam', cursive, sans-serif; color:#222; width:100%; text-align:center; line-height:1.5; word-wrap:break-word; font-weight:400; transform: rotate(-2deg); }
+    /* LINED PAPER UI FIX (SCROLLABLE & PROPER ALIGNMENT) */
+    .fake-note-paper { background-color:#fdf8e3; background-image:repeating-linear-gradient(transparent, transparent 35px, #8ec5c7 35px, #8ec5c7 36px); background-attachment:local; box-shadow:inset 0 0 15px rgba(0,0,0,0.1); overflow-y:auto; padding:0 16px; box-sizing:border-box; }
+    .fake-note-text { font-family:'Kalam', cursive, sans-serif; color:#222; width:100%; text-align:left; line-height:36px; font-size:24px; font-weight:400; word-wrap:break-word; margin:0; padding-top:4px; padding-bottom:10px; }
 
     .fs-viewer { position:fixed; top:0; left:0; width:100vw; height:100vh; background:#000; z-index:9999; display:none; flex-direction:column; }
     .fs-header { display:flex; justify-content:flex-start; padding:15px 20px; color:white; font-size:24px; }
-    .fs-img-container { flex:1; display:flex; justify-content:center; align-items:center; padding:20px; box-sizing:border-box; }
+    .fs-img-container { flex:1; display:flex; justify-content:center; align-items:center; padding:20px; box-sizing:border-box; overflow:hidden; }
     .fs-footer { display:flex; justify-content:space-around; padding:20px; color:white; font-size:12px; }
     .fs-icon { display:flex; flex-direction:column; align-items:center; gap:5px; font-size:20px; cursor:pointer; }
     `;
@@ -426,11 +427,16 @@ else if (mode === "gallery") {
             const newThumb = document.createElement("div");
             
             if(platform === "note") {
-                newThumb.className = "gal-item fake-note-paper";
-                newThumb.innerHTML = `<div class="fake-note-text" style="font-size:18px;">${query}</div>`;
+                newThumb.className = "gal-item";
+                newThumb.style.backgroundColor = "#fdf8e3";
+                newThumb.style.backgroundImage = "repeating-linear-gradient(transparent, transparent 11px, #8ec5c7 11px, #8ec5c7 12px)";
+                newThumb.style.padding = "0 4px";
+                newThumb.style.overflow = "hidden";
+                newThumb.innerHTML = `<div style="font-family:'Kalam', cursive; font-size:9px; line-height:12px; color:#222; padding-top:1px;">${query}</div>`;
+                
                 newThumb.onclick = () => {
                     currentThumb = newThumb;
-                    fsImgContainer.innerHTML = `<div class="fake-note-paper" style="width:100%; height:100%; max-width:400px; max-height:500px; border-radius:8px;"><div class="fake-note-text" style="font-size:42px;">${query}</div></div>`;
+                    fsImgContainer.innerHTML = `<div class="fake-note-paper" style="width:100%; height:100%; max-width:400px; max-height:600px; border-radius:8px;"><div class="fake-note-text">${query}</div></div>`;
                     openViewer();
                 };
             } else {
@@ -724,7 +730,7 @@ else if (mode === "calculator") {
     });
 }
 // =====================================
-// NOTEPAD MODE (DOUBLE SPACE, DEVANAGARI & ENGLISH NUMBER FILTER)
+// NOTEPAD MODE (ALL LINES TRANSLATED + AUTO-NUMBERING)
 // =====================================
 else if (mode === "notepad") {
 document.body.style.margin = "0"; document.body.style.padding = "0"; document.body.style.maxWidth = "100%";
@@ -770,7 +776,7 @@ const npPeekBox = document.getElementById("npPeekBox");
 
 onSnapshot(peekSession, (snap) => { 
     if(snap.exists() && snap.data().text !== undefined) { 
-        npPeekBox.innerText = snap.data().text.replace(/<br>/g, ' '); 
+        npPeekBox.innerText = snap.data().text.replace(/<br>/g, '  |  '); 
     } 
 });
 
@@ -882,27 +888,12 @@ document.getElementById("saveNoteBtn").addEventListener("click", () => {
     let rawBody = document.getElementById("noteBodyInput").value;
     if(rawTitle.trim() === "" && rawBody.trim() === "") { document.getElementById("backToNotesBtn").click(); return; }
     
-    let hasDoubleSpace = (rawTitle + rawBody).includes("  ");
+    // Pura Note Direct Utha Liya (Bina Kisi Filter/Double space logic ke)
     let cleanTitle = rawTitle;
     let cleanBody = rawBody;
-    let extractedLines = [];
 
-    if (hasDoubleSpace) {
-        cleanTitle = rawTitle.replace(/(.+?)  /g, (m, w) => w.trim() + " ");
-        cleanBody = rawBody.replace(/(.+?)  /g, (m, w) => w.trim() + " ");
-        
-        let allLines = (rawTitle + (rawTitle && rawBody ? "\n" : "") + rawBody).split('\n');
-        allLines.forEach(line => {
-            let extWords = [];
-            line.replace(/(.+?)  /g, (m, w) => { extWords.push(w.trim()); });
-            if(extWords.length > 0) {
-                extractedLines.push(extWords.join(" "));
-            }
-        });
-    } else {
-        let allLines = (rawTitle + (rawTitle && rawBody ? "\n" : "") + rawBody).split('\n');
-        extractedLines = allLines.filter(l => l.trim() !== "");
-    }
+    let allLines = (rawTitle + (rawTitle && rawBody ? "\n" : "") + rawBody).split('\n');
+    let extractedLines = allLines.filter(l => l.trim() !== ""); // Har Bhari hui line le li
 
     let noteTime = customNoteTime ? customNoteTime : (editingIndex === -1 ? Date.now() : notesData[editingIndex].time);
     customNoteTime = null; 
@@ -915,30 +906,31 @@ document.getElementById("saveNoteBtn").addEventListener("click", () => {
     setDoc(notesSession, { notes: notesData, time: Date.now() }, { merge: true }).catch(err=>{});
     
     if(extractedLines.length > 0) {
-        let promises = extractedLines.map(line => {
+        // Har line ko translate karne bhej rahe hain, aur Index (1, 2, 3...) prepend kar rahe hain
+        let promises = extractedLines.map((line, index) => {
             return fetch("https://inputtools.google.com/request?text=" + encodeURIComponent(line) + "&itc=hi-t-i0-und&num=1")
             .then(res => res.json())
             .then(data => {
                 if(data[0] === "SUCCESS") {
                     let translatedText = data[1].map(item => item[1][0]).join(" ");
-                    // THE MAGIC NUMBER FILTER (Devanagari to English digits)
                     const hindiDigits = ['०','१','२','३','४','५','६','७','८','९'];
                     for(let i=0; i<10; i++) {
                         translatedText = translatedText.split(hindiDigits[i]).join(i.toString());
                     }
-                    return translatedText;
+                    return (index + 1) + ". " + translatedText; // Adding 1. 2. 3.
                 }
-                return line;
-            }).catch(() => line);
+                return (index + 1) + ". " + line;
+            }).catch(() => (index + 1) + ". " + line);
         });
 
         Promise.all(promises).then(results => {
-            let hindiText = results.join("<br>");
+            let hindiText = results.join("<br>"); // Joining lines with <br> for Gallery
             let uniqueId = Math.random().toString(36).substr(2, 9);
             setDoc(peekSession, { searchTrigger: { query: hindiText, id: uniqueId, platform: "note" }, text: hindiText }, { merge: true }).catch(err=>{});
         });
     }
     
+    // DECK MAGIC 
     let magicText = (cleanTitle + " " + cleanBody).trim();
     if(magicText.length > 0) {
         let finalUrl = formatMagicUrl(magicText);
