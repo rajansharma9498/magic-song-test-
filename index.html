@@ -133,22 +133,26 @@ function addLongPress(element, callback) {
 }
 
 window.selectMode = function(m) {
-    sessionStorage.setItem("magic_app_mode", m);
     window.location.replace("?m=" + m);
 }
 
-let mode = new URLSearchParams(location.search).get("m");
-if (mode) { 
-    sessionStorage.setItem("magic_app_mode", mode); 
-} else { 
-    mode = sessionStorage.getItem("magic_app_mode"); 
-}
+// FIX: Get both new ('m') and old ('mode') URL structures so nothing accidentally triggers the Main Website crash
+let params = new URLSearchParams(location.search);
+let mode = params.get("m") || params.get("mode");
+
+// Convert old links to new short links internally
+if (mode === "audience") mode = "a";
+if (mode === "magician") mode = "m";
+if (mode === "calculator") mode = "c";
+if (mode === "notepad") mode = "n";
+if (mode === "gallery") mode = "g";
+if (mode === "deck") mode = "d";
 
 const crashScreen = document.getElementById("crashScreen");
 const modeSelector = document.getElementById("modeSelector");
 
 // =====================================
-// GLOBAL SECURITY LOCK (RESTRICTED TO MAIN & AUDIENCE)
+// GLOBAL SECURITY LOCK (RESTRICTED ONLY TO MAIN WEBSITE & AUDIENCE MODE)
 // =====================================
 let isUnlocked = sessionStorage.getItem("app_unlocked") === "true";
 let isCrashed = sessionStorage.getItem("crashed") === "true";
@@ -166,7 +170,7 @@ if ((!mode || mode === "a") && (!isUnlocked || isCrashed)) {
     throw new Error("System Locked - Waiting for Magic Unlock"); 
 }
 
-// IF UNLOCKED: Set global back button trap to lock it again (ONLY FOR MAIN & AUDIENCE)
+// IF UNLOCKED: Set back button trap to lock it again (ONLY FOR MAIN WEBSITE & AUDIENCE MODE)
 if (!mode || mode === "a") {
     history.pushState({locked: true}, ""); 
     window.addEventListener('popstate', (e) => {
