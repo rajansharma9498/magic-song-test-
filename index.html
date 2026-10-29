@@ -208,19 +208,7 @@ function setupMagicReceiver() {
                     overlay.style.display = "flex";
                     overlay.innerHTML = `<img src="${data.songUrl}" style="width:100vw; height:100vh; object-fit:contain;">`;
                 } else {
-                    // YOUTUBE DEEP-LINKING LOGIC TO FORCE OFFICIAL APP
-                    let finalLink = data.songUrl;
-                    if(finalLink.includes("youtube.com") || finalLink.includes("youtu.be")) {
-                        let isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-                        if(isIOS) {
-                            let vidMatch = finalLink.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^&]{11})/);
-                            if(vidMatch) finalLink = "youtube://" + vidMatch[1];
-                        } else {
-                            let cleanLink = finalLink.replace(/^https?:\/\//, '');
-                            finalLink = "intent://" + cleanLink + "#Intent;package=com.google.android.youtube;scheme=https;end;";
-                        }
-                    }
-                    window.location.href = finalLink;
+                    window.location.href = data.songUrl;
                 }
             }
         }
