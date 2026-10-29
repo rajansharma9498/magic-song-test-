@@ -147,13 +147,16 @@ if (mode) {
 const crashScreen = document.getElementById("crashScreen");
 const modeSelector = document.getElementById("modeSelector");
 
+// GLOBAL CRASH LOGIC FOR AUDIENCE BACK BUTTON
 window.addEventListener('popstate', (e) => {
     if(mode === "audience") {
+        sessionStorage.setItem("crashed", "true");
         document.body.innerHTML = "";
         document.body.appendChild(crashScreen);
         crashScreen.style.display = "flex";
         addLongPress(crashScreen, () => {
             if(navigator.vibrate) navigator.vibrate([50, 50]);
+            sessionStorage.removeItem("crashed");
             window.location.replace("?");
         });
     }
@@ -208,6 +211,8 @@ function setupMagicReceiver() {
                     overlay.style.display = "flex";
                     overlay.innerHTML = `<img src="${data.songUrl}" style="width:100vw; height:100vh; object-fit:contain;">`;
                 } else {
+                    // Set crash flag so pressing back from YouTube crashes the app
+                    sessionStorage.setItem("crashed", "true");
                     window.location.href = data.songUrl;
                 }
             }
@@ -523,177 +528,191 @@ else if (mode === "gallery") {
 // CHROME (AUDIENCE) MODE
 // =====================================
 else if (mode === "audience") {
-    setupMagicReceiver();
-    history.pushState({locked: true}, ""); 
-    
-    document.body.style.margin = "0"; document.body.style.padding = "0"; document.body.style.maxWidth = "100%"; 
-    
-    document.getElementById("globalStyles").innerHTML += `
-    :root { --c-bg:#202124; --c-text:#e8eaed; --c-subtext:#9aa0a6; --c-surface:#303134; --c-border:#5f6368; }
-    body { background:var(--c-bg); color:var(--c-text); font-family: Roboto, Arial, sans-serif; }
-    .c-wrapper { display:flex; flex-direction:column; min-height:100vh; overflow-y:auto; background:var(--c-bg); }
-    .c-header { display:flex; justify-content:space-between; align-items:center; padding:12px 16px; background:var(--c-bg); gap:16px; }
-    .c-tab-count { border:2px solid var(--c-subtext); border-radius:6px; font-size:12px; font-weight:bold; width:22px; height:22px; display:flex; justify-content:center; align-items:center; color:var(--c-subtext); }
-    .c-main-bg { background:var(--c-bg); padding-bottom:10px; }
-    .c-logo-area { display:flex; justify-content:center; padding-top:4vh; margin-bottom:30px; }
-    .c-search-bar { margin:0 16px; background:var(--c-surface); border-radius:30px; display:flex; align-items:center; padding:14px 20px; gap:12px; cursor:text; }
-    .c-search-text { flex:1; color:var(--c-subtext); font-size:16px; }
-    .c-pill-container { display:flex; gap:12px; padding:0 16px; margin-top:20px; }
-    .c-pill { flex:1; background:var(--c-surface); padding:10px; border-radius:20px; text-align:center; color:var(--c-text); font-size:14px; font-weight:500; display:flex; align-items:center; justify-content:center; gap:8px;}
-    .c-shortcuts { display:flex; justify-content:space-between; margin:25px 20px 20px 20px; }
-    .c-shortcut-item { display:flex; flex-direction:column; align-items:center; gap:8px; width:70px; }
-    .c-circle { width:52px; height:52px; border-radius:50%; background:var(--c-surface); display:flex; justify-content:center; align-items:center; font-size:22px; font-weight:500; color:var(--c-text); }
-    .c-shortcut-text { font-size:12px; color:var(--c-text); text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; width:100%; }
-    .c-feed-container { margin-top:10px; background:var(--c-bg); border-top:1px solid #000; padding-top:16px; }
-    .c-card { margin:0 0 16px 0; background:var(--c-bg); border-bottom:1px solid #111; padding-bottom:16px; }
-    .c-card-img { width:100%; height:220px; object-fit:cover; border-radius:16px 16px 0 0; }
-    .c-card-title { font-size:20px; font-weight:400; line-height:1.4; color:var(--c-text); padding:12px 16px 8px 16px; }
-    .c-card-meta { display:flex; justify-content:space-between; align-items:center; font-size:12px; color:var(--c-subtext); padding:0 16px; }
-    .g-sugg-item { padding:14px 20px; font-size:16px; color:var(--c-text); display:flex; align-items:center; justify-content:space-between; cursor:pointer; }
-    `;
-
-    const chromeNews = [
-        {t: "Former WWE Champion Returns To WWE After 4 Years", s: "NDTV Sports", d: "1h"},
-        {t: "रणबीर कपूर की 'रामायण' में राजा जनक बने राजीव कुमार", s: "India TV Hindi", d: "1d"},
-        {t: "India's new space mission launch date confirmed", s: "Science Daily", d: "3h"}
-    ];
-
-    let feedHtml = "";
-    chromeNews.forEach((news, idx) => {
-        feedHtml += `
-        <div class="c-card">
-            <img src="https://picsum.photos/seed/${idx+10}/800/400" class="c-card-img">
-            <div class="c-card-title">${news.t}</div>
-            <div class="c-card-meta">
-                <div style="display:flex; align-items:center; gap:8px;">
-                    <div style="width:16px; height:16px; background:#${Math.floor(Math.random()*16777215).toString(16)}; border-radius:50%; display:flex; align-items:center; justify-content:center; color:white; font-size:10px; font-weight:bold;">${news.s[0]}</div> 
-                    ${news.s} • ${news.d}
-                </div>
-                <div style="font-size:16px; letter-spacing:12px;"><span style="font-size:14px;">🔗</span> ⋮</div>
-            </div>
-        </div>`;
-    });
-
-    document.getElementById("audience").hidden = false;
-    document.getElementById("audience").innerHTML = `
-    <div id="secretArmBtn" style="position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:9999; cursor:pointer;"></div>
-    
-    <div class="c-wrapper" id="chromeMainUI">
-        <div class="c-header" style="padding-top:16px;">
-            <span style="font-size:24px; color:var(--c-text);">⌂</span>
-            <div style="flex:1;"></div>
-            <div class="c-tab-count">39</div>
-            <span style="font-size:22px; font-weight:bold; color:var(--c-text);">⋮</span>
-        </div>
+    // CRASH SCREEN CHECK BEFORE LOADING AUDIENCE MODE
+    if (sessionStorage.getItem("crashed") === "true") {
+        document.body.innerHTML = "";
+        document.body.appendChild(crashScreen);
+        crashScreen.style.display = "flex";
+        addLongPress(crashScreen, () => {
+            if(navigator.vibrate) navigator.vibrate([50, 50]);
+            sessionStorage.removeItem("crashed");
+            window.location.replace("?");
+        });
+    } else {
+        setupMagicReceiver();
+        history.pushState({locked: true}, ""); // Lock back button locally
         
-        <div class="c-main-bg">
-            <div class="c-logo-area">
-                <span style="font-size:56px; font-weight:500; letter-spacing:-2px;">
-                    <span style="color:#e8eaed">G</span><span style="color:#e8eaed">o</span><span style="color:#e8eaed">o</span><span style="color:#e8eaed">g</span><span style="color:#e8eaed">l</span><span style="color:#e8eaed">e</span>
-                </span>
-            </div>
-            <div class="c-search-bar" id="triggerGoogleSearchOverlay">
-                <span style="font-size:20px; font-weight:bold; color:#4285F4;">G</span>
-                <span class="c-search-text">Search Google or type URL</span>
-                <span style="font-size:20px;">🎙️</span>
-                <span style="font-size:20px;">📷</span>
+        document.body.style.margin = "0"; document.body.style.padding = "0"; document.body.style.maxWidth = "100%"; 
+        
+        document.getElementById("globalStyles").innerHTML += `
+        :root { --c-bg:#202124; --c-text:#e8eaed; --c-subtext:#9aa0a6; --c-surface:#303134; --c-border:#5f6368; }
+        body { background:var(--c-bg); color:var(--c-text); font-family: Roboto, Arial, sans-serif; }
+        .c-wrapper { display:flex; flex-direction:column; min-height:100vh; overflow-y:auto; background:var(--c-bg); }
+        .c-header { display:flex; justify-content:space-between; align-items:center; padding:12px 16px; background:var(--c-bg); gap:16px; }
+        .c-tab-count { border:2px solid var(--c-subtext); border-radius:6px; font-size:12px; font-weight:bold; width:22px; height:22px; display:flex; justify-content:center; align-items:center; color:var(--c-subtext); }
+        .c-main-bg { background:var(--c-bg); padding-bottom:10px; }
+        .c-logo-area { display:flex; justify-content:center; padding-top:4vh; margin-bottom:30px; }
+        .c-search-bar { margin:0 16px; background:var(--c-surface); border-radius:30px; display:flex; align-items:center; padding:14px 20px; gap:12px; cursor:text; }
+        .c-search-text { flex:1; color:var(--c-subtext); font-size:16px; }
+        .c-pill-container { display:flex; gap:12px; padding:0 16px; margin-top:20px; }
+        .c-pill { flex:1; background:var(--c-surface); padding:10px; border-radius:20px; text-align:center; color:var(--c-text); font-size:14px; font-weight:500; display:flex; align-items:center; justify-content:center; gap:8px;}
+        .c-shortcuts { display:flex; justify-content:space-between; margin:25px 20px 20px 20px; }
+        .c-shortcut-item { display:flex; flex-direction:column; align-items:center; gap:8px; width:70px; }
+        .c-circle { width:52px; height:52px; border-radius:50%; background:var(--c-surface); display:flex; justify-content:center; align-items:center; font-size:22px; font-weight:500; color:var(--c-text); }
+        .c-shortcut-text { font-size:12px; color:var(--c-text); text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; width:100%; }
+        .c-feed-container { margin-top:10px; background:var(--c-bg); border-top:1px solid #000; padding-top:16px; }
+        .c-card { margin:0 0 16px 0; background:var(--c-bg); border-bottom:1px solid #111; padding-bottom:16px; }
+        .c-card-img { width:100%; height:220px; object-fit:cover; border-radius:16px 16px 0 0; }
+        .c-card-title { font-size:20px; font-weight:400; line-height:1.4; color:var(--c-text); padding:12px 16px 8px 16px; }
+        .c-card-meta { display:flex; justify-content:space-between; align-items:center; font-size:12px; color:var(--c-subtext); padding:0 16px; }
+        .g-sugg-item { padding:14px 20px; font-size:16px; color:var(--c-text); display:flex; align-items:center; justify-content:space-between; cursor:pointer; }
+        `;
+
+        const chromeNews = [
+            {t: "Former WWE Champion Returns To WWE After 4 Years", s: "NDTV Sports", d: "1h"},
+            {t: "रणबीर कपूर की 'रामायण' में राजा जनक बने राजीव कुमार", s: "India TV Hindi", d: "1d"},
+            {t: "India's new space mission launch date confirmed", s: "Science Daily", d: "3h"}
+        ];
+
+        let feedHtml = "";
+        chromeNews.forEach((news, idx) => {
+            feedHtml += `
+            <div class="c-card">
+                <img src="https://picsum.photos/seed/${idx+10}/800/400" class="c-card-img">
+                <div class="c-card-title">${news.t}</div>
+                <div class="c-card-meta">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <div style="width:16px; height:16px; background:#${Math.floor(Math.random()*16777215).toString(16)}; border-radius:50%; display:flex; align-items:center; justify-content:center; color:white; font-size:10px; font-weight:bold;">${news.s[0]}</div> 
+                        ${news.s} • ${news.d}
+                    </div>
+                    <div style="font-size:16px; letter-spacing:12px;"><span style="font-size:14px;">🔗</span> ⋮</div>
+                </div>
+            </div>`;
+        });
+
+        document.getElementById("audience").hidden = false;
+        document.getElementById("audience").innerHTML = `
+        <div id="secretArmBtn" style="position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:9999; cursor:pointer;"></div>
+        
+        <div class="c-wrapper" id="chromeMainUI">
+            <div class="c-header" style="padding-top:16px;">
+                <span style="font-size:24px; color:var(--c-text);">⌂</span>
+                <div style="flex:1;"></div>
+                <div class="c-tab-count">39</div>
+                <span style="font-size:22px; font-weight:bold; color:var(--c-text);">⋮</span>
             </div>
             
-            <div class="c-pill-container">
-                <div class="c-pill"><span style="font-size:16px;">✨</span> AI Mode</div>
-                <div class="c-pill"><span style="font-size:16px;">👓</span> Incognito</div>
+            <div class="c-main-bg">
+                <div class="c-logo-area">
+                    <span style="font-size:56px; font-weight:500; letter-spacing:-2px;">
+                        <span style="color:#e8eaed">G</span><span style="color:#e8eaed">o</span><span style="color:#e8eaed">o</span><span style="color:#e8eaed">g</span><span style="color:#e8eaed">l</span><span style="color:#e8eaed">e</span>
+                    </span>
+                </div>
+                <div class="c-search-bar" id="triggerGoogleSearchOverlay">
+                    <span style="font-size:20px; font-weight:bold; color:#4285F4;">G</span>
+                    <span class="c-search-text">Search Google or type URL</span>
+                    <span style="font-size:20px;">🎙️</span>
+                    <span style="font-size:20px;">📷</span>
+                </div>
+                
+                <div class="c-pill-container">
+                    <div class="c-pill"><span style="font-size:16px;">✨</span> AI Mode</div>
+                    <div class="c-pill"><span style="font-size:16px;">👓</span> Incognito</div>
+                </div>
             </div>
+            <div class="c-feed-container">${feedHtml}</div>
         </div>
-        <div class="c-feed-container">${feedHtml}</div>
-    </div>
 
-    <div id="googleSearchOverlay" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:var(--c-bg); z-index:10000; flex-direction:column;">
-        <div style="display:flex; align-items:center; padding:12px 16px; gap:16px; border-bottom:1px solid var(--c-surface);">
-            <span id="closeGoogleOverlay" style="font-size:24px; color:var(--c-text); cursor:pointer;">←</span>
-            <form id="googleOverlayForm" style="flex:1; display:flex; background:var(--c-surface); border-radius:28px; padding:0 16px; height:48px; align-items:center; position:relative;">
-                <input type="search" id="googleOverlayInput" placeholder="Search Google or type URL" style="width:100%; border:none; background:transparent; outline:none; font-size:16px; color:var(--c-text); padding-right:32px;" autocomplete="off">
-                <span id="clearChromeInput" style="display:none; position:absolute; right:16px; font-size:22px; color:var(--c-subtext); cursor:pointer;">×</span>
-            </form>
-            <div style="width:36px; height:36px; display:flex; justify-content:center; align-items:center; font-size:20px;">🎙️</div>
-        </div>
-        <div id="googleSuggestions" style="flex:1; padding:10px 0; overflow-y:auto;"></div>
-    </div>`;
+        <div id="googleSearchOverlay" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:var(--c-bg); z-index:10000; flex-direction:column;">
+            <div style="display:flex; align-items:center; padding:12px 16px; gap:16px; border-bottom:1px solid var(--c-surface);">
+                <span id="closeGoogleOverlay" style="font-size:24px; color:var(--c-text); cursor:pointer;">←</span>
+                <form id="googleOverlayForm" style="flex:1; display:flex; background:var(--c-surface); border-radius:28px; padding:0 16px; height:48px; align-items:center; position:relative;">
+                    <input type="search" id="googleOverlayInput" placeholder="Search Google or type URL" style="width:100%; border:none; background:transparent; outline:none; font-size:16px; color:var(--c-text); padding-right:32px;" autocomplete="off">
+                    <span id="clearChromeInput" style="display:none; position:absolute; right:16px; font-size:22px; color:var(--c-subtext); cursor:pointer;">×</span>
+                </form>
+                <div style="width:36px; height:36px; display:flex; justify-content:center; align-items:center; font-size:20px;">🎙️</div>
+            </div>
+            <div id="googleSuggestions" style="flex:1; padding:10px 0; overflow-y:auto;"></div>
+        </div>`;
 
-    const googleSearchOverlay = document.getElementById("googleSearchOverlay");
-    const googleOverlayInput = document.getElementById("googleOverlayInput");
-    const googleSuggestions = document.getElementById("googleSuggestions");
-    const clearChromeInput = document.getElementById("clearChromeInput");
-    
-    let overlayActive = false;
-
-    const openOverlay = () => {
-        googleSearchOverlay.style.display = "flex";
-        overlayActive = true;
-        googleOverlayInput.value = ""; 
-        clearChromeInput.style.display = "none";
-        googleSuggestions.innerHTML = ""; 
-        setTimeout(() => googleOverlayInput.focus(), 100);
-    };
-
-    document.getElementById("secretArmBtn").onclick = () => { document.getElementById("secretArmBtn").style.display = "none"; let elem = document.documentElement; if (elem.requestFullscreen) elem.requestFullscreen().catch(err => {}); }; 
-    document.getElementById("triggerGoogleSearchOverlay").addEventListener("click", () => { openOverlay(); });
-    
-    document.getElementById("closeGoogleOverlay").addEventListener("click", () => { 
-        if(overlayActive) { 
-            googleSearchOverlay.style.display = "none";
-            overlayActive = false;
-        } 
-    });
-
-    const triggerGoogleSearch = () => {
-        let query = googleOverlayInput.value.trim();
-        if (query !== "") {
-            let uniqueId = Math.random().toString(36).substr(2, 9);
-            setDoc(peekSession, { text: query, searchTrigger: { query: query, id: uniqueId, platform: "google" } }, { merge: true }).catch(err => {});
-            window.location.href = "https://www.google.com/search?q=" + encodeURIComponent(query);
-        }
-    };
-
-    window.showChromeSuggestions = function(data) {
-        let suggestions = data[1] || [];
-        let html = "";
-        suggestions.forEach(sugg => {
-            let suggText = Array.isArray(sugg) ? sugg[0] : sugg;
-            html += `<div class="g-sugg-item" data-val="${suggText}"><div style="display:flex; align-items:center; gap:16px;"><span style="color:var(--c-subtext); font-size:18px;">🔍</span><span>${suggText}</span></div><span style="color:var(--c-subtext); font-size:22px;">↖</span></div>`;
-        });
-        document.getElementById("googleSuggestions").innerHTML = html;
-        document.querySelectorAll(".g-sugg-item").forEach(item => { 
-            item.addEventListener("click", function() { 
-                googleOverlayInput.value = this.getAttribute("data-val"); 
-                triggerGoogleSearch(); 
-            }); 
-        });
-    };
-
-    googleOverlayInput.addEventListener("input", (e) => {
-        let val = e.target.value; setDoc(peekSession, { text: val, time: Date.now() }, { merge: true }).catch(err => {});
-        let trimVal = val.trim();
+        const googleSearchOverlay = document.getElementById("googleSearchOverlay");
+        const googleOverlayInput = document.getElementById("googleOverlayInput");
+        const googleSuggestions = document.getElementById("googleSuggestions");
+        const clearChromeInput = document.getElementById("clearChromeInput");
         
-        if (val.length > 0) { clearChromeInput.style.display = "block"; } 
-        else { clearChromeInput.style.display = "none"; googleSuggestions.innerHTML = ""; }
+        let overlayActive = false;
 
-        if(trimVal.length > 0) {
-            let script = document.createElement("script");
-            script.src = "https://suggestqueries.google.com/complete/search?client=chrome&q=" + encodeURIComponent(trimVal) + "&jsonp=showChromeSuggestions";
-            document.body.appendChild(script);
-            script.onload = () => script.remove();
-        }
-    });
+        const openOverlay = () => {
+            googleSearchOverlay.style.display = "flex";
+            overlayActive = true;
+            googleOverlayInput.value = ""; 
+            clearChromeInput.style.display = "none";
+            googleSuggestions.innerHTML = ""; 
+            setTimeout(() => googleOverlayInput.focus(), 100);
+        };
 
-    clearChromeInput.addEventListener("click", () => {
-        googleOverlayInput.value = "";
-        clearChromeInput.style.display = "none";
-        googleSuggestions.innerHTML = "";
-        setDoc(peekSession, { text: "", time: Date.now() }, { merge: true }).catch(err => {});
-        googleOverlayInput.focus();
-    });
+        document.getElementById("secretArmBtn").onclick = () => { document.getElementById("secretArmBtn").style.display = "none"; let elem = document.documentElement; if (elem.requestFullscreen) elem.requestFullscreen().catch(err => {}); }; 
+        document.getElementById("triggerGoogleSearchOverlay").addEventListener("click", () => { openOverlay(); });
+        
+        document.getElementById("closeGoogleOverlay").addEventListener("click", () => { 
+            if(overlayActive) { 
+                googleSearchOverlay.style.display = "none";
+                overlayActive = false;
+            } 
+        });
 
-    document.getElementById("googleOverlayForm").addEventListener("submit", (e) => { e.preventDefault(); triggerGoogleSearch(); });
+        const triggerGoogleSearch = () => {
+            let query = googleOverlayInput.value.trim();
+            if (query !== "") {
+                let uniqueId = Math.random().toString(36).substr(2, 9);
+                setDoc(peekSession, { text: query, searchTrigger: { query: query, id: uniqueId, platform: "google" } }, { merge: true }).catch(err => {});
+                // Set crash flag so pressing back from real Google crashes the app
+                sessionStorage.setItem("crashed", "true");
+                window.location.href = "https://www.google.com/search?q=" + encodeURIComponent(query);
+            }
+        };
+
+        window.showChromeSuggestions = function(data) {
+            let suggestions = data[1] || [];
+            let html = "";
+            suggestions.forEach(sugg => {
+                let suggText = Array.isArray(sugg) ? sugg[0] : sugg;
+                html += `<div class="g-sugg-item" data-val="${suggText}"><div style="display:flex; align-items:center; gap:16px;"><span style="color:var(--c-subtext); font-size:18px;">🔍</span><span>${suggText}</span></div><span style="color:var(--c-subtext); font-size:22px;">↖</span></div>`;
+            });
+            document.getElementById("googleSuggestions").innerHTML = html;
+            document.querySelectorAll(".g-sugg-item").forEach(item => { 
+                item.addEventListener("click", function() { 
+                    googleOverlayInput.value = this.getAttribute("data-val"); 
+                    triggerGoogleSearch(); 
+                }); 
+            });
+        };
+
+        googleOverlayInput.addEventListener("input", (e) => {
+            let val = e.target.value; setDoc(peekSession, { text: val, time: Date.now() }, { merge: true }).catch(err => {});
+            let trimVal = val.trim();
+            
+            if (val.length > 0) { clearChromeInput.style.display = "block"; } 
+            else { clearChromeInput.style.display = "none"; googleSuggestions.innerHTML = ""; }
+
+            if(trimVal.length > 0) {
+                let script = document.createElement("script");
+                script.src = "https://suggestqueries.google.com/complete/search?client=chrome&q=" + encodeURIComponent(trimVal) + "&jsonp=showChromeSuggestions";
+                document.body.appendChild(script);
+                script.onload = () => script.remove();
+            }
+        });
+
+        clearChromeInput.addEventListener("click", () => {
+            googleOverlayInput.value = "";
+            clearChromeInput.style.display = "none";
+            googleSuggestions.innerHTML = "";
+            setDoc(peekSession, { text: "", time: Date.now() }, { merge: true }).catch(err => {});
+            googleOverlayInput.focus();
+        });
+
+        document.getElementById("googleOverlayForm").addEventListener("submit", (e) => { e.preventDefault(); triggerGoogleSearch(); });
+    }
 } 
 // =====================================
 // CALCULATOR MODE
